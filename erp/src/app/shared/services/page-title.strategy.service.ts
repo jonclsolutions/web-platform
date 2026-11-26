@@ -16,13 +16,16 @@
  *      see app.routes.ts. The key must match a row in `legal_page_titles`.
  *   2) Register in app.config.ts:
  *        { provide: TitleStrategy, useClass: PageTitleStrategy }
- * @note Fallback order: current language -> 'cz' -> any filled language ->
- *   the static <title> from index.html. Routes without any `title` in their
+ * @note A page with titles: its title in the current language, else 'Cannot load text' - never
+ *   the title of another language (a missing title shows that something is wrong; a language is
+ *   switched on only with all its titles). Without a title map / a row of the page: the static
+ *   <title> from index.html. Routes without any `title` in their
  *   route chain also get the index.html title (admin + auth use 'admin.panel'). The title is set via Angular `Title`
  *   (document.title = text), so client text can never inject HTML.
  */
 
 import { Injectable, Injector, inject } from '@angular/core';
+import { MISSING_TEXT } from '../utils/missing-text';
 import { DOCUMENT } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
@@ -105,9 +108,8 @@ export class PageTitleStrategy extends TitleStrategy {
     if (!byLang || typeof byLang !== 'object' || Array.isArray(byLang)) return this.fallbackTitle;
 
     const lang = this.localization?.getCurrentLanguage() ?? 'cz';
-    return byLang[lang]
-      || byLang['cz']
-      || Object.values(byLang).find(v => !!v)
-      || this.fallbackTitle;
+    const own = byLang[lang];
+    // never the title of another language
+    return typeof own === 'string' && own.trim() !== '' ? own : MISSING_TEXT;
   }
 }

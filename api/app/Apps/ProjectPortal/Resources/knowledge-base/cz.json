@@ -432,7 +432,7 @@
             },
             {
               "type": "text",
-              "content": "Prázdný název použije český název stránky. Změny se klientům projeví po načtení stránky."
+              "content": "Prázdný název se klientům ukáže jako „Cannot load text“ - vyplňte ho ve všech jazycích. Změny se klientům projeví po načtení stránky."
             }
           ]
         },

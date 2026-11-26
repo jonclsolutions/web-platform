@@ -6,6 +6,9 @@
  * @author JS
  * @created 2025
  * @description Manages internationalization (i18n) data, including JSON translation file management, language metadata administration, and associated icon assets.
+ * @note A missing text is never replaced by the text of another language: the public pages get
+ *   'Cannot load text' in its place (show() with `complete`), and a language is switched on only
+ *   complete (saveLanguages, completeness()).
  * @note A deleted language (destroyLanguage, or left out of the saved list) takes everything stored
  *   in it with it: its translation file and icon, the content of the applications using the
  *   module's languages, the page titles of the module and the shared site texts (forgetContent()).
@@ -27,6 +30,7 @@ use Illuminate\Http\JsonResponse;
 use App\Support\I18n\PlainText;
 use App\Support\I18n\MissingTranslations;
 use App\Support\I18n\I18nText;
+use App\Support\I18n\LanguageCompleteness;
 use App\Models\Legal\PageTitle;
 use App\Models\Legal\SiteSetting;
 use Illuminate\Support\Facades\DB;
@@ -110,11 +114,11 @@ class TranslationController extends Controller
      * @note `changes` [{path, value}]: only these texts are written, every other text of the file
      *   stays as stored - two admins (or two tabs) saving different texts of one language never
      *   overwrite each other. A path must be a text of the primary language or of the file itself
-     *   (422 with the unknown paths, nothing written). The answer has the texts as stored
+     *   (422, errors.unknown, nothing written). The answer has the texts as stored
      *   (`values` - plain text, PlainText::fromHtml()).
      * @note `base` of a change = the stored text the edit started from: when the stored text is
      *   another one now (saved meanwhile in another tab / by another admin), nothing is written
-     *   and 409 lists those texts with their stored version (`conflicts`) - `force: true` writes
+     *   and 409 lists those texts with their stored version (`errors.conflicts`) - `force: true` writes
      *   the changes anyway (the admin chose to overwrite).
      * @note An upload must have exactly the keys of the primary language (Czech on the server;
      *   for Czech itself its current keys) - missing or extra keys are refused with 422 and the
@@ -178,17 +182,15 @@ class TranslationController extends Controller
                         $changes = $request->input('changes');
                         if (!$request->boolean('force') && ($conflicts = self::conflictsOf($oldData, $changes)) !== []) {
                             return response()->json([
-                                'message'        => 'The texts were changed meanwhile.',
-                                'conflicts'      => array_slice($conflicts, 0, self::UPLOAD_MISMATCH_LIST),
-                                'conflict_count' => count($conflicts),
+                                'message' => 'The texts were changed meanwhile.',
+                                'errors'  => ['conflicts' => array_slice($conflicts, 0, self::UPLOAD_MISMATCH_LIST), 'conflict_count' => count($conflicts)],
                             ], 409);
                         }
                         [$newData, $saved, $unknown] = self::mergeChanges($oldData, MissingTranslations::primary($module) ?? [], $changes);
                         if ($unknown !== []) {
                             return response()->json([
-                                'message'       => 'The texts are not in the translations of the module.',
-                                'unknown'       => array_slice($unknown, 0, self::UPLOAD_MISMATCH_LIST),
-                                'unknown_count' => count($unknown),
+                                'message' => 'The texts are not in the translations of the module.',
+                                'errors'  => ['unknown' => array_slice($unknown, 0, self::UPLOAD_MISMATCH_LIST), 'unknown_count' => count($unknown)],
                             ], 422);
                         }
                     }
@@ -347,17 +349,56 @@ class TranslationController extends Controller
     }
 
     /**
-     * Retrieves translation strings for a specific language and module.
+     * @description Texts of a language of a module: as stored (the editors), or with `complete=1`
+     *   as the visitors get them (the public pages) - every key of Czech, a missing or empty text
+     *   'Cannot load text', also for a language without a file yet; never the texts of another
+     *   language (MissingTranslations::complete()).
+     * @param Request $request `complete` (boolean).
+     * @param string $module Module.
+     * @param string $lang Language code.
+     * @return JsonResponse The texts; 404 when there are none (stored: no file; complete: no Czech file either).
      */
-    public function show(string $module, string $lang): JsonResponse
+    public function show(Request $request, string $module, string $lang): JsonResponse
     {
         $filePath = $this->i18nDirectory($module) . '/' . $lang . '.json';
+        $stored = File::exists($filePath) ? (json_decode(File::get($filePath), true) ?? []) : null;
 
-        if (!File::exists($filePath)) {
+        if ($request->boolean('complete')) {
+            $completed = MissingTranslations::complete($module, is_array($stored) ? $stored : []);
+            if ($completed !== null) {
+                return $this->respond((object) $completed);
+            }
+        }
+        if ($stored === null) {
             return response()->json(['message' => 'Not found'], 404);
         }
 
-        return $this->respond((object) (json_decode(File::get($filePath), true) ?? []));
+        return $this->respond((object) $stored);
+    }
+
+    /**
+     * @description What every language of a module other than Czech still lacks (texts, page
+     *   titles, content) - a language may be switched on only when it lacks nothing; the window
+     *   "Jazyky" says why it cannot be yet.
+     * @param Request $request Current request (permission of the module).
+     * @param string $module Module.
+     * @return JsonResponse { code: { part: count } } ({} for a complete language).
+     */
+    public function completeness(Request $request, string $module): JsonResponse
+    {
+        if ($denied = $this->denyModuleWrite($request, $module)) {
+            return $denied;
+        }
+        $result = [];
+        foreach (self::moduleLanguages($module) as $lang) {
+            $code = (string) ($lang['code'] ?? '');
+            if ($code === '' || strtolower($code) === MissingTranslations::PRIMARY) {
+                continue;
+            }
+            $result[$code] = (object) LanguageCompleteness::missing($module, $code);
+        }
+
+        return $this->respond((object) $result);
     }
 
     /**
@@ -403,6 +444,9 @@ class TranslationController extends Controller
 
     /**
      * Updates language metadata and handles optional icon uploads for a module.
+     * @note A language other than Czech is switched on only when it lacks nothing (texts, page
+     *   titles, content - LanguageCompleteness): 422 with `errors.incomplete` {code: {part: count}},
+     *   nothing saved. Switching off is always allowed.
      */
     public function saveLanguages(Request $request, string $module): JsonResponse
     {
@@ -437,6 +481,26 @@ class TranslationController extends Controller
         $currentModuleMeta = collect(self::moduleLanguages($module))->keyBy('code');
 
         $mergedCurrent = [];
+        // A language other than Czech is switched on only when it lacks nothing (texts, page titles,
+        // content) - visitors never get a half translated language (LanguageCompleteness).
+        $incomplete = [];
+        foreach ($incoming as $lang) {
+            $code = (string) $lang['code'];
+            $wasActive = !empty($currentModuleMeta->get($code)['active']);
+            if (!empty($lang['active']) && !$wasActive && strtolower($code) !== MissingTranslations::PRIMARY) {
+                $missing = LanguageCompleteness::missing($module, $code);
+                if ($missing !== []) {
+                    $incomplete[$code] = $missing;
+                }
+            }
+        }
+        if ($incomplete !== []) {
+            return response()->json([
+                'message' => 'A language can be switched on only with all its texts.',
+                'errors'  => ['incomplete' => $incomplete],
+            ], 422);
+        }
+
         foreach ($incoming as $lang) {
             $code = $lang['code'];
             // the URL of the icon is derived from its path when read (withIconUrls) - one sent by

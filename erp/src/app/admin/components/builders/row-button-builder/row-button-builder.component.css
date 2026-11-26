@@ -13,7 +13,7 @@
     @description: Grey pill holding the buttons; the active button is white with a soft shadow.
       Icon + text, optional number (grey / amber) and amber dot, or a flag instead of the icon.
       Long rows scroll sideways instead of overflowing the page.
-    @usage: .rbb, .rbb--sm, .rbb--stretch, .rbb-btn, .rbb-btn.active, .rbb-btn--danger, .rbb-btn--attention,
+    @usage: .rbb, .rbb--sm, .rbb--stretch, .rbb-btn, .rbb-btn.active, .rbb-btn--danger, .rbb-btn--attention, .rbb-btn--muted,
       .rbb-image, .rbb-label, .rbb-count, .rbb-count--attention, .rbb-dot
 */
 :host {
@@ -76,6 +76,13 @@
   outline: 2px solid var(--color-zinc-900);
   outline-offset: 2px;
 }
+/* Switched off (a language visitors do not see): still chosen and edited, quieter, dashed. */
+.rbb-btn--muted:not(.active) {
+  color: var(--color-zinc-500, #71717a);
+  outline: 1px dashed var(--color-zinc-300, #d4d4d8);
+  outline-offset: -3px;
+}
+.rbb-btn--muted:not(.active) .rbb-image { opacity: 0.6; }
 .rbb-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;

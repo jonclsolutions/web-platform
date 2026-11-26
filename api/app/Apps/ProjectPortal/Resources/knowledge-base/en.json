@@ -432,7 +432,7 @@
             },
             {
               "type": "text",
-              "content": "An empty title uses the Czech title of the page. Clients see the changes after the page loads."
+              "content": "Clients see an empty title as 'Cannot load text' - fill it in in all languages. Clients see the changes after the page loads."
             }
           ]
         },

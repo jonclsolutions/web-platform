@@ -58,6 +58,38 @@
   color: #85581d;
 }
 
+/* What a language lacks: switched off - why it cannot be switched on (with the way to the texts);
+   switched on (an update added texts) - visitors see 'Cannot load text', more urgent. */
+.ew-manage-missing {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.ew-manage-missing.is-on {
+  color: #85581d;
+}
+
+.ew-link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ew-link-btn:focus-visible {
+  outline: 2px solid var(--color-zinc-900);
+  outline-offset: 2px;
+}
+
 /* Window "Spravovat jazyky": one row per language - flag / code / name, its state, its actions. */
 .ew-manage-list {
   list-style: none;

@@ -7,8 +7,8 @@
  * @description Editor mode of the public website - the website shown in the frame of the visual
  *   text editor of the admin. Active only inside the frame of the editor on a page of the admin
  *   of the same origin; then it marks every text of the translations (LocalizationService) and
- *   of the content (WebContentService) with the invisible marks of its key, shows the Czech
- *   reference in place of a text missing in the language (orange), applies the unsaved
+ *   of the content (WebContentService) with the invisible marks of its key, shows a text
+ *   missing in the language as the visitors see it - 'Cannot load text' (orange), applies the unsaved
  *   texts sent by the admin (live preview), runs the overlay (outlines, selection) and talks to
  *   the admin with window messages (text-editor-protocol).
  * @usage `inject(PublicTextEditorService).active` - the cookie bar, the analytics and the language
@@ -25,6 +25,7 @@ import { Injectable, Injector, NgZone, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
 import { markText } from './text-editor-markers';
+import { MISSING_TEXT } from '../../shared/utils/missing-text';
 import { TextEditorEntry, TextEditorOverlay } from './text-editor-overlay';
 import {
   TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME, TEXT_EDITOR_HOST_PREFIX, TextEditorContentSection, isBannersQuery,
@@ -112,7 +113,7 @@ export class PublicTextEditorService {
   /** Unsaved texts of `draftLang`. */
   private drafts: Record<string, string> = {};
   private draftLang: string | null = null;
-  /** Texts missing in `draftLang`: key → Czech reference shown in their place (orange). */
+  /** Texts missing in `draftLang`: key → the text shown in their place ('Cannot load text', orange). */
   private missing: Record<string, string> = {};
   /** Hover labels of the content sections (from the admin, in its language). */
   private contentLabels: Partial<Record<TextEditorContentSection, string>> = {};
@@ -157,11 +158,12 @@ export class PublicTextEditorService {
       for (const [path, value] of Object.entries(this.drafts)) {
         setAtPath(copy, path, value);
       }
-      // a text still empty in the language shows its Czech reference (key when Czech lacks it too)
-      for (const [path, reference] of Object.entries(this.missing)) {
+      // a text still missing in the language shows what the visitors see ('Cannot load text' -
+      // never the text of another language); the key when nothing is given
+      for (const [path, shown] of Object.entries(this.missing)) {
         const current = getAtPath(copy, path);
-        if (typeof current !== 'string' || !current.trim()) {
-          setAtPath(copy, path, reference?.trim() ? reference : `[${path}]`);
+        if (typeof current !== 'string' || !current.trim() || current === MISSING_TEXT) {
+          setAtPath(copy, path, shown?.trim() ? shown : `[${path}]`);
           missingPaths.add(path);
         }
       }

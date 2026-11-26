@@ -380,7 +380,9 @@ describe('SettingsComponent', () => {
         ? of([{ code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }])
         : of(JSON.parse(JSON.stringify(config))));
       init();
-      expect(component.languages.map(l => l.code)).toEqual(['en']);
+      // a switched off language is offered too (its texts are filled in before it is switched on)
+      expect(component.languages.map(l => l.code)).toEqual(['en', 'de']);
+      expect(component.langItems.map(item => !!item.muted)).toEqual([false, true]);
       expect(component.currentLang).toBe('en');
       expect(component.getLangName('en')).toBe('English');
       expect(component.getLangName('xx')).toBe('XX');

@@ -260,12 +260,12 @@ describe('EditWebsiteComponent', () => {
 
   /**
    * @description A failed toggle of the active flag is rolled back.
-   * @input  upload fails; toggleLangActive(en)
+   * @input  the quiet POST fails; toggleLangActive(en)
    * @output en.active true again; alert 'edit-website.toggle_failed_error'
    */
   it('rolls back a failed language toggle', fakeAsync(() => {
     component.ngOnInit();
-    (ctx.dataHandler as any).upload.and.returnValue(throwError(() => new Error('x')));
+    (ctx.dataHandler as any).postQuietly.and.returnValue(throwError(() => new Error('x')));
     component.toggleLangActive(component.languages[1]);
     expect(component.languages[1].active).toBeTrue();
     expect(ctx.alert.open).toHaveBeenCalledWith('shared.error', 'edit-website.toggle_failed_error', 'danger');

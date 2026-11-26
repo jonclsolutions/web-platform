@@ -531,8 +531,8 @@
                   "active": false
                 },
                 {
-                  "label": "Language active",
-                  "text": "Ticked = the language is offered to visitors in the language switch. Keep a new language inactive until its texts are translated.",
+                  "label": "New language switched off",
+                  "text": "A new language is created switched off - it has no texts yet. Switch it on in the Languages window once it is complete.",
                   "active": false
                 }
               ]
@@ -541,7 +541,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see an inactive language, its texts stay.",
+                "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see a switched off language, its texts stay. Only a complete language can be switched on: while it lacks something (texts, page titles, FAQ, positions, references, help center), Activate is disabled and what is missing is written under the language, with the button Show the missing texts. When something is missing in a switched on language after an update of the application, the window shows it there too. A switched off language is offered for editing in the other tabs too (Page titles, FAQ, Job positions, References, Help center) - its tab is dashed and greyer, so you complete it before you switch it on.",
                 "Delete deletes the language (after a confirmation; Cancel keeps you in the Languages window). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
                 "Download JSON and Upload JSON are at every language in the Languages window (see chapter 06).",
                 "When the open language has unsaved edits, adding a language does not throw them away - the open language stays open and the new one is in the row of languages."
@@ -642,11 +642,7 @@
                 },
                 {
                   "title": "What the visitor sees",
-                  "text": "Instead of a missing text the website shows “Cannot load text”. So fill in all texts before activating a language."
-                },
-                {
-                  "title": "Same as CZ",
-                  "text": "For a language other than Czech: how many texts are the same as in Czech - probably not translated yet (a name or a number may be the same on purpose). A click lists only them; the Missing filter goes off."
+                  "text": "Instead of a missing text the website shows “Cannot load text” - never the text of another language (the visitor sees that something is wrong instead of reading Czech). That is why a language can be switched on only complete."
                 }
               ]
             },
@@ -706,11 +702,11 @@
                 },
                 {
                   "title": "Orange outline",
-                  "text": "A text missing in the language. The Czech reference (or the key) is shown in its place with Missing and the key above it; the panel lists the Missing texts of this page. Content from the admin missing in the language shows Cannot load text - orange too, with a link to its part."
+                  "text": "A text missing in the language. “Cannot load text” is shown in its place - exactly what a visitor would see - with Missing and the key above it; the Czech reference is in the panel as the model for the translation. The panel lists the Missing texts of this page. Content from the admin missing in the language shows Cannot load text too - orange, with a link to its part."
                 },
                 {
                   "title": "Switched off language",
-                  "text": "The top bar offers every language, a switched off one dashed with a dot. When it is open, a notice says visitors do not see it and Switch the language on turns it on. Manage languages opens the same window as on the Translations tab (adding, uploading and downloading the JSON, deleting)."
+                  "text": "The top bar offers every language, a switched off one dashed with a dot. When it is open, a notice says visitors do not see it; Switch the language on turns it on only when it is complete - otherwise the notice says what is missing. Manage languages opens the same window as on the Translations tab (adding, uploading and downloading the JSON, deleting)."
                 },
                 {
                   "title": "Other texts of the page",
@@ -738,10 +734,6 @@
             {
               "type": "text",
               "content": "The Back button of the browser always closes the editor (asking about unsaved edits) - pages and languages opened in the preview are not added to the history of the browser. The language switcher in the footer of the preview switches the language of the whole editor (asking first about unsaved edits); your own language choice for visits of the website does not change."
-            },
-            {
-              "type": "text",
-              "content": "For a language other than Czech the panel of the editor lists the texts of the page that are the same as in Czech (maybe not translated) and mentions it at the selected text - information only."
             }
           ]
         },
@@ -784,7 +776,7 @@
             },
             {
               "type": "text",
-              "content": "Empty field = the visitor sees the Czech title. That is why empty fields are orange, the language shows an orange number (how many titles are missing) and a warning is above the list. The same number is on the Page titles tab and as the orange dot in the menu. A good page title says what the page is about and the company name, for example “Services | Company Ltd.”."
+              "content": "Empty field = the visitor sees “Cannot load text” in the browser tab (never a title in another language). That is why empty fields are orange, the language shows an orange number (how many titles are missing) and a warning is above the list. The same number is on the Page titles tab and as the orange dot in the menu. A good page title says what the page is about and the company name, for example “Services | Company Ltd.”."
             }
           ]
         },

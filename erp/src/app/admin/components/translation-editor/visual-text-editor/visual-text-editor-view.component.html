@@ -94,7 +94,12 @@
       <div class="te-inactive" role="status">
         <span>{{ e.t('editor_inactive_message').replace('{lang}', lang.name) }}</span>
         @if (e.canUpdate) {
-          <button type="button" class="te-btn te-btn--ghost te-inactive-btn" (click)="activateLang()">{{ e.t('editor_activate_button') }}</button>
+          <!-- Switched on only complete: until then the notice says what is missing. -->
+          @if (e.missingSummary(lang.code); as missing) {
+            <span class="te-inactive-missing">{{ e.t('activate_incomplete_note').replace('{parts}', missing) }}</span>
+          }
+          <button type="button" class="te-btn te-btn--ghost te-inactive-btn" (click)="activateLang()"
+                  [disabled]="!e.canActivate(lang)">{{ e.t('editor_activate_button') }}</button>
         }
       </div>
     }
@@ -145,9 +150,6 @@
                     [readonly]="!e.canEditTexts"></textarea>
           @if (!currentValue(key).trim() && !e.loadFailed) {
             <p class="te-missing">{{ e.t('editor_missing') }}</p>
-          } @else if (e.isSameAsCzPath(key)) {
-            <!-- Another language with the Czech text: maybe not translated yet (information only). -->
-            <p class="te-same">{{ e.t('editor_same_as_cz_note') }}</p>
           }
           <!-- A changed text: back to its saved version (no confirmation - one text). -->
           @if (e.canEditTexts && e.changedPaths.has(key)) {
@@ -205,7 +207,8 @@
           <!-- "Loading" is the title of a page until its own title is set (on purpose - nothing
                wrong is shown meanwhile); when it stays, the page has no title of its own. -->
           @if (!titlePending) {
-            <div class="te-ref">{{ pageTitle }}</div>
+            <!-- 'Cannot load text': the page has no title in this language (no other language shown) -->
+            <div class="te-ref" [class.te-ref--missing]="pageTitle === missingText">{{ pageTitle }}</div>
           } @else if (titleMissing) {
             <div class="te-ref te-ref--missing">{{ e.t('editor_page_title_missing') }}</div>
           } @else {
@@ -227,28 +230,6 @@
                 </li>
               }
             </ul>
-          </div>
-        }
-
-        <!-- Texts of this page the same as in Czech (another language): maybe not translated yet. -->
-        @let same = sameAsCzKeys;
-        @if (same.length) {
-          <div class="te-section">
-            <div class="te-label">{{ e.t('editor_same_list_label').replace('{count}', '' + same.length) }}</div>
-            <ul class="te-hidden">
-              @for (key of sameShown(same); track key) {
-                <li>
-                  <button type="button" class="te-hidden-item te-same-item" [class.te-hidden-item--on]="key === selectedKey" (click)="selectKey(key)">
-                    <span class="te-hidden-key">{{ key }}</span>
-                  </button>
-                </li>
-              }
-            </ul>
-            @if (same.length > 6) {
-              <button type="button" class="te-link" (click)="sameExpanded = !sameExpanded">
-                {{ sameExpanded ? e.t('editor_changed_less') : e.t('editor_changed_all').replace('{count}', '' + same.length) }}
-              </button>
-            }
           </div>
         }
 

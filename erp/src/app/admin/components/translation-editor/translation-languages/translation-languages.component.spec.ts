@@ -23,8 +23,12 @@ describe('TranslationLanguagesComponent', () => {
 
   beforeEach(() => {
     editor = jasmine.createSpyObj<BaseTranslationEditorComponent>('editor',
-      ['toggleLangActive', 'openUploadModal', 'askDeleteLang', 'openAddForm', 'downloadSavedJson', 't', 'trackByCode', 'onLangCodeInput', 'closeAddForm', 'confirmAddLang', 'onIconFileSelected', 'clearIconSelection']);
+      ['toggleLangActive', 'openUploadModal', 'askDeleteLang', 'openAddForm', 'downloadSavedJson', 't', 'trackByCode', 'onLangCodeInput', 'closeAddForm', 'confirmAddLang', 'onIconFileSelected', 'clearIconSelection',
+        'loadCompleteness', 'canActivate', 'missingSummary', 'lacksTexts', 'missingPartsOf', 'showMissingIn']);
     editor.t.and.callFake((key: string) => key);
+    editor.canActivate.and.returnValue(true);
+    editor.missingSummary.and.returnValue('');
+    editor.lacksTexts.and.returnValue(false);
     Object.assign(editor, { languages: [en], canUpdate: true, isDirty: false, currentLang: 'cz', i18n: { getValue: (k: string) => k } });
     TestBed.configureTestingModule({ imports: [TranslationLanguagesComponent] });
     fixture = TestBed.createComponent(TranslationLanguagesComponent);
@@ -74,13 +78,51 @@ describe('TranslationLanguagesComponent', () => {
   });
 
   /**
+   * @description A language is switched on only complete: opening the window asks what the
+   *   languages lack; a switched off incomplete language has its switch-on disabled with what is
+   *   missing and the way to its missing texts (the window closes); a switched on one that lacks
+   *   texts says the visitors see 'Cannot load text'. A new language is created switched off.
+   * @input DE off lacking 'Texty 3', EN on lacking 'Texty 1'; open; click "show missing" of DE;
+   *   the add form
+   * @output loadCompleteness once; DE switch-on disabled + activate_incomplete_note; EN enabled +
+   *   active_incomplete_note; showMissingIn('de'), closed; the add form without the active box,
+   *   with new_language_off_note
+   */
+  it('switches on only a complete language and says what is missing', () => {
+    const de = { code: 'de', name: 'Deutsch', active: false } as LangMeta;
+    Object.assign(editor, { languages: [en, de] });
+    editor.canActivate.and.callFake((lang: LangMeta) => lang.active);
+    editor.missingSummary.and.callFake((code: string) => (code === 'de' ? 'Texty 3' : 'Texty 1'));
+    editor.lacksTexts.and.returnValue(true);
+    let closed = 0;
+    component.closed.subscribe(() => closed++);
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    expect(editor.loadCompleteness).toHaveBeenCalledTimes(1);
+    const rows = Array.from(document.querySelectorAll('.ew-manage-row')) as HTMLElement[];
+    expect((rows[1].querySelector('.ew-manage-toggle') as HTMLButtonElement).disabled).toBeTrue();
+    expect(rows[1].querySelector('.ew-manage-missing')!.textContent).toContain('activate_incomplete_note');
+    expect((rows[0].querySelector('.ew-manage-toggle') as HTMLButtonElement).disabled).toBeFalse();
+    expect(rows[0].querySelector('.ew-manage-missing')!.textContent).toContain('active_incomplete_note');
+    (rows[1].querySelector('.ew-link-btn') as HTMLButtonElement).click();
+    expect(editor.showMissingIn).toHaveBeenCalledWith('de');
+    expect(closed).toBe(1);
+
+    fixture.componentRef.setInput('open', false);
+    Object.assign(editor, { showAddForm: true, newLangCode: '', newLangName: '' });
+    fixture.detectChanges();
+    expect(document.querySelector('.ew-checkbox')).toBeNull();
+    expect(document.body.textContent).toContain('new_language_off_note');
+  });
+
+  /**
    * @description The code field of a new language takes at most 2 characters and hands every
    *   input to the editor (which keeps only the letters).
    * @input showAddForm; type 'tu' into the code field
    * @output maxlength 2; onLangCodeInput called
    */
   it('limits the code field of a new language to 2 characters', () => {
-    Object.assign(editor, { showAddForm: true, newLangCode: '', newLangName: '', newLangActive: true });
+    Object.assign(editor, { showAddForm: true, newLangCode: '', newLangName: '', newLangActive: false });
     fixture.detectChanges();
     const field = document.querySelector('.ew-input--mono') as HTMLInputElement;
     expect(field.maxLength).toBe(2);

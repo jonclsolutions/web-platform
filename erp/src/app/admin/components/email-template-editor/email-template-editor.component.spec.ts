@@ -51,17 +51,19 @@ describe('EmailTemplateEditorComponent', () => {
   }
 
   /**
-   * @description Loads the active languages and the texts of the prefix; the preview shows the
+   * @description Loads the languages (a switched off one too - muted tab, the e-mail is prepared
+   *   before the language is switched on) and the texts of the prefix; the preview shows the
    *   stored texts of the shown language, the rows with their samples and the subject suffix;
    *   missing texts fall back to the defaults of the section.
    * @input  languages cz, en, de (inactive); stored texts.
-   * @output languages cz/en; get(endpoint); preview subject/title/intro/outro, greeting, IČO;
+   * @output languages cz/en/de (de muted); get(endpoint); preview subject/title/intro/outro, greeting, IČO;
    *   email label default; rendered rows + 'Předmět – X'.
    */
   it('loads and previews the template', () => {
     create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }]), of(stored));
     expect(dh().get).toHaveBeenCalledWith('web/settings/sales-order-email-template');
-    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
+    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en', 'de']);
+    expect(component.langItems.map(item => !!item.muted)).toEqual([false, false, true]);
     expect(component.loading).toBeFalse();
     expect(['subject', 'title', 'intro', 'outro'].map(f => component.preview(f as any))).toEqual(['Předmět', 'Titulek', 'Úvod', 'Závěr']);
     expect([component.previewLabel('greeting'), component.previewLabel('summary_header'), component.previewLabel('label_ico')]).toEqual(['Dobrý den', 'Shrnutí', 'IČO']);
@@ -72,7 +74,8 @@ describe('EmailTemplateEditorComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('.email-tpl-preview-table tr').length).toBe(2);
     expect(el.querySelector('.email-tpl-preview-subject-value')!.textContent!.trim()).toBe('Předmět – X');
-    expect(el.querySelectorAll('.email-tpl-lang-tabs .rbb-btn').length).toBe(2);
+    expect(el.querySelectorAll('.email-tpl-lang-tabs .rbb-btn').length).toBe(3);
+    expect(el.querySelectorAll('.email-tpl-lang-tabs .rbb-btn--muted').length).toBe(1);
   });
 
   /**

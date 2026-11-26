@@ -1,22 +1,46 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "web",
+            "part": "public",
+            "text": "Stránka O nás: druhý nadpis a odstavec příběhu jsou doplněné i v angličtině, polštině, francouzštině a němčině – na čerstvé instalaci se tam už neukáže „Cannot load text“ a nástěnka nehlásí chybějící texty."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Editory jazyků (FAQ, pozice, reference, nápověda, názvy stránek, právní dokumenty, e-maily, nastavení) nabízejí i vypnutý jazyk – čárkovaná šedší záložka s vysvětlivkou, takže ho doplníte celý dřív, než ho zapnete. Nápověda u názvů stránek už neslibuje český název."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Texty a jazyky: chybějící text se na webu i v e-shopu zobrazí jako „Cannot load text“ – nikdy text jiného jazyka (ani když se jazyk nenačte, ani u názvů stránek). Náhled editoru ukazuje totéž co návštěvník; česká předloha je jen v panelu."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Jazyky: zapnout jde jen kompletní jazyk (texty, názvy stránek, obsah webu). Okno Jazyky u vypnutého jazyka napíše, co chybí, a nabídne chybějící texty; server neúplný jazyk odmítne. Nový jazyk se vytváří vypnutý. Přepínač „Jako CZ“ byl odebrán."
+        },
+        {
+            "type": "changed",
+            "area": "shop",
+            "part": "admin",
+            "text": "Texty e-shopu: stránka je stejná jako Texty webu – tlačítko Jazyky v hlavičce, řádek se statistikou, přepínač Chybí, čitelné názvy textů (Pokladna › Popisky polí › Jméno), ukládací lišta na telefonu a dotaz před odchodem s neuloženými úpravami. Editor na stránkách zatím jen pro web."
+        },
+        {
             "type": "added",
             "area": "core",
             "part": "admin",
             "text": "Texty a jazyky: když stejný text mezitím uložil někdo jiný (nebo jiná záložka), uložení se zeptá – Přepsat, nebo Neukládat (jeho verze se ukáže jako uložená, vaše úpravy zůstanou). Chyba uložení ukáže jen jedno hlášení."
         },
         {
-            "type": "added",
+            "type": "fixed",
             "area": "web",
             "part": "admin",
-            "text": "Editor textů na stránkách: panel vypíše texty stránky stejné jako v češtině (u jiného jazyka) a u vybraného textu to připomene. Hlavní stránka pod adresou /home (logo, menu) se v seznamu stránek jmenuje Hlavní stránka, ne „Jiná stránka“."
-        },
-        {
-            "type": "added",
-            "area": "core",
-            "part": "admin",
-            "text": "Texty a jazyky: přepínač „Jako CZ“ u jiného jazyka než čeština ukáže počet textů stejných jako v češtině (nejspíš nepřeložených) a kliknutím je vypíše samotné. Je jen informativní – název nebo číslo může být stejné schválně."
+            "text": "Editor textů na stránkách: hlavní stránka pod adresou /home (logo, menu) se v seznamu stránek jmenuje Hlavní stránka, ne „Jiná stránka“."
         },
         {
             "type": "changed",

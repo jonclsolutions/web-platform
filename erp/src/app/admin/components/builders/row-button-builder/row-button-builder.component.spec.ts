@@ -6,6 +6,7 @@
  * @created 2026
  * @description Unit tests of RowButtonBuilderComponent (shared row of buttons) and of the
  *   helpers languageRowButtons and RowButtonItems: rendering, accessibility per kind, selection, links,
+ *   muted (switched off) languages,
  *   the drop-down of the tabs (`phoneSelect`: phone, a row that does not fit).
  * @dependencies provideRouter([]) for the links of kind nav.
  */
@@ -260,6 +261,25 @@ describe('RowButtonBuilderComponent', () => {
     expect(result[0]).toEqual(jasmine.objectContaining({ value: 'cz', label: 'CZ', imageUrl: '/cz.svg', count: 2, dot: true, title: 'Missing' }));
     expect(result[1]).toEqual(jasmine.objectContaining({ value: 'en', label: 'EN', imageUrl: undefined, count: null, dot: false, title: undefined }));
     expect(languageRowButtons(langs, { showName: true }).map(b => b.label)).toEqual(['Čeština', 'English']);
+  });
+
+  /**
+   * @description A switched off language is offered too, muted (dashed, quieter) with the
+   *   inactiveTitle explanation appended to its own title; the active one stays normal.
+   * @input cz active with title 'Missing', en inactive; inactiveTitle 'Off'; render as tabs, active cz.
+   * @output cz muted false, title 'Missing'; en muted true, title 'Off'; both titles joined
+   *   'Missing – Off'; one rendered .rbb-btn--muted (en) with that title.
+   */
+  it('mutes the switched off languages', () => {
+    const langs = [{ code: 'cz', active: true }, { code: 'en', active: false }];
+    const result = languageRowButtons(langs, { title: code => (code === 'cz' ? 'Missing' : ''), inactiveTitle: 'Off' });
+    expect(result.map(b => [b.muted, b.title])).toEqual([[false, 'Missing'], [true, 'Off']]);
+    expect(languageRowButtons([{ code: 'de', active: false }], { title: () => 'Missing', inactiveTitle: 'Off' })[0].title).toBe('Missing – Off');
+
+    set({ kind: 'tabs', items: result, active: 'cz' });
+    const muted = fixture.nativeElement.querySelectorAll('.rbb-btn--muted');
+    expect(muted.length).toBe(1);
+    expect(muted[0].getAttribute('title')).toBe('Off');
   });
 
   /**

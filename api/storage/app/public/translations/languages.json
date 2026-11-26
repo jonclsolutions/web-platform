@@ -18,7 +18,7 @@
     {
         "code": "en",
         "name": "English",
-        "active": true,
+        "active": false,
         "isBuiltIn": false,
         "module": "web",
         "icon_path": null
@@ -26,7 +26,7 @@
     {
         "code": "pl",
         "name": "Polski",
-        "active": true,
+        "active": false,
         "isBuiltIn": false,
         "module": "web",
         "icon_path": null
@@ -34,7 +34,7 @@
     {
         "code": "fr",
         "name": "Français",
-        "active": true,
+        "active": false,
         "isBuiltIn": false,
         "module": "web",
         "icon_path": null
@@ -42,7 +42,7 @@
     {
         "code": "de",
         "name": "Deutsch",
-        "active": true,
+        "active": false,
         "isBuiltIn": false,
         "module": "web",
         "icon_path": null

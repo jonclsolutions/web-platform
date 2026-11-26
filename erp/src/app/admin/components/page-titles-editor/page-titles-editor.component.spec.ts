@@ -58,14 +58,16 @@ describe('PageTitlesEditorComponent', () => {
    * @description Loads the rows of its endpoint with the active languages of the area's module;
    *   every row gets every language; the favicon comes from the public configuration.
    * @input area web; languages cz, en, de (inactive).
-   * @output get('web/page-titles'); languages cz, en; row 1 { cz: 'Domů', en: '' }; not dirty;
+   * @output get('web/page-titles'); languages cz, en, de (switched off - its titles are filled in
+   *   before it is switched on, muted tab); row 1 { cz: 'Domů', en: '', de: '' }; not dirty;
    *   favicon '/storage/logo.png' (environment storage URL); rendered 2 inputs.
    */
   it('loads the rows of its area', () => {
     create();
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('web/page-titles');
-    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
-    expect(component.rows[0].title_i18n).toEqual({ cz: 'Domů', en: '' });
+    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en', 'de']);
+    expect(component.langItems.map(item => !!item.muted)).toEqual([false, false, true]);
+    expect(component.rows[0].title_i18n).toEqual({ cz: 'Domů', en: '', de: '' });
     expect(component.isDirty).toBeFalse();
     expect(component.faviconSrc).toContain('logo.png');
     expect(fixture.nativeElement.querySelectorAll('.pt-input').length).toBe(2);
@@ -86,7 +88,7 @@ describe('PageTitlesEditorComponent', () => {
     component.onInput(component.rows[0]);
     (ctx.dataHandler as any).put.and.returnValue(of(rows()));
     component.save();
-    expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('web/page-titles', { titles: [{ id: 1, title_i18n: { cz: 'Úvod', en: '' } }] });
+    expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('web/page-titles', { titles: [{ id: 1, title_i18n: { cz: 'Úvod', en: '', de: '' } }] });
     expect(ctx.alert.open).toHaveBeenCalledWith('page-titles.pt_saved_title', 'page-titles.pt_saved_message', 'success');
     expect(dirty).toEqual([true, false]);
 
@@ -175,7 +177,7 @@ describe('PageTitlesEditorComponent', () => {
 
     create({ area: 'admin', endpoint: 'legal/config/page-titles', logoSrc: '/x.png' }, get(of([])));
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('languages');
-    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
+    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en', 'de']);
     expect(component.faviconSrc).toBe('/x.png');
   });
 
@@ -223,7 +225,7 @@ describe('PageTitlesEditorComponent', () => {
     create();
     const notifications = TestBed.inject(AdminNotificationsService);
     spyOn(notifications, 'refresh');
-    expect(component.langItems.map(i => [i.value, i.count])).toEqual([['cz', null], ['en', 1]]);
+    expect(component.langItems.map(i => [i.value, i.count])).toEqual([['cz', null], ['en', 1], ['de', 2]]);
     expect(component.langItems[1].title).toBeTruthy();
 
     component.switchLang('en');

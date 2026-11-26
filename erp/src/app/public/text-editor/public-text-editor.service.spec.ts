@@ -190,22 +190,23 @@ describe('PublicTextEditorService', () => {
   });
 
   /**
-   * @description Texts missing in the language: the Czech reference from the admin is shown in
-   *   their place (the key in brackets when Czech lacks it too) and marked as missing; a draft or
-   *   an existing text wins; another language is not touched.
-   * @input init {lang en, missing {about.heading_2: 'Náš příběh', about.x: '', faq.title: 'FAQ'}};
-   *   decorate({faq: {title: 'FAQs'}, about: {}}, 'en'); decorate for cz
-   * @output about.heading_2 'Náš příběh' (missing entry), about.x '[about.x]', faq.title 'FAQs'
-   *   (ordinary entry); cz without them
+   * @description Texts missing in the language: what the visitors see ('Cannot load text' from
+   *   the admin - never another language) is shown in their place and marked as missing, also
+   *   where the loaded (complete) texts already have it; the key in brackets when nothing is
+   *   given; a draft or an existing text wins; another language is not touched.
+   * @input init {lang en, missing {about.heading_2: 'Cannot load text', about.x: '', faq.title:
+   *   'Cannot load text'}}; decorate({faq: {title: 'FAQs'}, about: {heading_2: 'Cannot load text'}}, 'en'); cz
+   * @output about.heading_2 'Cannot load text' (missing entry), about.x '[about.x]', faq.title
+   *   'FAQs' (ordinary entry); cz without them; a draft 'Our story' ordinary
    */
-  it('shows the Czech reference in place of a missing text', () => {
+  it('shows what the visitors see in place of a missing text', () => {
     activate();
     fromAdmin({
       channel: TEXT_EDITOR_CHANNEL, type: 'init', lang: 'en', drafts: {}, selected: null, contentLabels: {}, missingLabel: 'Chybí',
-      missing: { 'about.heading_2': 'Náš příběh', 'about.x': '', 'faq.title': 'FAQ' },
+      missing: { 'about.heading_2': 'Cannot load text', 'about.x': '', 'faq.title': 'Cannot load text' },
     });
-    const en = service.decorate({ faq: { title: 'FAQs' }, about: {} }, 'en') as any;
-    expect(stripMarks(en.about.heading_2)).toBe('Náš příběh');
+    const en = service.decorate({ faq: { title: 'FAQs' }, about: { heading_2: 'Cannot load text' } }, 'en') as any;
+    expect(stripMarks(en.about.heading_2)).toBe('Cannot load text');
     expect(service.entry(scanMarks(en.about.heading_2)[0].index!)).toEqual({ kind: 'text', key: 'about.heading_2', missing: true });
     expect(stripMarks(en.about.x)).toBe('[about.x]');
     expect(service.entry(scanMarks(en.faq.title)[0].index!)).toEqual({ kind: 'text', key: 'faq.title' });

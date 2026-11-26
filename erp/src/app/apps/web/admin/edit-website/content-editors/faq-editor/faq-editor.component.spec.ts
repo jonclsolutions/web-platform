@@ -60,9 +60,11 @@ describe('FaqEditorComponent', () => {
   it('loads the FAQ with the web languages', () => {
     create();
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('web/faq');
-    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
-    expect(component.entries[1].name_i18n).toEqual({ cz: 'Ceny', en: '' });
-    expect(component.entries[0].items[1].question_i18n).toEqual({ cz: 'Q2?', en: '' });
+    // a switched off language (de) is offered too - its texts are filled in before it is switched on
+    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en', 'de']);
+    expect(component.langItems.map(item => !!item.muted)).toEqual([false, false, true]);
+    expect(component.entries[1].name_i18n).toEqual({ cz: 'Ceny', en: '', de: '' });
+    expect(component.entries[0].items[1].question_i18n).toEqual({ cz: 'Q2?', en: '', de: '' });
     expect(component.entries.map(c => c.open)).toEqual([true, false]);
     expect(component.isDirty).toBeFalse();
     expect(fixture.nativeElement.querySelectorAll('.ce-input').length).toBe(5);
@@ -133,9 +135,9 @@ describe('FaqEditorComponent', () => {
     const [url, body] = (ctx.dataHandler as any).put.calls.mostRecent().args;
     expect(url).toBe('web/faq');
     expect(body).toEqual({ categories: [
-      { id: null, name_i18n: { cz: '', en: '' }, items: [{ id: null, question_i18n: { cz: '', en: '' }, answer_i18n: { cz: '', en: '' } }] },
-      { id: 1, name_i18n: { cz: 'Obecné', en: 'General' }, items: [] },
-      { id: 2, name_i18n: { cz: 'Ceny', en: '' }, items: [{ id: 11, question_i18n: { cz: 'Q2?', en: '' }, answer_i18n: { cz: 'A2', en: '' } }] },
+      { id: null, name_i18n: { cz: '', en: '', de: '' }, items: [{ id: null, question_i18n: { cz: '', en: '', de: '' }, answer_i18n: { cz: '', en: '', de: '' } }] },
+      { id: 1, name_i18n: { cz: 'Obecné', en: 'General', de: '' }, items: [] },
+      { id: 2, name_i18n: { cz: 'Ceny', en: '', de: '' }, items: [{ id: 11, question_i18n: { cz: 'Q2?', en: '', de: '' }, answer_i18n: { cz: 'A2', en: '', de: '' } }] },
     ] });
     expect(ctx.alert.open).toHaveBeenCalledWith('web-content-editor.saved_title', 'web-content-editor.saved_message', 'success');
     expect(component.isDirty).toBeFalse();
@@ -200,11 +202,11 @@ describe('FaqEditorComponent', () => {
    * @description With the languages of the host page the editor loads no languages itself and
    *   follows them: a deleted language disappears (the edited one falls back to the first) with
    *   all its texts (also from the saved state - a language created again with the same code
-   *   starts empty), a switched off one is not offered.
+   *   starts empty), a switched off one is offered with a muted tab (filled in before it is switched on).
    * @input hostLanguages cz + en; edit en + a cz name; host list without en; en created again;
    *   en back but inactive.
    * @output no GET languages/web; languages [cz, en]; then [cz], lang 'cz', no en texts, the cz
-   *   edit kept, not dirty once undone; en again: no texts (all 6 missing); then [cz].
+   *   edit kept, not dirty once undone; en again: no texts (all 6 missing); then [cz, en] - en muted.
    */
   it('follows the languages of the host page', () => {
     (ctx.dataHandler as any).get.and.callFake((url: string) => of(url === 'languages/web' ? languages : rows()));
@@ -239,6 +241,7 @@ describe('FaqEditorComponent', () => {
 
     fixture.componentRef.setInput('hostLanguages', [languages[0], { ...languages[1], active: false }]);
     fixture.detectChanges();
-    expect(component.languages.map(l => l.code)).toEqual(['cz']);
+    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
+    expect(component.langItems[1].muted).toBeTrue();
   });
 });

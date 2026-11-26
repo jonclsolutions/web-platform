@@ -16,6 +16,7 @@ namespace App\Apps\Web;
 
 use App\Apps\Web\Http\Middleware\CheckWebActive;
 use App\Apps\Web\Services\WebAgendaSource;
+use App\Apps\Web\Services\WebContentMissing;
 use App\Apps\Web\Services\WebNotificationSource;
 use App\Apps\Web\Services\WebRetentionSource;
 use App\Apps\Web\Models\WebJob;
@@ -144,6 +145,15 @@ final class WebApp extends AppManifest
         if ($settings) {
             I18nText::forget($settings, self::EMAIL_TEXT_COLUMNS, $code);
         }
+    }
+
+    /**
+     * @description See AppManifest::contentMissing() - FAQ, positions, references and knowledge
+     *   base records missing a text in the language.
+     */
+    public function contentMissing(string $code): array
+    {
+        return array_filter(WebContentMissing::counts([$code]));
     }
 
     /** @description Texts of the inquiry confirmation e-mail stored per language (web settings). */

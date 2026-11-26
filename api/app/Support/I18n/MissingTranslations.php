@@ -16,6 +16,10 @@
  * translated stays quiet until it is switched on). Lists count per item, as in the editor.
  * @note A missing or broken Czech file counts 0 (nothing to compare with); a missing or broken
  * file of another active language counts all its texts as missing.
+ * @note complete(): the texts of a language as the visitors get them - every key of Czech, a
+ *   missing / empty text is MISSING_TEXT ('Cannot load text'). Never the text of another
+ *   language: a text that is not there shows that something is wrong, the visitor is not misled.
+ *   forLanguage(): the same count for any language (also a switched off one - may it be switched on?).
  * @dependencies TranslationController::activeLanguageCodes()
  */
 
@@ -28,6 +32,9 @@ final class MissingTranslations
 {
     /** @description Primary language - the reference of every other one (the editor does the same). */
     public const PRIMARY = 'cz';
+
+    /** @description Text shown in place of a missing one (the same everywhere: web, e-shop, content, portal). */
+    public const MISSING_TEXT = 'Cannot load text';
 
     /**
      * @description Texts missing in the active languages of a module.
@@ -55,19 +62,83 @@ final class MissingTranslations
         $missing = [];
 
         foreach (TranslationController::activeLanguageCodes($module) as $code) {
-            $texts = strtolower($code) === self::PRIMARY ? self::flatten($primary) : self::flatten(self::read($module, $code) ?? []);
-            $count = 0;
-            foreach ($keys as $key) {
-                if (trim($texts[$key] ?? '') === '') {
-                    $count++;
-                }
-            }
+            $count = self::countMissing($keys, strtolower($code) === self::PRIMARY ? $primary : (self::read($module, $code) ?? []));
             if ($count > 0) {
                 $missing[$code] = $count;
             }
         }
 
         return $missing;
+    }
+
+    /**
+     * @description Texts missing in one language of a module, switched on or off.
+     * @param string $module Translation module.
+     * @param string $code Language code.
+     * @return int Keys of Czech without a text in the language (0 without a Czech file).
+     */
+    public static function forLanguage(string $module, string $code): int
+    {
+        $primary = self::read($module, self::PRIMARY);
+        if ($primary === null) {
+            return 0;
+        }
+        $texts = strtolower($code) === self::PRIMARY ? $primary : (self::read($module, $code) ?? []);
+
+        return self::countMissing(array_keys(self::flatten($primary)), $texts);
+    }
+
+    /**
+     * @description Texts of a language as the visitors get them: every key of Czech (the
+     *   structure), the texts of the language; a missing or empty text is MISSING_TEXT. Keys only
+     *   the language has stay. Never a text of another language.
+     * @param string $module Translation module.
+     * @param array<mixed> $texts Stored texts of the language ([] when it has no file).
+     * @return array<mixed>|null The completed texts, null when the module has no Czech file.
+     */
+    public static function complete(string $module, array $texts): ?array
+    {
+        $primary = self::read($module, self::PRIMARY);
+
+        return $primary === null ? null : self::completeWith($primary, $texts);
+    }
+
+    /**
+     * @param array<mixed> $reference Czech texts (structure).
+     * @param array<mixed> $texts Texts of the language.
+     * @return array<mixed>
+     */
+    private static function completeWith(array $reference, array $texts): array
+    {
+        $out = $texts;
+        foreach ($reference as $key => $value) {
+            $own = $texts[$key] ?? null;
+            if (is_array($value)) {
+                $out[$key] = self::completeWith($value, is_array($own) ? $own : []);
+            } else {
+                $out[$key] = is_scalar($own) && trim((string) $own) !== '' ? $own : self::MISSING_TEXT;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<int, string> $keys Keys of Czech.
+     * @param array<mixed> $texts Texts of the language.
+     * @return int Keys without a text.
+     */
+    private static function countMissing(array $keys, array $texts): int
+    {
+        $flat = self::flatten($texts);
+        $count = 0;
+        foreach ($keys as $key) {
+            if (trim($flat[$key] ?? '') === '') {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**

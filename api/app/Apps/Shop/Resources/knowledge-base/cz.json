@@ -1452,7 +1452,7 @@
             },
             {
               "type": "text",
-              "content": "Ovládání je stejné jako u stránky Texty webu (aplikace Web) - kapitoly Překlady a Názvy stránek tam popisují každý krok. Zde jen to, co je pro e-shop jiné."
+              "content": "Ovládání je stejné jako u stránky Texty webu (aplikace Web) - kapitoly Překlady a Názvy stránek tam popisují každý krok. Výjimka: editor textů přímo na stránkách zatím e-shop nemá - texty e-shopu se upravují jen v tabulce. Zde jen to, co je pro e-shop jiné."
             }
           ]
         },
@@ -1463,18 +1463,18 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název, aktivní), aktivace a deaktivace, smazání (smaže i všechny texty jazyka včetně názvů stránek a e-mailu objednávky). Čeština je výchozí jazyk.",
+                "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název; nový jazyk je vypnutý), zapnutí jen kompletního jazyka (okno Jazyky napíše, co chybí), vypnutí, smazání (smaže i všechny texty jazyka včetně názvů stránek a e-mailu objednávky). Čeština je výchozí jazyk. Vypnutý jazyk nabízí k úpravě i záložka Názvy stránek a e-mail objednávky v Objednávkách - jeho záložka je čárkovaná a šedší, takže ho celý doplníte dřív, než ho zapnete.",
                 "Jazyk je i v adrese e-shopu, například /cs/shop/catalog česky a /en/shop/catalog anglicky - stejně jako u webu (nápověda Texty webu, kapitola 03). Aktivní jazyk má e-shop v adrese sám, nic dalšího se nenastavuje.",
-                "Tabulka Klíč (JSON cesta) / Hodnota, hledání, statistika klíčů a chybějících textů, filtr chybějících.",
+                "Tabulka s čitelnou cestou textu (například Pokladna › Popisky polí › Jméno) a pod ní přesným klíčem, hledání (i podle čitelné cesty), řádek se statistikou a přepínač Chybí.",
                 "Stažení a nahrání JSON pro překladatele.",
-                "Tlačítko Uložit uloží texty aktuálního jazyka.",
+                "Tlačítko Uložit (s počtem změn) uloží změněné texty aktuálního jazyka. Texty, které mezitím uložil někdo jiný, se nepřepíšou bez dotazu (Přepsat / Neukládat). Odchod ze stránky s neuloženými úpravami (menu, Zpět) se nejdřív zeptá; na telefonu je tlačítko Uložit v liště dole.",
                 "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou. Že v zapnutých jazycích chybí texty, ukazuje oranžová tečka u položky Texty e-shopu v menu a pruh nad jazyky na této stránce: kolik textů chybí v kterém jazyce a tlačítko, které jazyk otevře jen s chybějícími texty. Tečka i pruh zmizí po doplnění."
               ]
             },
             {
               "type": "alert",
               "variant": "warning",
-              "content": "Chybějící text se zákazníkovi zobrazí jako „Cannot load text“. Jazyk aktivujte až po doplnění všech textů."
+              "content": "Chybějící text se zákazníkovi zobrazí jako „Cannot load text“ - nikdy text jiného jazyka. Proto jde jazyk zapnout až kompletní (texty i názvy stránek)."
             }
           ]
         },

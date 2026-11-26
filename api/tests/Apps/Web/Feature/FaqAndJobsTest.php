@@ -277,11 +277,29 @@ class FaqAndJobsTest extends TestCase
         $this->assertSame(['cz' => 'Pozice'], $job->fresh()->title_i18n);
         $this->assertSame(['cz' => 'Text'], $section->fresh()->body_i18n);
 
-        $list = fn (array $codes) => ['languages' => json_encode(array_map(fn ($code) => ['code' => $code, 'name' => $code, 'active' => true], $codes))];
+        // a new language is added switched off (it can be switched on only complete)
+        $list = fn (array $codes) => ['languages' => json_encode(array_map(fn ($code) => ['code' => $code, 'name' => $code, 'active' => $code === 'cz'], $codes))];
         $this->post('/api/languages/web', $list(['cz', 'sk']))->assertNoContent();
         $category->update(['name_i18n' => ['cz' => 'Obecné', 'sk' => 'Všeobecné']]);
         $this->post('/api/languages/web', $list(['cz']))->assertNoContent();
         $this->assertSame(['cz' => 'Obecné'], $category->fresh()->name_i18n);
+    }
+
+    /**
+     * @description The content of the website counts in what a language lacks (it can be switched
+     *   on only complete): a FAQ category written in Czech but not in Slovak is listed under `faq`.
+     * @input 'sk' added switched off; a category with only Czech; GET languages/web/completeness
+     * @output sk lacks faq >= 1; switching sk on refused (422, incomplete.sk.faq)
+     */
+    public function test_missing_content_keeps_a_language_off(): void
+    {
+        $this->signIn($this->userWith(['web-edit-website-view', 'web-edit-website-update']));
+        $list = fn (bool $sk) => ['languages' => json_encode([['code' => 'cz', 'name' => 'Čeština', 'active' => true], ['code' => 'sk', 'name' => 'Slovenčina', 'active' => $sk]])];
+        $this->post('/api/languages/web', $list(false))->assertNoContent();
+        WebFaqCategory::first()->update(['name_i18n' => ['cz' => 'Obecné']]);
+
+        $this->assertGreaterThanOrEqual(1, $this->getJson('/api/languages/web/completeness')->assertOk()->json('data.sk.faq'));
+        $this->postJson('/api/languages/web', $list(true))->assertStatus(422)->assertJsonStructure(['errors' => ['incomplete' => ['sk' => ['faq']]]]);
     }
 
     /**

@@ -11,7 +11,7 @@
  *   delete failure, toggle success, JSON upload (valid / invalid / failing / current language
  *   reload), JSON download and the textarea auto-height; a language that failed to load is not
  *   editable, a late answer of another language is ignored, a save sends only the changed texts
- *   and keeps edits made while it runs.
+ *   and keeps edits made while it runs; a language is switched on only complete.
  * @dependencies
  * - createAdminTestContext (DataHandler spy, alert spy, permission stub, i18n stub), real
  *   ResourceCacheService (the cache whose objects must not be mutated).
@@ -169,7 +169,7 @@ describe('BaseTranslationEditorComponent', () => {
   it('asks before overwriting texts saved meanwhile elsewhere', fakeAsync(() => {
     component.ngOnInit();
     const post = (ctx.dataHandler as any).postQuietly as jasmine.Spy;
-    const conflict = () => throwError(() => ({ status: 409, error: { conflicts: [{ path: 'home.title', value: 'Theirs' }], conflict_count: 1 } }));
+    const conflict = () => throwError(() => ({ status: 409, error: { errors: { conflicts: [{ path: 'home.title', value: 'Theirs' }], conflict_count: 1 } } }));
     post.and.callFake(conflict);
     ctx.confirm.open.and.resolveTo(false);
     component.updateValue('home.title', 'A');
@@ -188,35 +188,6 @@ describe('BaseTranslationEditorComponent', () => {
     flushMicrotasks();
     expect(post.calls.mostRecent().args[1]).toEqual({ lang: 'cz', changes: [{ path: 'home.title', value: 'A', base: 'Theirs' }], force: true });
     expect(component.isDirty).toBeFalse();
-    flush();
-  }));
-
-  /**
-   * @description "Jako CZ": in another language the texts identical with Czech (filled) are
-   *   counted and can be listed alone; never together with the missing filter; nothing for
-   *   Czech itself (the filter goes off there).
-   * @input cz {home: {title: 'Domů', sub: 'Pod', more: 'Více'}}; en {home: {title: 'Domů', sub: '',
-   *   more: 'More'}}; toggleSameAsCz(); toggleMissing(); toggleSameAsCz(); loadLang('cz')
-   * @output en: 1 same (title) - list [title]; the missing toggle turns it off (list [sub]); on
-   *   again turns missing off; cz: 0, filter off, the whole list
-   */
-  it('lists the texts the same as in Czech', fakeAsync(() => {
-    shared.cz = { home: { title: 'Domů', sub: 'Pod', more: 'Více' } } as any;
-    shared.en = { home: { title: 'Domů', sub: '', more: 'More' } } as any;
-    component.ngOnInit();
-    component.loadLang('en');
-    expect(component.langSameAsCz).toBe(1);
-    component.toggleSameAsCz();
-    expect(component.filteredKeys.map(k => k.path)).toEqual(['home.title']);
-    component.toggleMissing();
-    expect(component.onlySameAsCz).toBeFalse();
-    expect(component.filteredKeys.map(k => k.path)).toEqual(['home.sub']);
-    component.toggleSameAsCz();
-    expect(component.onlyMissing).toBeFalse();
-    component.loadLang('cz');
-    expect(component.langSameAsCz).toBe(0);
-    expect(component.onlySameAsCz).toBeFalse();
-    expect(component.filteredKeys.length).toBe(3);
     flush();
   }));
 
@@ -507,12 +478,56 @@ describe('BaseTranslationEditorComponent', () => {
     expect(ctx.alert.open).toHaveBeenCalledWith('shared.error', 'test-editor.delete_language_failed_error', 'danger');
     expect(component.langToDelete).toBeNull();
 
-    (ctx.dataHandler as any).upload.and.returnValue(of({ status: 'ok' }));
+    (ctx.dataHandler as any).postQuietly.and.returnValue(of({ status: 'ok' }));
     component.toggleLangActive(en);
     expect(en.active).toBeFalse();
     get.calls.reset();
     component.ngOnInit();
     expect(get).toHaveBeenCalledWith('languages/test');
+    en.active = true;
+    flush();
+  }));
+
+  /**
+   * @description A language is switched on only complete: what it lacks comes from the API
+   *   (languages/{module}/completeness); an incomplete one is not switched on (nothing sent); a
+   *   switch-on refused by the API (422 `errors.incomplete`) is undone with a message naming the missing
+   *   parts; switching off is always free; a new language is created switched off.
+   * @input en active; completeness {en: {texts: 2}}; switch en off, then on; completeness {en: {}};
+   *   switch on → 422 {errors: {incomplete: {en: {page_titles: 1}}}}; openAddForm()
+   * @output off sent; on not sent, canActivate false, summary 'texts 2'; then sent, en off again,
+   *   alert activate_incomplete_message, completeness en {page_titles: 1}; newLangActive false
+   */
+  it('switches a language on only complete', fakeAsync(() => {
+    let completeness: any = { en: { texts: 2 } };
+    answer({ 'languages/test/completeness': new Observable(subscriber => { subscriber.next(completeness); subscriber.complete(); }) });
+    component.ngOnInit();
+    const post = (ctx.dataHandler as any).postQuietly as jasmine.Spy;
+    post.and.returnValue(of(null));
+    const en = component.languages[1];
+
+    component.toggleLangActive(en);
+    expect(en.active).toBeFalse();
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(component.canActivate(en)).toBeFalse();
+    expect(component.lacksTexts('en')).toBeTrue();
+    expect(component.missingSummary('en')).toBe('texts 2');
+    component.toggleLangActive(en);
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(en.active).toBeFalse();
+
+    completeness = { en: {} };
+    component.loadCompleteness();
+    expect(component.canActivate(en)).toBeTrue();
+    post.and.returnValue(throwError(() => ({ status: 422, error: { errors: { incomplete: { en: { page_titles: 1 } } } } })));
+    component.toggleLangActive(en);
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(en.active).toBeFalse();
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.error', 'test-editor.activate_incomplete_message', 'danger');
+    expect(component.completeness['en']).toEqual({ page_titles: 1 });
+
+    component.openAddForm();
+    expect(component.newLangActive).toBeFalse();
     en.active = true;
     flush();
   }));

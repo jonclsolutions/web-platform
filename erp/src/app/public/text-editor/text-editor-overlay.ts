@@ -6,7 +6,7 @@
  * @created 2026
  * @description Overlay of the website in the visual text editor: finds the marked texts of the
  *   rendered page (text-editor-markers), outlines them (translations red, content of the admin
- *   blue, a text missing in the language orange - its Czech reference in its place), shows the
+ *   blue, a text missing in the language orange - 'Cannot load text' in its place), shows the
  *   key of the text under the pointer and of the selected one, selects a text
  *   on a click (a link is not followed; other controls - an accordion, tabs - still work), and
  *   keeps the page from leaving the editor (forms are not

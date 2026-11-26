@@ -9,8 +9,9 @@
  *   page, language, Zahodit změny / Uložit, close) and a side panel with the selected text -
  *   its key, the Czech reference, the saved version and the field for the edit. Edits show on the
  *   page at once and reach the website after Uložit; content of the admin (FAQ, references…)
- *   points to its part. A text missing in the language shows its Czech reference (orange) and is
- *   listed in the panel; every language is offered (a switched off one with a notice and its
+ *   points to its part. A text missing in the language shows what the visitors see - 'Cannot load
+ *   text' (orange, never the text of another language; the panel shows the Czech text as the
+ *   reference of the translator) - and is listed in the panel; every language is offered (a switched off one with a notice and its
  *   switch-on) and the window "Jazyky" manages them as on the list of the texts. The preview
  *   switches between the desktop and a phone (390 px - the mobile layout of the website). The translation state, saving and discarding are those of the
  *   translation editor of the module (`e`, BaseTranslationEditorComponent).
@@ -47,6 +48,7 @@ import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
 import { TranslationLanguagesComponent } from '../translation-languages/translation-languages.component';
 import { phoneQuery } from '../../builders/table-cards';
 import { withLanguagePrefix } from '../../../../shared/utils/language-url';
+import { MISSING_TEXT } from '../../../../shared/utils/missing-text';
 import {
   TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME, TextEditorContentSection, TextEditorFromFrame,
   TextEditorHiddenText, TextEditorShortcut, TextEditorToFrame, isBannersQuery, isTextEditorMessage,
@@ -163,7 +165,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   visibleKeys: string[] = [];
   /** Texts of the page that cannot be clicked (attributes, hidden). */
   hiddenTexts: TextEditorHiddenText[] = [];
-  /** Keys of the texts missing in the language that the page shows (Czech reference in place). */
+  /** Keys of the texts missing in the language that the page shows ('Cannot load text' in place). */
   missingKeys: string[] = [];
   /** The window "Jazyky" is open. */
   languagesOpen = false;
@@ -182,6 +184,8 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   device: VisualEditorDevice = readDevice();
   /** Width of the phone preview (template). */
   readonly mobileWidth = MOBILE_PREVIEW_WIDTH;
+  /** The text in place of a missing one (a page title missing in the language - template). */
+  readonly missingText = MISSING_TEXT;
   /** Selected text (key), null = none. */
   selectedKey: string | null = null;
   /** Clicked content of the admin, null = none. */
@@ -600,25 +604,6 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
 
   /** The list "Upravené texty" shows all of them (else the first CHANGED_LIST_LIMIT). */
   changedExpanded = false;
-  /** The list "Jako čeština" shows all of them (else the first HIDDEN_LIST_LIMIT). */
-  sameExpanded = false;
-
-  /**
-   * @returns Keys of the texts the page shows that are the same as in Czech (another language) -
-   *   maybe not translated yet.
-   */
-  get sameAsCzKeys(): string[] {
-    return this.e.currentLang === 'cz' ? [] : this.visibleKeys.filter(key => this.e.isSameAsCzPath(key));
-  }
-
-  /**
-   * @param all Keys of the list "Jako čeština".
-   * @returns The ones shown (the first HIDDEN_LIST_LIMIT unless expanded).
-   */
-  sameShown(all: string[]): string[] {
-    return this.sameExpanded ? all : all.slice(0, HIDDEN_LIST_LIMIT);
-  }
-
   /**
    * @param path Path of the page shown (without the language).
    * @returns The path of the page of the list it is another address of (`/home` → `/`), else itself.
@@ -710,14 +695,14 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   }
 
   /**
-   * @returns Texts missing in the language by key with their Czech reference (shown in their
-   *   place on the page, orange); Czech itself has no reference - the page shows the key.
+   * @returns Texts missing in the language by key with the text shown in their place on the page
+   *   (orange) - 'Cannot load text', what the visitors see; never the text of another language.
    */
   private missingTexts(): Record<string, string> {
     const missing: Record<string, string> = {};
     for (const key of this.e.flattenedKeys) {
       if (key.missing) {
-        missing[key.path] = this.e.currentLang === 'cz' ? '' : this.czValue(key.path);
+        missing[key.path] = MISSING_TEXT;
       }
     }
     return missing;

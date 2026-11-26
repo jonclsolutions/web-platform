@@ -5,9 +5,9 @@
  * @author JS
  * @created 2026
  * @description Unit tests of PageTitleStrategy: the route title key is resolved from the
- *   page-title map loaded once from the API, by current language → Czech → any non-empty value →
- *   the original document title; the title follows language changes; a failed or malformed map
- *   falls back to the document title.
+ *   page-title map loaded once from the API in the current language - a title missing in it is
+ *   'Cannot load text' (never another language); the title follows language changes; a failed or
+ *   malformed map / an unknown page gives the document title.
  * @dependencies
  * - PublicDataService spy, LocalizationService stub (language Subject), real Title service;
  *   buildTitle() spied to return the route's title key.
@@ -53,23 +53,24 @@ describe('PageTitleStrategy', () => {
   afterEach(() => (document.title = originalTitle));
 
   /**
-   * @description Title by language with fallbacks; loaded once; follows language switches.
+   * @description Title in the current language, 'Cannot load text' when the page has none in it
+   *   (no other language); loaded once; follows language switches.
    * @input Map {home: {en: 'Home', cz: 'Domů'}, faq: {cz: 'Dotazy'}, about: {en: '', de: 'Über'}};
-   *        routes home (en), faq (en), about (en), unknown, none; language → cz on home.
-   * @output 'Home', 'Dotazy', 'Über', 'RPSW', 'RPSW'; 'Domů'; one API request.
+   *        routes home (en), faq (en), about (en), bad, empty, unknown, none; language → cz on home.
+   * @output 'Home', 'Cannot load text' ×2, 'RPSW', 'Cannot load text', 'RPSW' ×2; 'Domů'; one API request.
    */
-  it('resolves titles by language with fallbacks', () => {
+  it('resolves titles in the current language only', () => {
     publicData.get.and.returnValue(of({ home: { en: 'Home', cz: 'Domů' }, faq: { cz: 'Dotazy' }, about: { en: '', de: 'Über' }, bad: ['x'], empty: { en: '' } }) as any);
     go('home');
     expect(title.getTitle()).toBe('Home');
     go('faq');
-    expect(title.getTitle()).toBe('Dotazy');
+    expect(title.getTitle()).toBe('Cannot load text');
     go('about');
-    expect(title.getTitle()).toBe('Über');
+    expect(title.getTitle()).toBe('Cannot load text');
     go('bad');
     expect(title.getTitle()).toBe('RPSW');
     go('empty');
-    expect(title.getTitle()).toBe('RPSW');
+    expect(title.getTitle()).toBe('Cannot load text');
     go('unknown');
     expect(title.getTitle()).toBe('RPSW');
     go(undefined);

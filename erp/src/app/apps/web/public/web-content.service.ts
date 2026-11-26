@@ -26,12 +26,14 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 import { PublicDataService } from '../../../shared/services/public-data.service';
 import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
 import { TextEditorContentSection } from '../../../public/text-editor/text-editor-protocol';
+import { MISSING_TEXT } from '../../../shared/utils/missing-text';
 
 /** Text per language code. */
 export type I18nText = Record<string, string>;
 
 /** Placeholder of a text missing in the current language. */
-export const MISSING_TEXT = 'Cannot load text';
+// the text in place of a missing one - shared by every public page (and the visual text editor)
+export { MISSING_TEXT };
 
 /** One FAQ category (tab) with its questions. */
 export interface PublicFaqCategory {

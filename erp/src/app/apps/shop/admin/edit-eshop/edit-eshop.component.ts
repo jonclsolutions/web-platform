@@ -5,15 +5,22 @@
  * @author JS
  * @created 2026
  * @description Texts of the e-shop: translations of the `shop` module and the browser page
- *   titles of the e-shop pages (API shop/page-titles).
+ *   titles of the e-shop pages (API shop/page-titles) - the same page as the texts of the website
+ *   (calmer actions, readable names of the keys, "Chybí" / "Jako CZ" filters), without the visual
+ *   text editor for now.
+ * @note Unsaved edits of any tab: leaving the page asks first (unsavedTextsGuard of the route).
+ * @note `?tab=page_titles` opens a tab (links of the notifications).
  * @dependencies
  * - BaseTranslationEditorComponent: language / translation editor logic and tabs.
  * - TranslationEditorViewComponent: the page.
+ * - unsavedTextsGuard (LeaveConfirmable): the question before leaving with unsaved edits.
  */
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { BaseTranslationEditorComponent } from '../../../../admin/components/translation-editor/base-translation-editor.component';
 import { TranslationEditorViewComponent } from '../../../../admin/components/translation-editor/translation-editor-view.component';
+import { LeaveConfirmable } from '../../../../admin/components/translation-editor/unsaved-texts.guard';
 
 /**
  * @description Translation editor of the `shop` module.
@@ -23,14 +30,37 @@ import { TranslationEditorViewComponent } from '../../../../admin/components/tra
   selector: 'app-edit-shop',
   standalone: true,
   imports: [TranslationEditorViewComponent],
-  template: '<app-translation-editor-view [e]="this"></app-translation-editor-view>',
+  // `compactActions`: the layout of the texts of the website (the "Jazyky" button, the statistics
+  // line, the "Chybí" / "Jako CZ" pills, the save bar on a phone); no `editorRoute` - no visual editor yet
+  template: '<app-translation-editor-view [e]="this" [compactActions]="true"></app-translation-editor-view>',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EditEshopComponent extends BaseTranslationEditorComponent {
+export class EditEshopComponent extends BaseTranslationEditorComponent implements LeaveConfirmable {
   protected override translationSection: string = 'edit-eshop';
 
   protected override readonly MODULE = 'shop';
   protected override readonly LANGUAGES_CACHE_KEY = 'edit-eshop:languages';
   protected override readonly TRANSLATIONS_CACHE_PREFIX = 'edit-eshop:translations:';
   protected override readonly UPDATE_PERMISSION = 'shop-edit-eshop-update';
+
+  private readonly route = inject(ActivatedRoute);
+  @ViewChild(TranslationEditorViewComponent) private view?: TranslationEditorViewComponent;
+
+  /**
+   * @description Leaving the page with unsaved edits of any tab asks first (unsavedTextsGuard -
+   *   the menu, Back, a link).
+   * @returns true = leave, false = stay.
+   */
+  confirmLeave(): boolean | Promise<boolean> {
+    return this.view ? this.view.confirmLeave() : true;
+  }
+
+  /** @description Loads the page and opens the tab named in the address (`?tab=`). */
+  override ngOnInit(): void {
+    super.ngOnInit();
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab && this.tabs.some(t => t.key === tab)) {
+      this.switchTab(tab);
+    }
+  }
 }

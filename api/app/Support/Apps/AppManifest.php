@@ -267,6 +267,18 @@ abstract class AppManifest
     }
 
     /**
+     * @description Records of the content of the application (stored per language) missing a text
+     *   in a language of its languageModule() - a language may be switched on only without any
+     *   (LanguageCompleteness). Keys are the parts of the content (`faq`, `jobs`…).
+     * @param string $code Language code.
+     * @return array<string, int> Part => records missing a text ([] = nothing missing / no content).
+     */
+    public function contentMissing(string $code): array
+    {
+        return [];
+    }
+
+    /**
      * @description Translation module whose languages the content of the application uses -
      *   its own id by default; an application without own texts names the module it follows
      *   (the project portal: the languages of the website). A deleted language of that module

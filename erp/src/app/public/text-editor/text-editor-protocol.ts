@@ -60,7 +60,7 @@ export interface TextEditorHiddenText {
 export type TextEditorToFrame =
   /**
    * First message after `ready`: hover labels (content, "missing"), the drafts, the texts missing
-   * in the language (key → Czech reference, shown in their place) and the selected key.
+   * in the language (key → the text shown in their place, 'Cannot load text') and the selected key.
    */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'init'; lang: string; drafts: Record<string, string>; missing: Record<string, string>; selected: string | null; contentLabels: Partial<Record<TextEditorContentSection, string>>; missingLabel: string }
   /**

@@ -31,7 +31,15 @@ export class TranslationLanguagesComponent {
   /** Translation editor of the module (languages and their actions). */
   @Input({ required: true }) e!: BaseTranslationEditorComponent;
   /** The window "Jazyky" is open. */
-  @Input() open = false;
+  /** The window "Jazyky" is shown - opening it asks again what the languages lack (their switch-on). */
+  @Input() set open(value: boolean) {
+    if (value && !this.isOpen) this.e?.loadCompleteness();
+    this.isOpen = value;
+  }
+  get open(): boolean {
+    return this.isOpen;
+  }
+  private isOpen = false;
   /** The window "Jazyky" was closed. */
   @Output() closed = new EventEmitter<void>();
   /** A language was turned on / off, uploaded, deleted or added (the texts / languages may differ). */
@@ -65,6 +73,16 @@ export class TranslationLanguagesComponent {
   manageToggle(lang: LangMeta): void {
     this.changed.emit();
     this.e.toggleLangActive(lang);
+  }
+
+  /**
+   * @description Opens a language with only its missing texts (the window closes) - what it lacks
+   *   for its switch-on.
+   * @param lang Language.
+   */
+  showMissing(lang: LangMeta): void {
+    this.closeManage();
+    this.e.showMissingIn(lang.code);
   }
 
   /**

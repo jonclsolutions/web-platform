@@ -19,6 +19,10 @@
  * language, so texts saved meanwhile in another tab or by another admin stay. One save at a
  * time (`saving`); a text edited again while it runs stays a change. The same text saved
  * meanwhile elsewhere is not overwritten unasked (409 → "Přepsat?", resolveConflicts()).
+ * @note A language other than Czech is switched on only complete (texts, page titles, content of
+ * the applications - `completeness`, API languages/{module}/completeness); until then its
+ * switch-on says what is missing. A new language is created switched off. A text missing later
+ * (an update of the application) shows 'Cannot load text' on the website - never another language.
  * @note A language that cannot be loaded (any error but 404 - a language without a file yet)
  * cannot be edited or saved (`loadFailed`): its empty texts must never be taken for the stored
  * ones. A newer load of the texts wins over an older one still running (another language).
@@ -349,7 +353,13 @@ export abstract class BaseTranslationEditorComponent
   showAddForm: boolean = false;
   newLangCode: string = '';
   newLangName: string = '';
-  newLangActive: boolean = true;
+  /** A new language is created switched off - it is switched on once complete (`canActivate`). */
+  newLangActive: boolean = false;
+  /**
+   * What every language other than Czech still lacks: code → part (`texts`, `page_titles`, `faq`…)
+   * → count; {} = complete. Unknown (not loaded yet) = the API decides on the switch-on.
+   */
+  completeness: Record<string, Record<string, number>> = {};
   addFormError: string = '';
   private newLangIconFile: File | null = null;
   newLangIconPreview: string = '';
@@ -368,14 +378,6 @@ export abstract class BaseTranslationEditorComponent
    * search, kept on a language switch, turned off by the toggle again.
    */
   onlyMissing: boolean = false;
-  /**
-   * The list shows only the texts identical with Czech ("Jako CZ" toggle) - in another language
-   * such a text is often not translated yet (a name or a number may be the same on purpose).
-   * Never together with `onlyMissing`; off for Czech itself.
-   */
-  onlySameAsCz = false;
-  /** Czech texts by key (built with the flat list) - what "Jako CZ" compares with. */
-  private czValues = new Map<string, string>();
 
   /** @returns Count of keys currently marked as missing in the active language. */
   get missingCount(): number { return this.filteredKeys.filter(k => k.missing).length; }
@@ -385,28 +387,6 @@ export abstract class BaseTranslationEditorComponent
   get langFilled(): number   { return this.flattenedKeys.filter(k => !k.missing && k.value?.trim()).length; }
   /** @returns Missing texts of the active language (not narrowed by the search / the missing filter). */
   get langMissing(): number  { return this.flattenedKeys.filter(k => k.missing).length; }
-  /** @returns Texts of the active language identical with Czech (0 for Czech itself). */
-  get langSameAsCz(): number { return this.currentLang === 'cz' ? 0 : this.flattenedKeys.filter(k => this.isSameAsCz(k)).length; }
-
-  /**
-   * @param path Dot path of the key.
-   * @returns Whether its text is filled and the same as the Czech one (another language than Czech).
-   */
-  isSameAsCzPath(path: string): boolean {
-    const key = this.flattenedKeys.find(k => k.path === path);
-    return !!key && this.isSameAsCz(key);
-  }
-
-  /**
-   * @param key Text of the list.
-   * @returns Whether it is filled and the same as its Czech text (another language than Czech).
-   */
-  isSameAsCz(key: FlatKey): boolean {
-    if (this.currentLang === 'cz' || key.missing) return false;
-    const cz = this.czValues.get(key.path)?.trim();
-    return !!cz && String(key.value ?? '').trim() === cz;
-  }
-
   /** @returns Total number of keys currently filtered. */
   get totalCount(): number   { return this.filteredKeys.length; }
   /** @returns Count of translated keys currently filtered. */
@@ -477,7 +457,70 @@ export abstract class BaseTranslationEditorComponent
     ];
   }
 
+  /** @description Asks what the languages still lack (for their switch-on) - only with the edit permission. */
+  loadCompleteness(): void {
+    if (!this.canUpdate) return;
+    this.dataHandler.getQuietly<Record<string, Record<string, number>>>(`languages/${this.MODULE}/completeness`)
+      .pipe(Core.takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.completeness = result && typeof result === 'object' ? result : {};
+          this.cd.markForCheck();
+        },
+        // unknown: the switch-on is left to the API (it refuses an incomplete language)
+        error: () => undefined,
+      });
+  }
+
+  /**
+   * @param code Language code.
+   * @returns What it lacks per part ([] when complete or not known), in the order of the parts.
+   */
+  missingPartsOf(code: string): { part: string; label: string; count: number }[] {
+    const parts = this.completeness[code];
+    if (!parts) return [];
+    return Object.entries(parts)
+      .filter(([, count]) => count > 0)
+      .map(([part, count]) => ({ part, count, label: this.partName(part) }));
+  }
+
+  /**
+   * @param code Language code.
+   * @returns What it lacks as one line ("Texty 12 · Názvy stránek 3"), '' when complete or unknown.
+   */
+  missingSummary(code: string): string {
+    return this.missingPartsOf(code).map(item => `${item.label} ${item.count}`).join(' · ');
+  }
+
+  /**
+   * @param code Language code.
+   * @returns Whether it lacks texts of this page (the list can show them - showMissingIn()).
+   */
+  lacksTexts(code: string): boolean {
+    return (this.completeness[code]?.['texts'] ?? 0) > 0;
+  }
+
+  /**
+   * @param lang Language.
+   * @returns Whether it may be switched on now: Czech / an active one always; another one when it
+   *   is known to lack nothing, or when its completeness is not known (the API decides).
+   */
+  canActivate(lang: LangMeta): boolean {
+    return !!lang.isBuiltIn || lang.active || this.missingPartsOf(lang.code).length === 0;
+  }
+
+  /**
+   * @param part Part of what a language lacks.
+   * @returns Its name (`completeness_parts` of the editor texts; the part itself when unknown).
+   */
+  private partName(part: string): string {
+    const names = this.i18n.getMergedSection(TRANSLATION_EDITOR_SECTION)?.completeness_parts;
+    const name = names && typeof names === 'object' ? names[part] : null;
+    return typeof name === 'string' && name ? name : part;
+  }
+
   private afterLanguagesLoaded(): void {
+    this.loadCompleteness();
     this.loadCzReference(() => {
       this.loadLang(this.currentLang);
     });
@@ -616,7 +659,6 @@ export abstract class BaseTranslationEditorComponent
     this.savedValues = new Map();
     const czFlat  = this.flattenToMap(this.czTranslations);
     const curFlat = this.flattenToMap(this.translations);
-    this.czValues = new Map([...czFlat].map(([path, value]) => [path, typeof value === 'string' ? value : String(value)]));
 
     for (const [path] of czFlat.entries()) {
       const rawVal = curFlat.get(path) ?? '';
@@ -686,10 +728,8 @@ export abstract class BaseTranslationEditorComponent
     const q = this.searchQuery.toLowerCase().trim();
     // the readable path counts too ("nadpis" finds the headings)
     const withLabels = !!q && this.hasKeyLabels;
-    if (this.currentLang === 'cz') this.onlySameAsCz = false;
     this.filteredKeys = this.flattenedKeys.filter(k =>
       (!this.onlyMissing || k.missing) &&
-      (!this.onlySameAsCz || this.isSameAsCz(k)) &&
       (!q || k.path.toLowerCase().includes(q) || String(k.value || '').toLowerCase().includes(q) || (withLabels && this.keyLabel(k.path).toLowerCase().includes(q)))
     );
     this.cd.markForCheck();
@@ -699,25 +739,12 @@ export abstract class BaseTranslationEditorComponent
   filterMissing(): void {
     this.searchQuery = '';
     this.onlyMissing = true;
-    this.onlySameAsCz = false;
     this.applyFilter();
   }
 
   /** @description The "Chybí" toggle of the search row: only the missing texts on / off (the search stays). */
   toggleMissing(): void {
     this.onlyMissing = !this.onlyMissing;
-    if (this.onlyMissing) this.onlySameAsCz = false;
-    this.applyFilter();
-    setTimeout(() => this.resizeAllTextareas(), 10);
-  }
-
-  /**
-   * @description The "Jako CZ" toggle of the search row: only the texts identical with Czech on /
-   *   off (the search stays; the missing filter goes off).
-   */
-  toggleSameAsCz(): void {
-    this.onlySameAsCz = !this.onlySameAsCz;
-    if (this.onlySameAsCz) this.onlyMissing = false;
     this.applyFilter();
     setTimeout(() => this.resizeAllTextareas(), 10);
   }
@@ -933,6 +960,7 @@ export abstract class BaseTranslationEditorComponent
         // open tabs of the website in this browser show the saved texts at once
         announceTexts({ kind: 'texts', module: this.MODULE, lang });
         this.notifications.refresh(); // the orange numbers follow the saved texts at once
+        this.loadCompleteness(); // what the languages lack for their switch-on
         if (lang !== this.currentLang || loadCount !== this.loadCount) {
           // the texts were loaded again meanwhile (another language, discarded edits) - their
           // state is not this save's; a reload of the same language shows what is stored now
@@ -952,9 +980,10 @@ export abstract class BaseTranslationEditorComponent
         this.cd.markForCheck();
       },
       error: (err) => {
-        const conflicts = err?.status === 409 && Array.isArray(err?.error?.conflicts) ? err.error.conflicts as { path: string; value: string }[] : null;
+        const details = err?.status === 409 ? err?.error?.errors : null;
+        const conflicts = Array.isArray(details?.conflicts) ? details.conflicts as { path: string; value: string }[] : null;
         if (conflicts && lang === this.currentLang && loadCount === this.loadCount) {
-          void this.resolveConflicts(conflicts, Number(err.error.conflict_count) || conflicts.length);
+          void this.resolveConflicts(conflicts, Number(details.conflict_count) || conflicts.length);
           return;
         }
         this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('save_failed_message'), 'danger');
@@ -993,7 +1022,7 @@ export abstract class BaseTranslationEditorComponent
     this.showAddForm     = true;
     this.newLangCode     = '';
     this.newLangName     = '';
-    this.newLangActive   = true;
+    this.newLangActive   = false;
     this.newLangIconFile = null;
     this.newLangIconPreview = '';
     this.addFormError    = '';
@@ -1193,8 +1222,12 @@ export abstract class BaseTranslationEditorComponent
    * list to the server. Invalidates the cache of the language list on success - the local
    * mutation of `lang.active` is optimistic, but the cache could return the earlier (invalid)
    * value after the TTL otherwise.
+   * @note A language that lacks something is not switched on (`canActivate` - the window says
+   *   what is missing); the API refuses it too (422 `errors.incomplete`) - then the message names the
+   *   missing parts. Quietly: one message of the editor, no second general one.
    */
   toggleLangActive(lang: LangMeta): void {
+    if (!lang.active && !this.canActivate(lang)) return;
     lang.active = !lang.active;
     this.cd.markForCheck();
 
@@ -1202,16 +1235,27 @@ export abstract class BaseTranslationEditorComponent
     fd.append('languages', JSON.stringify(this.languages));
     fd.append('module', this.MODULE);
 
-    this.dataHandler.upload<null>(`languages/${this.MODULE}`, fd)  // 204 since finding #6
+    this.dataHandler.postQuietly<null>(`languages/${this.MODULE}`, fd)  // 204 since finding #6
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.resourceCache.invalidate(this.LANGUAGES_CACHE_KEY);
           announceTexts({ kind: 'languages', module: this.MODULE });
         },
-        error: () => {
+        error: (err) => {
           lang.active = !lang.active;
-          this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('toggle_failed_error'), 'danger');
+          const incomplete = err?.status === 422 ? err?.error?.errors?.incomplete : null;
+          if (incomplete && typeof incomplete === 'object') {
+            // what the API found missing - the window shows it at the language too
+            this.completeness = { ...this.completeness, ...incomplete };
+            this.alertDialogService.open(
+              this.i18n.getValue('shared.error'),
+              this.t('activate_incomplete_message').replace('{lang}', lang.name).replace('{parts}', this.missingSummary(lang.code)),
+              'danger'
+            );
+          } else {
+            this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('toggle_failed_error'), 'danger');
+          }
           this.cd.markForCheck();
         }
       });
@@ -1269,6 +1313,7 @@ export abstract class BaseTranslationEditorComponent
         announceTexts({ kind: 'texts', module: this.MODULE, lang: this.uploadLangCode });
         this.notifications.refresh();
         this.uploadSuccess  = this.t('json_uploaded_message').replace('{lang}', this.uploadLangCode);
+        this.loadCompleteness();
         this.uploadError    = '';
         this.uploadMismatch = null;
 

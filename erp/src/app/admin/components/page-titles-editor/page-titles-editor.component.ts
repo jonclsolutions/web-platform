@@ -153,7 +153,8 @@ export class PageTitlesEditorComponent implements OnInit {
       () => this.dataHandler.get<PageTitleLang[]>(endpoint),
       this.LANG_TTL_MS
     ).pipe(
-      map((res: any) => ((Array.isArray(res) ? res : []) as PageTitleLang[]).filter(l => l.active !== false)),
+      // the switched off languages too: their titles are filled in before they are switched on
+      map((res: any) => (Array.isArray(res) ? res : []) as PageTitleLang[]),
       catchError(() => of([] as PageTitleLang[]))
     );
   }
@@ -251,6 +252,7 @@ export class PageTitlesEditorComponent implements OnInit {
    */
   get langItems(): RowButton[] {
     return this.langButtons.update(languageRowButtons(this.languages, {
+      inactiveTitle: this.i18n.getValue('shared.inactive_language_title'),
       count: code => this.missingCount(code) || null,
       title: code => this.missingCount(code) ? (this.strings?.pt_missing_lang_title ?? '').replace('{count}', String(this.missingCount(code))) : '',
     }));

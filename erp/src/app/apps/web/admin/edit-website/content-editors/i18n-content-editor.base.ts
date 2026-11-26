@@ -9,8 +9,9 @@
  *   endpoint), unsaved changes (dot on the tab, save / discard), reordering and removing list
  *   entries and the missing translations - counted per language (badge on the language tab) and
  *   shown at every empty field of the current language. Only the languages of the web module are
- *   offered (from the host page, current also after a language was deleted); texts of other
- *   languages are dropped by the API. Saving keeps the expanded / collapsed
+ *   offered (from the host page, current also after a language was deleted) - also the switched
+ *   off ones (muted tab): a language is prepared before it is switched on, and it can be switched
+ *   on only complete; texts of other languages are dropped by the API. Saving keeps the expanded / collapsed
  *   state of the entries (the API answers them in the saved order).
  * @usage `class FaqEditorComponent extends I18nContentEditorBase<FaqCategoryDraft>` - the subclass
  *   says how the API rows become drafts (fromApi), how drafts are sent (toPayload) and which texts
@@ -119,10 +120,13 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
     return this.i18n.getMergedSection('web-content-editor');
   }
 
-  /** Active languages (host page / loaded); the built-in Czech when there are none. */
+  /**
+   * Languages of the web (host page / loaded), the switched off ones too - they are filled in
+   * before they are switched on; the built-in Czech when there are none.
+   */
   get languages(): ContentLang[] {
-    const active = (this.host ?? this.loadedLanguages).filter(l => l.active !== false);
-    return active.length ? active : FALLBACK_LANGUAGES;
+    const all = this.host ?? this.loadedLanguages;
+    return all.length ? all : FALLBACK_LANGUAGES;
   }
 
   get canUpdate(): boolean {
@@ -185,14 +189,14 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
     });
   }
 
-  /** @description Active languages of the web module; a failure = [] (fallback above). */
+  /** @description Languages of the web module (switched off too); a failure = [] (fallback above). */
   private loadLanguages(): Observable<ContentLang[]> {
     return this.resourceCache.get(
       'web-content:languages:web',
       () => this.dataHandler.get<ContentLang[]>('languages/web'),
       this.LANG_TTL_MS
     ).pipe(
-      map((res: any) => ((Array.isArray(res) ? res : []) as ContentLang[]).filter(l => l.active !== false)),
+      map((res: any) => (Array.isArray(res) ? res : []) as ContentLang[]),
       catchError(() => of([] as ContentLang[]))
     );
   }
@@ -272,6 +276,7 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
   /** @description Language tabs: flag, code and the number of missing texts (amber). */
   get langItems(): RowButton[] {
     return this.langButtons.update(languageRowButtons(this.languages, {
+      inactiveTitle: this.i18n.getValue('shared.inactive_language_title'),
       count: code => this.missingCount(code),
       title: code => (this.missingCount(code) ? this.strings?.missing_badge_title ?? '' : ''),
     }));

@@ -153,7 +153,8 @@ export class EmailTemplateEditorComponent implements OnInit {
   ngOnInit(): void {
     this.dataHandler.get<EmailTemplateLang[]>(this.languagesEndpoint).subscribe({
       next: (res) => {
-        this.languages = (Array.isArray(res) ? res : []).filter(l => l.active !== false);
+        // the switched off languages too: the e-mail is prepared before the language is switched on
+        this.languages = Array.isArray(res) ? res : [];
         if (this.languages.length > 0 && !this.languages.find(l => l.code === this.currentLang)) {
           this.currentLang = this.languages[0].code;
         }
@@ -217,6 +218,7 @@ export class EmailTemplateEditorComponent implements OnInit {
   /** @description Language tabs (upper-case code) with the number of empty fields. */
   get langItems(): RowButton[] {
     return this.langButtons.update(languageRowButtons(this.languages, {
+      inactiveTitle: this.i18n.getValue('shared.inactive_language_title'),
       count: code => this.missingCount(code),
       title: code => this.missingCount(code) ? this.shared('missing_tab_title') : '',
     }));

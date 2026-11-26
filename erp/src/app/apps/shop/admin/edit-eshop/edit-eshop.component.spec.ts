@@ -8,7 +8,9 @@
  *   (module 'shop'). The page only configures BaseTranslationEditorComponent, so the tests check
  *   the configuration through the real editor: languages and translations of the 'shop'
  *   module, missing keys, saving, the 'shop-edit-eshop-update' permission, language management
- *   and the "Page titles" tab (PageTitlesEditorComponent of the e-shop pages).
+ *   and the "Page titles" tab (PageTitlesEditorComponent of the e-shop pages); the layout of the
+ *   texts of the website without the visual editor, the question before leaving with unsaved
+ *   edits (route guard) and the readable names of the keys of the e-shop.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, permission stub, alert spy, i18n stub),
  *   ResourceCacheService (real)
@@ -20,6 +22,11 @@ import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { PageTitlesEditorComponent } from '../../../../admin/components/page-titles-editor/page-titles-editor.component';
 import { EditEshopComponent } from './edit-eshop.component';
+import { SHOP_ADMIN_ROUTES } from '../shop-admin.routes';
+import { unsavedTextsGuard } from '../../../../admin/components/translation-editor/unsaved-texts.guard';
+import shopCz from '../i18n/cz.json';
+import shopEn from '../i18n/en.json';
+import adminCz from '../../../../../assets/i18n/admin/cz/cz.json';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 
 describe('EditEshopComponent', () => {
@@ -181,4 +188,59 @@ describe('EditEshopComponent', () => {
     expect(fixture.debugElement.query(By.css('app-page-titles-editor')).componentInstance).toBe(editor);
     discardPeriodicTasks();
   }));
+
+  /**
+   * @description The layout of the texts of the website (calmer actions: the "Jazyky" button in
+   *   the page header, the statistics line) - without the button of the visual text editor.
+   * @input render
+   * @output compactActions; .ew-langs-btn in the header; no .ew-editor-btn
+   */
+  it('has the layout of the texts of the website without the visual editor', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
+    expect(view.compactActions).toBeTrue();
+    expect(view.editorRoute).toBeNull();
+    expect(el.querySelector('app-page-header .ew-langs-btn')).not.toBeNull();
+    expect(el.querySelector('.ew-editor-btn')).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Leaving with unsaved edits asks first: the route has unsavedTextsGuard; without
+   *   edits the page lets go at once, with an edit it asks (a promise of the answer).
+   * @input route 'edit-eshop'; confirmLeave() clean; updateValue + confirmLeave()
+   * @output canDeactivate [unsavedTextsGuard]; true; a Promise
+   */
+  it('asks before leaving with unsaved edits', fakeAsync(() => {
+    expect(SHOP_ADMIN_ROUTES.find(r => r.path === 'edit-eshop')!.canDeactivate).toEqual([unsavedTextsGuard]);
+    fixture.detectChanges();
+    flush();
+    expect(component.confirmLeave()).toBeTrue();
+    component.updateValue('checkout', 'K pokladně');
+    fixture.detectChanges();
+    expect(component.confirmLeave() instanceof Promise).toBeTrue();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Readable names of the keys of the e-shop: the same names in Czech and English,
+   *   the groups and the common words put together.
+   * @input the real 'edit-eshop' / 'translation-editor' texts; keyLabel of checkout.labels.first_name,
+   *   product_detail.add_to_cart, cart.title
+   * @output the same keys in cz / en; 'Pokladna › Popisky polí › Jméno', 'Detail produktu › Tlačítko
+   *   do košíku', 'Košík › Nadpis' (title of the common words)
+   */
+  it('names the keys of the e-shop for people', () => {
+    const cz = (shopCz as any)['edit-eshop'].editor_key_labels;
+    expect(Object.keys((shopEn as any)['edit-eshop'].editor_key_labels).sort()).toEqual(Object.keys(cz).sort());
+    (ctx.i18n.getMergedSection as jasmine.Spy).and.callFake((section: string) =>
+      section === 'edit-eshop' ? (shopCz as any)['edit-eshop'] : (adminCz as any)[section]);
+    expect(component.hasKeyLabels).toBeTrue();
+    expect(component.keyLabel('checkout.labels.first_name')).toBe('Pokladna › Popisky polí › Jméno');
+    expect(component.keyLabel('product_detail.add_to_cart')).toBe('Detail produktu › Tlačítko do košíku');
+    expect(component.keyLabel('cart.title')).toBe('Košík › ' + (adminCz as any)['translation-editor'].editor_key_words.title.replace(/^./, (c: string) => c.toUpperCase()));
+  });
 });

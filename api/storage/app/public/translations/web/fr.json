@@ -436,6 +436,8 @@
         "about": {
             "story_heading": "Nous créons des logiciels qui aident vraiment votre entreprise à se développer",
             "story_text": "Nous ne sommes pas une agence qui vous construit un site puis disparaît. Nous nous consacrons au développement sur mesure de sites web, d'applications desktop et mobiles et de solutions basées sur l'intelligence artificielle - toujours avec l'objectif que le résultat résolve réellement votre problème concret, et pas seulement qu'il soit beau dans une présentation. De la première discussion à la conception de l'architecture, jusqu'au déploiement et au support à long terme, nous vous accompagnons tout au long du chemin comme une seule équipe.",
+            "story_heading_2": "Des solutions qui évolueront avec vous, même dans quelques années",
+            "story_text_2": "Nous nous appuyons sur des technologies éprouvées et un code propre, afin que l'application soit facile à faire évoluer et à maintenir. Chaque projet est livré avec une documentation, des tests automatisés et des contrôles de sécurité. Après la mise en ligne, nous surveillons les performances, préparons les mises à jour et vous accompagnons dans la suite du développement - votre solution reste ainsi rapide, sécurisée et prête pour les nouveaux besoins de votre entreprise.",
             "heading": "Développement sur mesure,\nde l'idée au déploiement",
             "lead": "Nous ne sommes pas une agence de modèles. Nous construisons chaque projet de A à Z — exactement comme votre activité en a besoin."
         },

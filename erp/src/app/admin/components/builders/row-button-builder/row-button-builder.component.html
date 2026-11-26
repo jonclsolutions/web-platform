@@ -5,7 +5,8 @@
     @author: JS
     @created: 2026
     @description: Row of buttons: buttons (tabs / filter) or links (nav), each with an icon or a
-        flag, the text, an optional number and dot; tabs with `phoneSelect` are a drop-down on a phone.
+        flag, the text, an optional number and dot; a muted item (a switched off language) has a
+        dashed outline; tabs with `phoneSelect` are a drop-down on a phone.
 -->
 <ng-template #content let-item>
   @if (item.icon) {
@@ -25,7 +26,7 @@
 @if (kind === 'nav') {
   <nav class="rbb" [class.rbb--sm]="size === 'sm'" [class.rbb--stretch]="stretch" [attr.aria-label]="ariaLabel || null">
     @for (item of visibleItems; track item.value) {
-      <a class="rbb-btn" [class.active]="isActive(item)" [class.rbb-btn--danger]="item.tone === 'danger'" [class.rbb-btn--attention]="item.tone === 'attention'"
+      <a class="rbb-btn" [class.active]="isActive(item)" [class.rbb-btn--danger]="item.tone === 'danger'" [class.rbb-btn--attention]="item.tone === 'attention'" [class.rbb-btn--muted]="item.muted"
          [routerLink]="item.link ?? null" [attr.aria-current]="isActive(item) ? 'page' : null" [attr.title]="item.title || null">
         <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }"></ng-container>
       </a>
@@ -54,7 +55,7 @@
       @if (menuOpen) {
         <div class="rbb-select-menu" role="listbox" [attr.aria-label]="ariaLabel || null">
           @for (item of visibleItems; track item.value) {
-            <button type="button" class="rbb-select-option" role="option" [class.active]="isActive(item)"
+            <button type="button" class="rbb-select-option" role="option" [class.active]="isActive(item)" [class.rbb-btn--muted]="item.muted"
                     [attr.aria-selected]="isActive(item)" [attr.title]="item.title || null"
                     [disabled]="item.disabled" (click)="choose(item, $event)">
               <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }"></ng-container>
@@ -75,7 +76,7 @@
   <div class="rbb" [class.rbb--sm]="size === 'sm'" [class.rbb--stretch]="stretch" [class.rbb--has-select]="phoneSelect && kind === 'tabs'" [class.rbb--measure]="collapsed"
        [attr.role]="kind === 'tabs' ? 'tablist' : 'group'" [attr.aria-label]="ariaLabel || null">
     @for (item of visibleItems; track item.value) {
-      <button type="button" class="rbb-btn" [class.active]="isActive(item)" [class.rbb-btn--danger]="item.tone === 'danger'" [class.rbb-btn--attention]="item.tone === 'attention'"
+      <button type="button" class="rbb-btn" [class.active]="isActive(item)" [class.rbb-btn--danger]="item.tone === 'danger'" [class.rbb-btn--attention]="item.tone === 'attention'" [class.rbb-btn--muted]="item.muted"
               [attr.role]="kind === 'tabs' ? 'tab' : null"
               [attr.aria-selected]="kind === 'tabs' ? isActive(item) : null"
               [attr.aria-pressed]="kind === 'filter' ? isActive(item) : null"

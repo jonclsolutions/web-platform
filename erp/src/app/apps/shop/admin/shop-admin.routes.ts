@@ -12,6 +12,7 @@
 
 import { Routes } from '@angular/router';
 import { SHOP_AUDIT_LOG } from './shop-logs/shop-logs.config';
+import { unsavedTextsGuard } from '../../../admin/components/translation-editor/unsaved-texts.guard';
 
 export const SHOP_ADMIN_ROUTES: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -25,6 +26,7 @@ export const SHOP_ADMIN_ROUTES: Routes = [
   { path: 'suppliers', loadComponent: () => import('./suppliers/suppliers.component').then(m => m.SuppliersComponent), data: { help: 'shop-suppliers', permission: 'shop-suppliers-view' } },
   { path: 'coupons', loadComponent: () => import('./coupons/coupons.component').then(m => m.CouponsComponent), data: { help: 'coupons', permission: 'shop-coupons-view' } },
   { path: 'logs', loadComponent: () => import('../../../admin/components/audit-log-page/audit-log-page.component').then(m => m.AuditLogPageComponent), data: { help: 'shop-logs', permission: 'shop-view-logs', auditLog: SHOP_AUDIT_LOG } },
-  { path: 'edit-eshop', loadComponent: () => import('./edit-eshop/edit-eshop.component').then(m => m.EditEshopComponent), data: { help: 'edit-eshop', permission: 'shop-edit-eshop-view' } },
+  // unsavedTextsGuard: leaving the texts with unsaved edits asks first (as the texts of the website)
+  { path: 'edit-eshop', loadComponent: () => import('./edit-eshop/edit-eshop.component').then(m => m.EditEshopComponent), canDeactivate: [unsavedTextsGuard], data: { help: 'edit-eshop', permission: 'shop-edit-eshop-view' } },
   { path: 'welcome-page', loadComponent: () => import('./shop-welcome-page/shop-welcome-page.component').then(m => m.ShopWelcomePageComponent), data: { help: 'shop-welcome-page', permission: 'shop-welcome-page-view' } },
 ];

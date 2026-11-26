@@ -18,6 +18,9 @@
  *   English, otherwise the first active language (pickInitialLanguage) - that guess is not
  *   stored. Storing the explicit choice is a functional preference the visitor asked for (no
  *   consent needed).
+ * @note Missing texts (2026-11): the texts are loaded complete (`?complete=1`) - a text missing
+ *   in the language is 'Cannot load text', a language that fails to load is not replaced by
+ *   another one. A text of another language never stands in for a missing one.
  * @note Visual text editor (2026-11): inside the frame of the editor the published texts are the
  *   loaded ones with the unsaved texts of the admin applied and every text marked with its key
  *   (PublicTextEditorService.decorate); saved texts are written into the cached ones; changed
@@ -37,8 +40,6 @@ import { TextsChange, listenTexts } from '../utils/texts-broadcast';
 
 /** localStorage key of the language the visitor chose in the switcher. */
 const LANGUAGE_STORAGE_KEY = 'selectedLanguage';
-/** Language every public area has (the seed of the translations) - texts fall back to it. */
-const BASE_LANGUAGE = 'cz';
 
 export interface ApiLanguage {
   code: string;
@@ -247,17 +248,15 @@ export class LocalizationService {
     }
 
     const module = this.currentModule;
-    const url = `${this.API_URL}/translations/${module}/${lang}`;
+    // complete: every key of the module, a text missing in the language is 'Cannot load text' -
+    // never the text of another language (the visitor sees that something is wrong, not Czech)
+    const url = `${this.API_URL}/translations/${module}/${lang}?complete=1`;
 
     return this.http.get<ApiEnvelope<any>>(url).pipe(
       map(res => res.data),  // translation dictionary in `data` (finding #6)
       tap(data => { if (module === this.currentModule) this.translationsCache.set(lang, data); }),
-      catchError(() => {
-        if (lang !== BASE_LANGUAGE) {
-          return this.loadTranslations$(BASE_LANGUAGE);
-        }
-        return of(null);
-      })
+      // no texts of another language in place of a language that failed to load
+      catchError(() => of(null))
     );
   }
 
@@ -331,7 +330,8 @@ export class LocalizationService {
 
   /**
    * @description Texts of the current module in another language than the current one (e.g. the
-   *   offer of that language in the language-suggestion bar) - not cached, not published.
+   *   offer of that language in the language-suggestion bar) - not cached, not published; as
+   *   stored (not completed): a text of the offer missing in that language means no offer.
    * @param lang Translation code.
    * @returns The translations, null when they cannot be loaded.
    */

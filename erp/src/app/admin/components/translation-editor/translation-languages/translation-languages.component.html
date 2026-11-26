@@ -71,13 +71,8 @@
         </div>
       </div>
 
-      <div class="ew-field">
-        <label class="ew-checkbox-label">
-          <input type="checkbox" [(ngModel)]="e.newLangActive" class="ew-checkbox">
-          <span class="ew-checkbox-box"></span>
-          <span>{{ e.t('active_checkbox_label') }}</span>
-        </label>
-      </div>
+      <!-- A new language has no texts yet: it is created switched off and switched on once complete. -->
+      <p class="ew-modal-desc" role="note">{{ e.t('new_language_off_note') }}</p>
 
       @if (e.addFormError) {
         <div class="ew-form-error">
@@ -192,7 +187,9 @@
           </span>
           <span class="ew-manage-actions">
             @if (!lang.isBuiltIn && e.canUpdate) {
-              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm" (click)="manageToggle(lang)">
+              <!-- A language is switched on only complete - the row below says what is missing. -->
+              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm ew-manage-toggle" (click)="manageToggle(lang)"
+                      [disabled]="!lang.active && !e.canActivate(lang)">
                 {{ lang.active ? e.t('deactivate_title') : e.t('activate_title') }}
               </button>
             }
@@ -215,6 +212,16 @@
           </span>
           @if (hasUnsavedEdits(lang)) {
             <span class="ew-manage-note" role="note">{{ e.t('unsaved_download_note') }}</span>
+          }
+          <!-- What the language lacks: switched off - why it cannot be switched on yet (and where
+               to fill it); switched on - visitors see 'Cannot load text' in its place. -->
+          @if (!lang.isBuiltIn && e.canUpdate && e.missingSummary(lang.code); as missing) {
+            <span class="ew-manage-missing" [class.is-on]="lang.active" role="note">
+              {{ (lang.active ? e.t('active_incomplete_note') : e.t('activate_incomplete_note')).replace('{parts}', missing) }}
+              @if (e.lacksTexts(lang.code)) {
+                <button type="button" class="ew-link-btn" (click)="showMissing(lang)">{{ e.t('show_missing_texts_button') }}</button>
+              }
+            </span>
           }
         </li>
       }

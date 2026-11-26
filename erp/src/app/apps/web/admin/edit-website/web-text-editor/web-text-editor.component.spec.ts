@@ -33,6 +33,9 @@ describe('WebTextEditorComponent', () => {
   const cz = { faq: { title: 'Časté dotazy', sub: 'Podtitulek' } };
   const en = { faq: { title: 'FAQ', sub: 'Subtitle' } };
 
+  /** What the languages lack (API languages/web/completeness) - {} = complete. */
+  let completeness: Record<string, Record<string, number>> = {};
+
   /** The frame of the website. */
   const frame = () => fixture.nativeElement.querySelector('iframe') as HTMLIFrameElement;
   /** A message of the page in the frame. */
@@ -48,9 +51,12 @@ describe('WebTextEditorComponent', () => {
     localStorage.removeItem('jsw_languages');
     spyOn(window, 'matchMedia').and.returnValue({ matches: phone, addEventListener: () => {}, removeEventListener: () => {} } as unknown as MediaQueryList);
     ctx = createAdminTestContext();
-    // get: the languages; getQuietly: the texts (a missing language answers 404)
+    // get: the languages; getQuietly: the texts (a missing language answers 404) and what the
+    // languages lack (`completeness` of the test)
+    completeness = {};
     const route = (url: string) => {
       if (url === 'languages/web') return of(structuredClone(languages));
+      if (url === 'languages/web/completeness') return of(structuredClone(completeness));
       if (url === 'translations/web/cz') return of(structuredClone(cz));
       if (url === 'translations/web/en') return of(structuredClone(en));
       return throwError(() => ({ status: 404 }));
@@ -276,26 +282,34 @@ describe('WebTextEditorComponent', () => {
   }));
 
   /**
-   * @description A switched off language: the notice under the bar with its switch-on; the texts
-   *   it lacks go to the page with their Czech reference (init and after the texts load) and the
-   *   missing texts the page shows are listed in the panel - a click selects them.
-   * @input DE (off, no texts); ready; scan with missing faq.sub; click the list; Zapnout jazyk
-   * @output notice; init missing {faq.title: 'Časté dotazy', faq.sub: 'Podtitulek'} and the label;
-   *   list of 1 → selected faq.sub; the language turned on (upload languages/web), notice gone,
-   *   the page not loaded again (its language switcher follows by texts-broadcast)
+   * @description A switched off language: the notice under the bar with its switch-on - disabled
+   *   with what is missing while the language is incomplete; the texts it lacks go to the page as
+   *   the visitors would see them ('Cannot load text', init and after the texts load) and the
+   *   missing texts the page shows are listed in the panel - a click selects them; once complete
+   *   the language is switched on without a new load of the page.
+   * @input DE (off, no texts, completeness {texts: 2}); ready; scan with missing faq.sub; click the
+   *   list; Zapnout jazyk; completeness {} → Zapnout jazyk
+   * @output notice with activate_incomplete_note, the button disabled, nothing sent; init missing
+   *   {faq.title, faq.sub: 'Cannot load text'} and the label; list of 1 → selected faq.sub; then the
+   *   language turned on (POST languages/web), notice gone, the page not loaded again
    */
   it('shows the missing texts and switches a switched off language on', fakeAsync(() => {
     setup();
+    completeness = { de: { texts: 2 } };
+    component.loadCompleteness();
     const el = fixture.nativeElement as HTMLElement;
     view.switchLang('de');
     flush();
     fixture.detectChanges();
     expect(component.currentLang).toBe('de');
     expect(el.querySelector('.te-inactive')!.textContent).toContain('editor_inactive_message');
-    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'drafts', lang: 'de', missing: { 'faq.title': 'Časté dotazy', 'faq.sub': 'Podtitulek' } }));
+    expect(el.querySelector('.te-inactive-missing')!.textContent).toContain('activate_incomplete_note');
+    expect((el.querySelector('.te-inactive-btn') as HTMLButtonElement).disabled).toBeTrue();
+    const missing = { 'faq.title': 'Cannot load text', 'faq.sub': 'Cannot load text' };
+    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'drafts', lang: 'de', missing }));
 
     fromPage({ type: 'ready' });
-    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'init', lang: 'de', missing: { 'faq.title': 'Časté dotazy', 'faq.sub': 'Podtitulek' }, missingLabel: jasmine.stringContaining('editor_missing_label') }));
+    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'init', lang: 'de', missing, missingLabel: jasmine.stringContaining('editor_missing_label') }));
     fromPage({ type: 'scan', path: '/faq', title: '', visible: ['faq.sub'], missing: ['faq.sub'], hidden: [] });
     const items = el.querySelectorAll('.te-missing-item');
     expect(items.length).toBe(1);
@@ -305,10 +319,15 @@ describe('WebTextEditorComponent', () => {
     expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key: 'faq.sub', reveal: true });
 
     const loaded = view.frameUrl;
+    view.activateLang();
+    expect((ctx.dataHandler as any).postQuietly).not.toHaveBeenCalledWith('languages/web', jasmine.any(FormData));
+    completeness = { de: {} };
+    component.loadCompleteness();
+    fixture.detectChanges();
     (el.querySelector('.te-inactive-btn') as HTMLButtonElement).click();
     flush();
     fixture.detectChanges();
-    expect((ctx.dataHandler as any).upload).toHaveBeenCalledWith('languages/web', jasmine.any(FormData));
+    expect((ctx.dataHandler as any).postQuietly).toHaveBeenCalledWith('languages/web', jasmine.any(FormData));
     expect(component.languages.find(l => l.code === 'de')!.active).toBeTrue();
     expect(el.querySelector('.te-inactive')).toBeNull();
     expect(view.frameUrl).toBe(loaded);
@@ -651,34 +670,6 @@ describe('WebTextEditorComponent', () => {
     expect(view.framePath).toBe('/');
     expect(view.knownPage).toBeTrue();
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.te-page-select option').length).toBe(WEB_EDITOR_PAGES.length);
-    discardPeriodicTasks();
-  }));
-
-  /**
-   * @description Another language: the texts of the page the same as in Czech are listed in the
-   *   panel (a click selects them) and the selected one says so; Czech lists none.
-   * @input EN; edit faq.title to the Czech text; scan with faq.title, faq.sub; select faq.title; CZ
-   * @output list [faq.title]; the note under the field; in Czech no list
-   */
-  it('lists the texts of the page the same as in Czech', fakeAsync(() => {
-    setup();
-    const el = fixture.nativeElement as HTMLElement;
-    view.switchLang('en');
-    flush();
-    view.edit('faq.title', 'Časté dotazy');
-    fromPage({ type: 'scan', path: '/faq', title: '', visible: ['faq.title', 'faq.sub'], missing: [], hidden: [] });
-    const items = el.querySelectorAll('.te-same-item');
-    expect(Array.from(items).map(i => i.textContent!.trim())).toEqual(['faq.title']);
-    (items[0] as HTMLButtonElement).click();
-    flush();
-    fixture.detectChanges();
-    expect(view.selectedKey).toBe('faq.title');
-    expect(el.querySelector('.te-same')).not.toBeNull();
-    view.revert('faq.title');
-    view.switchLang('cz');
-    flush();
-    fixture.detectChanges();
-    expect(view.sameAsCzKeys).toEqual([]);
     discardPeriodicTasks();
   }));
 

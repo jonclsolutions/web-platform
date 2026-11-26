@@ -436,6 +436,8 @@
         "about": {
             "story_heading": "Wir bauen Software, die Ihrem Unternehmen wirklich beim Wachsen hilft",
             "story_text": "Wir sind keine Agentur, die Ihnen nur eine Website baut und dann verschwindet. Wir widmen uns der individuellen Entwicklung von Websites, Desktop- und Mobile-Anwendungen sowie Lösungen auf Basis künstlicher Intelligenz - immer mit dem Ziel, dass das Ergebnis Ihr konkretes Problem tatsächlich löst und nicht nur in einer Präsentation gut aussieht. Vom ersten Gespräch über den Architekturentwurf bis zum Deployment und langfristigen Support sind wir die ganze Zeit als ein Team an Ihrer Seite.",
+            "story_heading_2": "Lösungen, die auch in ein paar Jahren mit Ihnen mitwachsen",
+            "story_text_2": "Wir setzen auf bewährte Technologien und sauberen Code, damit sich die Anwendung leicht erweitern und warten lässt. Jedes Projekt erhält eine Dokumentation, automatisierte Tests und Sicherheitsprüfungen. Nach dem Start überwachen wir die Leistung, bereiten Updates vor und unterstützen Sie bei der Weiterentwicklung - so bleibt Ihre Lösung schnell, sicher und bereit für neue Anforderungen Ihres Unternehmens.",
             "heading": "Individuelle Entwicklung,\nvon der Idee bis zum Deployment",
             "lead": "Wir sind keine Vorlagen-Agentur. Jedes Projekt bauen wir von Grund auf — genau so, wie Ihr Geschäft es braucht."
         },

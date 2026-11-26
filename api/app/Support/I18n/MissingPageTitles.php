@@ -8,9 +8,10 @@
  * @created 2026
  * @description Page titles (browser tab, title in search results - legal_page_titles) missing in
  * the active languages of an area (web, shop …): every page of the area must have a non-empty
- * title in every active language; Czech too. Without it the visitor sees the title of another
- * language (Czech) - so the admin is told (orange dot of the text editor page, the count of its
- * "Názvy stránek" tab), the same way as missing texts (MissingTranslations).
+ * title in every active language; Czech too. Without it the visitor sees 'Cannot load text' (no
+ * title of another language) - so the admin is told (orange dot of the text editor page, the
+ * count of its "Názvy stránek" tab), the same way as missing texts (MissingTranslations).
+ * forLanguage() counts any language (also a switched off one - may it be switched on?).
  * @note Inactive languages are not counted - visitors cannot switch to them.
  * @dependencies PageTitle, TranslationController::activeLanguageCodes()
  */
@@ -46,5 +47,21 @@ final class MissingPageTitles
         }
 
         return $missing;
+    }
+
+    /**
+     * @description Pages of an area without a title in one language, switched on or off.
+     * @param string $area Area of the pages.
+     * @param string $code Language code.
+     * @return int
+     */
+    public static function forLanguage(string $area, string $code): int
+    {
+        $code = strtolower($code);
+
+        return PageTitle::query()->where('area', $area)->pluck('title_i18n')
+            ->map(fn ($value) => is_array($value) ? $value : [])
+            ->filter(fn (array $title) => trim((string) ($title[$code] ?? '')) === '')
+            ->count();
     }
 }

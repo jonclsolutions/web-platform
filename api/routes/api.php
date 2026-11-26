@@ -194,6 +194,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         ->where(['module' => TranslationController::MODULE_PATTERN, 'code' => TranslationController::LANG_PATTERN])
         ->group(function () {
             Route::post('/{module}',     [TranslationController::class, 'saveLanguages']);
+            // what the languages still lack - a language is switched on only when complete
+            Route::get('/{module}/completeness', [TranslationController::class, 'completeness']);
             Route::post('/{module}/{code}/icon', [TranslationController::class, 'storeLanguageIcon']);
             Route::delete('/{module}/{code}',    [TranslationController::class, 'destroyLanguage']);
         });

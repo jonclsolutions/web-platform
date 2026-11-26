@@ -437,7 +437,9 @@
             "story_heading": "We build software that truly helps your company grow",
             "story_text": "We're not an agency that just builds you a website and then disappears. We focus on custom development across websites, desktop and mobile applications and solutions built on artificial intelligence - always with an emphasis on making the result actually solve your specific problem, not just look good in a presentation. From the first conversation through architecture design to deployment and long-term support, we are with you all the way as one team.",
             "heading": "Custom development,\nfrom idea to deployment",
-            "lead": "We're not a template agency. We build every project from the ground up — exactly the way your business needs it."
+            "lead": "We're not a template agency. We build every project from the ground up — exactly the way your business needs it.",
+            "story_heading_2": "Header 1",
+            "story_text_2": "test test test test test test test test test test test test test test test test test test test test test test test test test test"
         },
         "tech_stack": {
             "heading": "Technologies we build on",

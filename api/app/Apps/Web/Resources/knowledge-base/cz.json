@@ -531,8 +531,8 @@
                   "active": false
                 },
                 {
-                  "label": "Jazyk aktivní",
-                  "text": "Zaškrtnutý = jazyk se návštěvníkům nabízí v přepínači jazyků. Nový jazyk nechte neaktivní, dokud nepřeložíte texty.",
+                  "label": "Nový jazyk vypnutý",
+                  "text": "Nový jazyk se vytvoří vypnutý - zatím nemá texty. Zapnete ho v okně Jazyky, až bude kompletní.",
                   "active": false
                 }
               ]
@@ -541,7 +541,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "V okně Jazyky jazyk tlačítkem Deaktivovat nebo Aktivovat vypnete či zapnete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
+                "V okně Jazyky jazyk tlačítkem Deaktivovat nebo Aktivovat vypnete či zapnete - vypnutý jazyk návštěvníci nevidí, texty zůstanou. Zapnout jde jen kompletní jazyk: dokud mu něco chybí (texty, názvy stránek, FAQ, pozice, reference, nápověda), je Aktivovat neaktivní a pod jazykem je napsáno, co chybí, s tlačítkem Zobrazit chybějící texty. Když po aktualizaci aplikace chybí něco v zapnutém jazyce, okno to u něj také ukáže. Vypnutý jazyk nabízejí k úpravě i ostatní záložky (Názvy stránek, FAQ, Pracovní pozice, Reference, Centrum nápovědy) - jeho záložka je čárkovaná a šedší, takže ho celý doplníte dřív, než ho zapnete.",
                 "Tlačítkem Smazat jazyk smažete (po potvrzení; když dáte Zrušit, zůstanete v okně Jazyky). Smažou se i všechny jeho texty - překlady, obsah stránek, názvy stránek a texty e-mailů. Pokud jazyk chcete jen dočasně skrýt, deaktivujte ho.",
                 "Stáhnout JSON a Nahrát JSON jsou u každého jazyka v okně Jazyky (viz kapitola 06).",
                 "Když má otevřený jazyk neuložené úpravy, přidání nového jazyka je nezahodí - otevřený jazyk zůstane otevřený a nový jazyk najdete v řadě jazyků."
@@ -642,11 +642,7 @@
                 },
                 {
                   "title": "Co uvidí návštěvník",
-                  "text": "Místo chybějícího textu se na webu zobrazí „Cannot load text“. Před aktivací jazyka proto doplňte všechny texty."
-                },
-                {
-                  "title": "Jako CZ",
-                  "text": "U jiného jazyka než čeština: kolik textů je stejných jako v češtině - nejspíš ještě nepřeložené (název nebo číslo může být stejné schválně). Kliknutím zobrazíte jen je; filtr Chybí se tím vypne."
+                  "text": "Místo chybějícího textu se na webu zobrazí „Cannot load text“ - nikdy text jiného jazyka (návštěvník pozná, že je něco špatně, a nečte češtinu). Proto jde jazyk zapnout až kompletní."
                 }
               ]
             },
@@ -706,11 +702,11 @@
                 },
                 {
                   "title": "Oranžový rámeček",
-                  "text": "Text, který v jazyce chybí. Na jeho místě je česká předloha (nebo klíč) a nad ním Chybí a klíč; v panelu je seznam Chybějící texty této stránky. Obsah z administrace, který v jazyce chybí, ukazuje Cannot load text - také oranžově, s odkazem do své části."
+                  "text": "Text, který v jazyce chybí. Na jeho místě je „Cannot load text“ - přesně to, co by viděl návštěvník - a nad ním Chybí a klíč; česká předloha je v panelu jako vzor pro překlad. V panelu je seznam Chybějící texty této stránky. Obsah z administrace, který v jazyce chybí, ukazuje také Cannot load text - oranžově, s odkazem do své části."
                 },
                 {
                   "title": "Vypnutý jazyk",
-                  "text": "V horní liště jsou všechny jazyky, vypnutý je čárkovaný s tečkou. Po jeho otevření lišta upozorní, že ho návštěvníci nevidí, a tlačítko Zapnout jazyk ho zapne. Spravovat jazyky otevře stejné okno jako na záložce Překlady (přidání, nahrání a stažení JSON, smazání)."
+                  "text": "V horní liště jsou všechny jazyky, vypnutý je čárkovaný s tečkou. Po jeho otevření lišta upozorní, že ho návštěvníci nevidí; tlačítko Zapnout jazyk ho zapne, jen když je kompletní - jinak lišta napíše, co chybí. Spravovat jazyky otevře stejné okno jako na záložce Překlady (přidání, nahrání a stažení JSON, smazání)."
                 },
                 {
                   "title": "Další texty stránky",
@@ -738,10 +734,6 @@
             {
               "type": "text",
               "content": "Tlačítko Zpět prohlížeče editor vždy zavře (s dotazem na neuložené úpravy) - stránky a jazyky otevřené v náhledu do historie prohlížeče nepřibývají. Přepínač jazyka v patičce náhledu přepne jazyk celého editoru (při neuložených úpravách se nejdřív zeptá); vaše vlastní volba jazyka pro návštěvy webu se tím nemění."
-            },
-            {
-              "type": "text",
-              "content": "U jiného jazyka než čeština panel editoru vypíše texty stránky stejné jako v češtině (možná nepřeložené) a u vybraného textu to připomene - jen pro informaci."
             }
           ]
         },
@@ -784,7 +776,7 @@
             },
             {
               "type": "text",
-              "content": "Prázdné pole = návštěvník uvidí český název. Proto jsou prázdná pole oranžová, u jazyka svítí oranžové číslo (kolik názvů chybí) a nad seznamem je upozornění. Stejné číslo je na záložce Názvy stránek a oranžová tečka v menu. Dobrý název stránky obsahuje, o čem stránka je, a název firmy, například „Služby | Firma s.r.o.“."
+              "content": "Prázdné pole = návštěvník uvidí v záložce prohlížeče „Cannot load text“ (nikdy název v jiném jazyce). Proto jsou prázdná pole oranžová, u jazyka svítí oranžové číslo (kolik názvů chybí) a nad seznamem je upozornění. Stejné číslo je na záložce Názvy stránek a oranžová tečka v menu. Dobrý název stránky obsahuje, o čem stránka je, a název firmy, například „Služby | Firma s.r.o.“."
             }
           ]
         },

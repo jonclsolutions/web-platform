@@ -1945,7 +1945,7 @@
             },
             {
               "type": "text",
-              "content": "Empty field = the Czech title is used. The recommended length is up to 60 characters. Page titles of the website and the e-shop are set in their applications (Edit website, Edit e-shop)."
+              "content": "An empty field shows as 'Cannot load text' - fill in the title in all languages. The recommended length is up to 60 characters. Page titles of the website and the e-shop are set in their applications (Edit website, Edit e-shop)."
             }
           ]
         }

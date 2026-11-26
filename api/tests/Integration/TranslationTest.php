@@ -175,7 +175,7 @@ class TranslationTest extends TestCase
      *   home; invalid paths, data + changes together, upload with changes, too long text; en.json
      *   not valid JSON.
      * @output 200 values {home.text: "Hello\nworld"}, file {home: {title: Old, text}, extra: Keep};
-     *   title + items.1 written, extra kept; 422 unknown [nope.x, home] count 2, file unchanged;
+     *   title + items.1 written, extra kept; 422 errors.unknown [nope.x, home] count 2, file unchanged;
      *   422 changes.0.path / data / upload / changes.0.value; 500 with the file unchanged; no *.tmp.
      */
     public function test_save_changes_merges_into_the_stored_texts(): void
@@ -196,7 +196,7 @@ class TranslationTest extends TestCase
 
         $before = File::get($this->file('web/en.json'));
         $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'nope.x', 'value' => 'x'], ['path' => 'home', 'value' => 'x'], ['path' => 'extra', 'value' => 'ok']]])
-            ->assertStatus(422)->assertJsonPath('unknown', ['nope.x', 'home'])->assertJsonPath('unknown_count', 2);
+            ->assertStatus(422)->assertJsonPath('errors.unknown', ['nope.x', 'home'])->assertJsonPath('errors.unknown_count', 2);
         $this->assertSame($before, File::get($this->file('web/en.json')));
 
         $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'a..b', 'value' => 'x']]])->assertStatus(422)->assertJsonValidationErrors(['changes.0.path']);
@@ -218,7 +218,7 @@ class TranslationTest extends TestCase
      *   (also the other changes); the same base passes; `force` overwrites; without `base` no check.
      * @input en {home: {title: Theirs, text: T}}; changes title (base Old) + text (base T); the
      *   same with base Theirs; force; no base
-     * @output 409 conflicts [{home.title, Theirs}] count 1, file unchanged; 200 written; 200 with
+     * @output 409 errors.conflicts [{home.title, Theirs}] count 1, file unchanged; 200 written; 200 with
      *   force; 200 without base
      */
     public function test_save_changes_refuses_texts_changed_meanwhile(): void
@@ -232,7 +232,7 @@ class TranslationTest extends TestCase
         $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [
             ['path' => 'home.title', 'value' => 'Mine', 'base' => 'Old'],
             ['path' => 'home.text', 'value' => 'T2', 'base' => 'T'],
-        ]])->assertStatus(409)->assertJsonPath('conflicts', [['path' => 'home.title', 'value' => 'Theirs']])->assertJsonPath('conflict_count', 1);
+        ]])->assertStatus(409)->assertJsonPath('errors.conflicts', [['path' => 'home.title', 'value' => 'Theirs']])->assertJsonPath('errors.conflict_count', 1);
         $this->assertSame($before, File::get($this->file('web/en.json')));
 
         $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.title', 'value' => 'Mine', 'base' => 'Theirs']]])->assertOk();
@@ -240,6 +240,79 @@ class TranslationTest extends TestCase
         $this->assertSame('Forced', json_decode(File::get($this->file('web/en.json')), true)['home']['title']);
         $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.title', 'value' => 'Plain', 'base' => null], ['path' => 'home.text', 'value' => 'X']]])->assertStatus(409);
         $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.text', 'value' => 'X']]])->assertOk();
+    }
+
+    /**
+     * @description The public pages get the texts of a language complete: every key of Czech, a
+     *   missing / empty text 'Cannot load text' (also without a file of the language) - never a
+     *   Czech text; the editors get the stored texts (404 without a file).
+     * @input cz {home: {title, text}, items: [a, b]}; en {home: {title: Home, text: ''}, extra: X};
+     *   GET en / en?complete=1 / de?complete=1 / de
+     * @output stored en; complete en {home: {Home, Cannot load text}, items: [Cannot…, Cannot…],
+     *   extra: X}; de all 'Cannot load text'; de 404
+     */
+    public function test_public_texts_are_complete_without_another_language(): void
+    {
+        File::ensureDirectoryExists($this->file('web'));
+        File::put($this->file('web/cz.json'), json_encode(['home' => ['title' => 'Domů', 'text' => 'Text'], 'items' => ['a', 'b']]));
+        File::put($this->file('web/en.json'), json_encode(['home' => ['title' => 'Home', 'text' => ''], 'extra' => 'X']));
+        $missing = 'Cannot load text';
+
+        $this->getJson('/api/translations/web/en')->assertOk()->assertExactJson(['data' => ['home' => ['title' => 'Home', 'text' => ''], 'extra' => 'X']]);
+        $this->getJson('/api/translations/web/en?complete=1')->assertOk()
+            ->assertExactJson(['data' => ['home' => ['title' => 'Home', 'text' => $missing], 'extra' => 'X', 'items' => [$missing, $missing]]]);
+        $this->getJson('/api/translations/web/de?complete=1')->assertOk()
+            ->assertExactJson(['data' => ['home' => ['title' => $missing, 'text' => $missing], 'items' => [$missing, $missing]]]);
+        $this->getJson('/api/translations/web/de')->assertStatus(404);
+    }
+
+    /**
+     * @description A language other than Czech is switched on only complete: what it lacks per part
+     *   (texts, page titles, content of the applications) is listed for the window "Jazyky"; a
+     *   switch-on of an incomplete language is refused (422 with the parts, nothing saved), of a
+     *   complete one saved; switching off and keeping an active language as it is are free.
+     * @input cz {a, b}; languages web cz, en (off), de (on, incomplete - an update added a text);
+     *   en with a only; GET completeness; switch en on; fill en; switch en on; de stays on, en off
+     * @output completeness en {texts: 1}, de {texts: 2}; 422 errors.incomplete {en: {texts: 1}}, en still
+     *   off; then 204, en on; de kept on (not a switch-on); 204 switching en off
+     */
+    public function test_a_language_is_switched_on_only_complete(): void
+    {
+        $this->signIn($this->userWith(self::EDITOR));
+        File::ensureDirectoryExists($this->file('web'));
+        File::put($this->file('web/cz.json'), json_encode(['a' => 'A', 'b' => 'B']));
+        File::put($this->file('web/en.json'), json_encode(['a' => 'A en']));
+        $this->languages([
+            ['code' => 'cz', 'name' => 'Čeština', 'module' => 'web', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'en', 'name' => 'English', 'module' => 'web', 'active' => false],
+            ['code' => 'de', 'name' => 'Deutsch', 'module' => 'web', 'active' => true],
+        ]);
+        \App\Models\Legal\PageTitle::query()->where('area', 'web')->delete();
+        $list = fn (bool $en) => ['languages' => json_encode([
+            ['code' => 'cz', 'name' => 'Čeština', 'active' => true],
+            ['code' => 'en', 'name' => 'English', 'active' => $en],
+            ['code' => 'de', 'name' => 'Deutsch', 'active' => true],
+        ])];
+        $active = fn (string $code) => collect(json_decode(File::get($this->file('languages.json')), true))->first(fn ($l) => $l['code'] === $code && $l['module'] === 'web')['active'];
+
+        $completeness = $this->getJson('/api/languages/web/completeness')->assertOk()->json('data');
+        $this->assertSame(1, $completeness['en']['texts']);
+        $this->assertSame(2, $completeness['de']['texts']);
+        $this->assertArrayNotHasKey('cz', $completeness);
+
+        $this->postJson('/api/languages/web', $list(true))->assertStatus(422)->assertJsonPath('errors.incomplete.en.texts', 1);
+        $this->assertFalse($active('en'));
+
+        File::put($this->file('web/en.json'), json_encode(['a' => 'A en', 'b' => 'B en']));
+        $this->postJson('/api/languages/web', $list(true))->assertNoContent();
+        $this->assertTrue($active('en'));
+        $this->assertTrue($active('de'));
+        $this->postJson('/api/languages/web', $list(false))->assertNoContent();
+        $this->assertFalse($active('en'));
+
+        $this->app['auth']->forgetGuards();
+        $this->signIn($this->userWith(['web-edit-website-view']));
+        $this->getJson('/api/languages/web/completeness')->assertStatus(403);
     }
 
     /**

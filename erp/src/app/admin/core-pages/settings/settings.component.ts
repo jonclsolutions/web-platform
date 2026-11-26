@@ -132,7 +132,8 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit 
       this.LANG_TTL_MS
     ).subscribe({
       next: (res) => {
-        this.languages = (Array.isArray(res) ? res : []).filter(l => l.active !== false);
+        // the switched off languages too: their texts are filled in before they are switched on
+        this.languages = Array.isArray(res) ? res : [];
 
         if (this.languages.length > 0 && !this.languages.find(l => l.code === this.currentLang)) {
           this.currentLang = this.languages[0].code;
@@ -172,7 +173,7 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit 
 
   /** @description Language tabs of the translated fields. */
   get langItems(): RowButton[] {
-    return this.langButtons.update(languageRowButtons(this.languages));
+    return this.langButtons.update(languageRowButtons(this.languages, { inactiveTitle: this.i18n.getValue('shared.inactive_language_title'), }));
   }
 
   /**

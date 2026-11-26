@@ -68,23 +68,28 @@ describe('EditLegalComponent', () => {
   it('loads types, languages and sections', fakeAsync(() => {
     init();
     expect(component.activeTabId).toBe(1);
-    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
+    // a switched off language (de) is offered too - its documents are prepared before it is switched on
+    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en', 'de']);
+    expect(component.langItems.map(item => !!item.muted)).toEqual([false, false, true]);
     expect(component.data.map(s => s.id)).toEqual([11, 12]);
     expect((ctx.dataHandler as any).getCollection).toHaveBeenCalledWith('legal/document-sections?no_pagination=true&document_type_id=1&lang=cz');
     discardPeriodicTasks();
   }));
 
   /**
-   * @description Positions missing in a language are reported (here position 2 missing in EN).
-   * @input  cz positions [1, 2], en positions [1]
-   * @output missingSummary { 2: ['en'] }; langHasWarning('en') true; totalWarningsLabel '1 warning'; missingPositionsForCurrentLang [] in cz
+   * @description Positions missing in a language are reported (here position 2 missing in EN, both
+   *   in the switched off DE - prepared before it is switched on).
+   * @input  cz positions [1, 2], en positions [1], de none
+   * @output missingSummary { 1: ['de'], 2: ['en', 'de'] }; langHasWarning('en'), ('de') true;
+   *   totalWarningsLabel '3 warnings'; missingPositionsForCurrentLang [] in cz, [2] in en
    */
   it('reports positions missing in other languages', fakeAsync(() => {
     init();
-    expect(component.missingSummary).toEqual({ 2: ['en'] });
+    expect(component.missingSummary).toEqual({ 1: ['de'], 2: ['en', 'de'] });
     expect(component.langHasWarning('en')).toBeTrue();
+    expect(component.langHasWarning('de')).toBeTrue();
     expect(component.langHasWarning('cz')).toBeFalse();
-    expect(component.totalWarningsLabel).toBe('1 warning');
+    expect(component.totalWarningsLabel).toBe('3 warnings');
     expect(component.missingPositionsForCurrentLang).toEqual([]);
     component.switchLang('en');
     expect(component.missingPositionsForCurrentLang).toEqual([2]);
@@ -217,13 +222,13 @@ describe('EditLegalComponent', () => {
   /**
    * @description Labels are built from the translated templates.
    * @input  tab 1 (Terms), lang cz; section at position 2 missing in en
-   * @output newSectionTitle 'New in Terms (Čeština)'; missingTagTitle 'Missing in en'; missingTagText '1 missing'; addPositionButtonLabel(2) 'Add 2'
+   * @output newSectionTitle 'New in Terms (Čeština)'; missingTagTitle 'Missing in en, de'; missingTagText '2 missing'; addPositionButtonLabel(2) 'Add 2'
    */
   it('builds the translated labels', fakeAsync(() => {
     init();
     expect(component.newSectionTitle).toBe('New in Terms (Čeština)');
-    expect(component.missingTagTitle(component.data[1])).toBe('Missing in en');
-    expect(component.missingTagText(component.data[1])).toBe('1 missing');
+    expect(component.missingTagTitle(component.data[1])).toBe('Missing in en, de');
+    expect(component.missingTagText(component.data[1])).toBe('2 missing');
     expect(component.addPositionButtonLabel(2)).toBe('Add 2');
     expect(component.getLangName('xx')).toBe('XX');
     discardPeriodicTasks();

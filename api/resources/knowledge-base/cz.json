@@ -1945,7 +1945,7 @@
             },
             {
               "type": "text",
-              "content": "Prázdné pole = použije se název v češtině. Doporučená délka je do 60 znaků. Názvy stránek webu a e-shopu se nastavují v jejich aplikacích (Upravit web, Upravit e-shop)."
+              "content": "Prázdné pole se ukáže jako „Cannot load text“ - název vyplňte ve všech jazycích. Doporučená délka je do 60 znaků. Názvy stránek webu a e-shopu se nastavují v jejich aplikacích (Upravit web, Upravit e-shop)."
             }
           ]
         }

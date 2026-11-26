@@ -38,6 +38,8 @@ export interface RowButton {
   hidden?: boolean;
   /** Rendered but not clickable. */
   disabled?: boolean;
+  /** Shown quieter, with a dashed outline - something switched off (a language visitors do not see). */
+  muted?: boolean;
 }
 
 /** @description Language as the pages of the administration keep it (code, flag, name). */
@@ -45,12 +47,17 @@ export interface RowButtonLanguage {
   code: string;
   iconUrl?: string | null;
   name?: string | null;
+  /** false = switched off (visitors do not see it) - still edited, the tab is muted. */
+  active?: boolean | null;
 }
 
 /**
  * @description Language tabs: flag + upper-case code (or the name), optional count / dot per language.
+ *   A switched off language (`active` false) is offered too - it is prepared before it is
+ *   switched on - with a muted tab and `inactiveTitle` in its tooltip.
  * @param languages Languages of the page.
- * @param options showName = the name instead of the code; count / dot / title per language code.
+ * @param options showName = the name instead of the code; count / dot / title per language code;
+ *   inactiveTitle = tooltip of a switched off language.
  * @returns Buttons with `value` = the language code.
  */
 export function languageRowButtons(
@@ -60,6 +67,7 @@ export function languageRowButtons(
     count?: (code: string) => number | null;
     dot?: (code: string) => boolean;
     title?: (code: string) => string;
+    inactiveTitle?: string;
   } = {},
 ): RowButton[] {
   return languages.map(lang => {
@@ -71,7 +79,8 @@ export function languageRowButtons(
       count,
       countTone: 'attention' as const,
       dot: options.dot?.(lang.code) ?? false,
-      title: options.title?.(lang.code) || undefined,
+      title: [options.title?.(lang.code), lang.active === false ? options.inactiveTitle : ''].filter(Boolean).join(' – ') || undefined,
+      muted: lang.active === false,
     };
   });
 }

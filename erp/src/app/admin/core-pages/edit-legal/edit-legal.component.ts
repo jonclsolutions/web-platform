@@ -180,7 +180,8 @@ protected override translationSection: string = 'edit-legal';
     )
       .pipe(catchError(() => of({ languages: [] })))
       .subscribe((res: any) => {
-        this.languages = (Array.isArray(res) ? res : []).filter((l: any) => l.active !== false);  // payload = list (finding #6)
+        // payload = list (finding #6); the switched off languages too - prepared before they are switched on
+        this.languages = Array.isArray(res) ? res : [];
 
         if (this.languages.length > 0 && !this.languages.find(l => l.code === this.activeLang)) {
           this.activeLang = this.languages[0].code;
@@ -351,6 +352,7 @@ protected override translationSection: string = 'edit-legal';
   get langItems(): RowButton[] {
     return this.langButtons.update(languageRowButtons(this.languages, {
       showName: true,
+      inactiveTitle: this.i18n.getValue('shared.inactive_language_title'),
       dot: code => this.langHasWarning(code),
       title: code => (this.langHasWarning(code) ? this.strings.lang_tab_warning_title : ''),
     }));

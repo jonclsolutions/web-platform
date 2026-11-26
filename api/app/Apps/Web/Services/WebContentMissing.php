@@ -36,12 +36,14 @@ final class WebContentMissing
     private const MODULE = 'web';
 
     /**
-     * @description Records missing a text in an active language, per tab of the content.
+     * @description Records missing a text in an active language (or in the given languages), per
+     *   tab of the content.
+     * @param array<int, string>|null $codes Languages to check; null = the active ones.
      * @return array{faq: int, jobs: int, references: int, knowledge_base: int}
      */
-    public static function counts(): array
+    public static function counts(?array $codes = null): array
     {
-        $languages = array_values(array_unique(array_map('strtolower', TranslationController::activeLanguageCodes(self::MODULE))));
+        $languages = array_values(array_unique(array_map('strtolower', $codes ?? TranslationController::activeLanguageCodes(self::MODULE))));
         $activeJobs = WebJob::where('is_active', true)->pluck('id');
         $activeReferences = WebReference::where('is_active', true)->pluck('id');
         $activeSections = WebKbSection::where('is_active', true)->pluck('id');
