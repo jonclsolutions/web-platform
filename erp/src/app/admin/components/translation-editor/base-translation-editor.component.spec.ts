@@ -115,6 +115,44 @@ describe('BaseTranslationEditorComponent', () => {
   }));
 
   /**
+   * @description Changes of one text: the saved value is the loaded one; a text written
+   *   back to it is no change any more; ↺ restores it (the other edits stay); the list of the
+   *   changes goes from the last edited; a load clears it all.
+   * @input cz {home: {title, sub, more}}; edit title, sub, title again, more; write sub back;
+   *   revertValue(more); refreshTranslations()
+   * @output changedTexts [title, more, sub] after the edits; sub back → [title, more]; savedValueOf
+   *   title 'Domů'; revert more → value 'Více', [title], dirty; after the load nothing changed
+   */
+  it('reverts one text and lists the changes from the last edited', fakeAsync(() => {
+    shared.cz = { home: { title: 'Domů', sub: 'Podtitulek', more: 'Více' } } as any;
+    component.ngOnInit();
+    component.updateValue('home.title', 'A');
+    component.updateValue('home.sub', 'B');
+    component.updateValue('home.title', 'AA');
+    component.updateValue('home.more', 'C');
+    expect(component.changedTexts.map(t => t.path)).toEqual(['home.more', 'home.title', 'home.sub']);
+    expect(component.changedTexts[1].value).toBe('AA');
+    expect(component.savedValueOf('home.title')).toBe('Domů');
+
+    component.updateValue('home.sub', 'Podtitulek');
+    expect(component.changedTexts.map(t => t.path)).toEqual(['home.more', 'home.title']);
+    expect(component.changedPaths.has('home.sub')).toBeFalse();
+
+    component.revertValue('home.more');
+    expect(component.translations.home.more).toBe('Více');
+    expect(component.changedTexts.map(t => t.path)).toEqual(['home.title']);
+    expect(component.isDirty).toBeTrue();
+    component.revertValue('home.title');
+    expect(component.isDirty).toBeFalse();
+
+    component.updateValue('home.title', 'X');
+    component.refreshTranslations();
+    expect(component.changedPaths.size).toBe(0);
+    expect(component.savedValueOf('home.title')).toBe('Domů');
+    flush();
+  }));
+
+  /**
    * @description Without the Czech reference the editor still loads the language (no keys to
    *   compare); refresh forces a new request only when asked.
    * @input translations/test/cz fails.

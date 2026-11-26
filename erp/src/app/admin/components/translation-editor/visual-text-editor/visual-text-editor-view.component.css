@@ -328,6 +328,60 @@
 .te-hidden-key { color: var(--text); font-family: var(--ff-mono); font-size: 0.72rem; overflow-wrap: anywhere; }
 .te-hidden-where { color: var(--text-dim); font-size: 0.72rem; }
 
+/* "Vrátit uloženou verzi" under the field of a changed text. */
+.te-revert {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-indigo-700, #4338ca);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.te-revert:hover { text-decoration: underline; }
+
+/* List "Upravené texty": key (+ "jiná stránka"), the new text on one line, ↺ beside it. */
+.te-changed-row { display: flex; align-items: center; gap: 4px; }
+.te-changed-item { flex: 1; min-width: 0; }
+.te-changed-value {
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.te-changed-other {
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-dim);
+  font-family: var(--ff);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.te-changed-revert {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.te-changed-revert:hover { background: var(--bg); color: var(--text); }
+.te-revert:focus-visible,
+.te-changed-revert:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
+
 /* Texts missing in the language on the page (orange as their outline on the page). */
 .te-label--missing { color: #c2410c; }
 .te-missing-item { border-left: 3px solid #f97316; border-radius: 0 8px 8px 0; }

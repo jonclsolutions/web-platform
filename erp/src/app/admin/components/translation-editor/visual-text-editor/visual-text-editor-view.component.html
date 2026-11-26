@@ -59,7 +59,8 @@
         @if (e.isDirty) {
           <button type="button" class="te-btn te-btn--ghost" (click)="askDiscard()">{{ e.t('discard_changes_button') }}</button>
         }
-        <button type="button" class="te-btn te-btn--primary" [disabled]="!e.isDirty" (click)="save()">{{ saveLabel }}</button>
+        <button type="button" class="te-btn te-btn--primary" [disabled]="!e.isDirty" (click)="save()"
+                [title]="e.isDirty ? e.t('editor_changed_tooltip') : ''">{{ saveLabel }}</button>
       }
       <button type="button" class="te-close" (click)="close()" [attr.aria-label]="e.t('editor_close')" [title]="e.t('editor_close')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -103,6 +104,13 @@
           @if (!currentValue(key).trim()) {
             <p class="te-missing">{{ e.t('editor_missing') }}</p>
           }
+          <!-- A changed text: back to its saved version (no confirmation - one text). -->
+          @if (e.canUpdate && e.changedPaths.has(key)) {
+            <button type="button" class="te-revert" (click)="revert(key)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+              {{ e.t('editor_revert_button') }}
+            </button>
+          }
           <p class="te-hint">{{ e.t('editor_preview_hint') }}</p>
         } @else if (contentSection; as section) {
           <p class="te-note">{{ e.t('editor_content_note').replace('{part}', partLabel(section)) }}</p>
@@ -112,6 +120,39 @@
         } @else {
           <p class="te-empty">{{ e.t('editor_empty_hint') }}</p>
           <p class="te-count">{{ e.t('editor_texts_count').replace('{count}', '' + visibleKeys.length) }}</p>
+        }
+
+        <!-- Unsaved edits of the language, the last edited first: select (on this page it is
+             shown and outlined, elsewhere only opened here) or ↺ back to the saved version. -->
+        @if (e.changedPaths.size) {
+          <div class="te-section">
+            <div class="te-label">{{ e.t('editor_changed_label').replace('{count}', '' + e.changedPaths.size) }}</div>
+            <ul class="te-hidden te-changed">
+              @for (text of changedShown; track text.path) {
+                <li class="te-changed-row">
+                  <button type="button" class="te-hidden-item te-changed-item" [class.te-hidden-item--on]="text.path === selectedKey" (click)="selectKey(text.path)">
+                    <span class="te-hidden-key">{{ text.path }}
+                      @if (!onThisPage(text.path)) {
+                        <span class="te-changed-other">{{ e.t('editor_changed_other_page') }}</span>
+                      }
+                    </span>
+                    <span class="te-changed-value">{{ text.value || '—' }}</span>
+                  </button>
+                  @if (e.canUpdate) {
+                    <button type="button" class="te-changed-revert" (click)="revert(text.path)"
+                            [title]="e.t('editor_revert_button')" [attr.aria-label]="e.t('editor_revert_button') + ': ' + text.path">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+            @if (e.changedPaths.size > changedShown.length || changedExpanded) {
+              <button type="button" class="te-link" (click)="changedExpanded = !changedExpanded">
+                {{ changedExpanded ? e.t('editor_changed_less') : e.t('editor_changed_all').replace('{count}', '' + e.changedPaths.size) }}
+              </button>
+            }
+          </div>
         }
 
         <div class="te-section">

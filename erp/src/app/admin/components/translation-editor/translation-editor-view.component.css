@@ -89,6 +89,25 @@
 .ew-langs-btn:hover { background: var(--color-zinc-200); }
 .ew-langs-btn:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
 
+/* ↺ of a changed row: back to the saved version of the text. */
+.ew-revert-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 6px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-dim);
+  vertical-align: middle;
+  cursor: pointer;
+}
+.ew-revert-btn:hover { color: var(--text); background: var(--surface-2); }
+.ew-revert-btn:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
+
 /*
  * @module Statistics line and the "Chybí" toggle (`compactActions`, 2026-11)
  * @description The statistics of the whole language as one quiet line next to the language tabs

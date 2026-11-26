@@ -247,6 +247,13 @@ export abstract class BaseTranslationEditorComponent
    * button ("Uložit změny (3)"); cleared together with `isDirty`.
    */
   changedPaths = new Set<string>();
+  /**
+   * Saved values of the texts of the language (as loaded / saved - built with the flat list) - a
+   * text written back to it is no longer a change; "Vrátit uloženou verzi" / ↺ restores it.
+   * @note Taken at the load, not at the first edit: the field of the list writes the new value
+   *   into the flat list (ngModel) before `updateValue()` runs.
+   */
+  private savedValues = new Map<string, string>();
 
   showAddForm: boolean = false;
   newLangCode: string = '';
@@ -447,6 +454,7 @@ export abstract class BaseTranslationEditorComponent
    */
   private buildFlatList(): void {
     this.flattenedKeys = [];
+    this.savedValues = new Map();
     const czFlat  = this.flattenToMap(this.czTranslations);
     const curFlat = this.flattenToMap(this.translations);
 
@@ -466,6 +474,9 @@ export abstract class BaseTranslationEditorComponent
         const safeVal = typeof val === 'string' ? val : String(val);
         this.flattenedKeys.push({ path, value: safeVal, missing: false });
       }
+    }
+    for (const key of this.flattenedKeys) {
+      this.savedValues.set(key.path, key.value);
     }
   }
 
@@ -604,9 +615,38 @@ export abstract class BaseTranslationEditorComponent
       item.missing = (typeof newValue === 'string' ? newValue : String(newValue)).trim() === '';
     }
 
-    this.isDirty = true;
-    this.changedPaths.add(path);
+    // the last edited text goes to the end (the editor lists them from the last one); a text
+    // written back to its saved value is no longer a change
+    this.changedPaths.delete(path);
+    if (newValue !== this.savedValueOf(path)) {
+      this.changedPaths.add(path);
+    }
+    this.isDirty = this.changedPaths.size > 0;
     this.cd.markForCheck();
+  }
+
+  /**
+   * @param path Dot path of the key.
+   * @returns Its saved text (before the unsaved edit; the current one when not changed).
+   */
+  savedValueOf(path: string): string {
+    return this.savedValues.get(path) ?? '';
+  }
+
+  /**
+   * @description Restores the saved text of one changed key (no confirmation - one text, the
+   *   edit can be written again); the other edits stay.
+   * @param path Dot path of the key.
+   */
+  revertValue(path: string): void {
+    if (!this.canUpdate || !this.changedPaths.has(path)) return;
+    this.updateValue(path, this.savedValueOf(path));
+    setTimeout(() => this.resizeAllTextareas(), 0);
+  }
+
+  /** @returns The changed texts of the language, the last edited first (key and current text). */
+  get changedTexts(): { path: string; value: string }[] {
+    return [...this.changedPaths].reverse().map(path => ({ path, value: this.flattenedKeys.find(k => k.path === path)?.value ?? '' }));
   }
 
   adjustHeight(event: any): void {

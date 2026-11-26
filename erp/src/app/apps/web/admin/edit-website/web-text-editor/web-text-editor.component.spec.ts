@@ -159,6 +159,49 @@ describe('WebTextEditorComponent', () => {
   }));
 
   /**
+   * @description A changed text: "Vrátit uloženou verzi" in the panel restores it at once (also
+   *   on the page); the panel lists the edits from the last one, a text not on the page shown
+   *   marked "jiná stránka"; ↺ of the list restores it; a click selects it; the save button tells
+   *   where the list is.
+   * @input scan /faq with faq.title; edit faq.title, then faq.sub (not on the page); revert from
+   *   the list, then from the panel link
+   * @output list [faq.sub (other page), faq.title]; save title tooltip; ↺ faq.sub → drafts
+   *   {faq.title}; the link → drafts {}, no list, not dirty
+   */
+  it('restores a text and lists the edited texts', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    fromPage({ type: 'scan', path: '/faq', title: '', visible: ['faq.title'], missing: [], hidden: [] });
+    fromPage({ type: 'select', key: 'faq.title' });
+    flush();
+    view.edit('faq.title', 'Dotazy');
+    view.edit('faq.sub', 'Jiný');
+    fixture.detectChanges();
+    const rows = () => Array.from(el.querySelectorAll('.te-changed-row'));
+    expect(rows().map(r => r.querySelector('.te-hidden-key')!.textContent!.trim().split(/\s+/)[0])).toEqual(['faq.sub', 'faq.title']);
+    expect(rows()[0].querySelector('.te-changed-other')).not.toBeNull();
+    expect(rows()[1].querySelector('.te-changed-other')).toBeNull();
+    expect(el.querySelector('.te-btn--primary')!.getAttribute('title')).toContain('editor_changed_tooltip');
+
+    (rows()[0].querySelector('.te-changed-revert') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'drafts', values: { 'faq.title': 'Dotazy' } }));
+    expect(rows().length).toBe(1);
+
+    (rows()[0].querySelector('.te-changed-item') as HTMLButtonElement).click();
+    flush();
+    expect(view.selectedKey).toBe('faq.title');
+    (el.querySelector('.te-revert') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'drafts', values: {} }));
+    expect(component.translations.faq.title).toBe('Časté dotazy');
+    expect(rows().length).toBe(0);
+    expect(el.querySelector('.te-revert')).toBeNull();
+    expect(component.isDirty).toBeFalse();
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description Another language with unsaved edits asks first; keeping them changes nothing;
    *   confirming loads the language and the same page in it. Close goes back (the route asks
    *   about unsaved edits - see the next test).

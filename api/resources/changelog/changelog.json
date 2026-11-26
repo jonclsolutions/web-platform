@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
+            "text": "Texty webu: jeden upravený text jde vrátit na uloženou verzi bez potvrzení (odkaz v editoru, ikona ↺ v seznamu) a editor vypisuje Upravené texty – naposledy upravený nahoře, text z jiné stránky označený. Text přepsaný zpět na uložený se už nepočítá jako změna."
+        },
+        {
             "type": "fixed",
             "area": "core",
             "part": "admin",

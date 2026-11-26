@@ -292,6 +292,13 @@
               @if (item.missing) {
                 <span class="ew-missing-badge" [title]="e.t('missing_translation_title')">!</span>
               }
+              <!-- A changed text: back to its saved version (no confirmation - one text). -->
+              @if (e.canUpdate && e.changedPaths.has(item.path)) {
+                <button type="button" class="ew-revert-btn" (click)="e.revertValue(item.path)"
+                        [title]="e.t('editor_revert_button')" [attr.aria-label]="e.t('editor_revert_button') + ': ' + item.path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+                </button>
+              }
             </td>
             <td class="ew-td-val">
               <textarea

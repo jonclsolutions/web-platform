@@ -569,6 +569,37 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
+   * @description ↺ of a changed row restores its saved text without a confirmation (the other
+   *   edits stay); an unchanged row has none.
+   * @input  render; type into the footer row, edit home.title; click the ↺ of the footer row
+   * @output 2 ↺ buttons; after the click footer 'Patička', 1 change left (home.title), 1 button
+   */
+  it('restores the saved text of a changed row', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.ew-revert-btn')).toBeNull();
+    // typed into the field of the row (ngModel writes the flat list before updateValue runs)
+    const footerRow = Array.from(el.querySelectorAll('.ew-row')).find(row => row.querySelector('.ew-key-text')!.textContent!.includes('footer'))!;
+    const field = footerRow.querySelector('.ew-edit-input') as HTMLTextAreaElement;
+    field.value = 'Nová';
+    field.dispatchEvent(new Event('input'));
+    component.updateValue('home.title', 'Jiný');
+    fixture.detectChanges();
+    expect(component.changedPaths.has('footer')).toBeTrue();
+    expect(el.querySelectorAll('.ew-revert-btn').length).toBe(2);
+    (footerRow.querySelector('.ew-revert-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    flush();
+    expect(component.translations.footer).toBe('Patička');
+    expect([...component.changedPaths]).toEqual(['home.title']);
+    expect(el.querySelectorAll('.ew-revert-btn').length).toBe(1);
+    expect(document.querySelector('.am-overlay')).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description The list of texts (`compactActions`): every row is a .ew-row (on a phone a
    *   compact row - key above the text); a key gets a break chance (<wbr>) only after its dots,
    *   its text stays the same (copying a key copies it whole) and the whole key is its title.

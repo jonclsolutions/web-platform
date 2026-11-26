@@ -50,6 +50,9 @@ export interface VisualEditorPage {
   labelKey: string;
 }
 
+/** Changed texts listed before "zobrazit všechny". */
+export const CHANGED_LIST_LIMIT = 6;
+
 /** Sections of the content and the tab of the admin that edits them. */
 const CONTENT_SECTIONS: TextEditorContentSection[] = ['faq', 'jobs', 'references', 'knowledge_base'];
 
@@ -114,8 +117,6 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   /** The confirmation is about leaving the editor (its own texts: stay / leave without saving). */
   pendingLeave = false;
 
-  /** Saved values of the edited texts (before their first edit since the last save / load). */
-  private readonly originals = new Map<string, string>();
   /** Language of the page shown in the frame (a deleted language switches the page to Czech). */
   private frameLang = '';
   /** Languages (code / state) when last seen - an added / deleted / switched language reloads the page. */
@@ -139,7 +140,6 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     this.phone?.addEventListener('change', this.onPhoneChange);
     window.addEventListener('message', this.onMessage);
     this.e.saved$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.originals.clear();
       this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'commit' });
     });
   }
@@ -166,7 +166,6 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     this.languagesSeen = languages;
     this.uploadSeen = uploaded;
     if (reload && this.frameLang !== '') {
-      this.originals.clear();
       this.navigateFrame(this.framePath);
     }
     if (this.e.flattenedKeys !== this.keysSeen) {
@@ -253,7 +252,6 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   switchLang(code: string): void {
     if (code === this.e.currentLang) return;
     this.guard(() => {
-      this.originals.clear();
       this.e.loadLang(code);
       this.navigateFrame(this.framePath);
     });
@@ -299,7 +297,6 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   /** @description Throws the edits away after a confirmation. */
   askDiscard(): void {
     this.pendingAction = () => {
-      this.originals.clear();
       this.e.discardChanges();
       this.postDrafts();
     };
@@ -356,10 +353,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
    * @returns Its saved text in the language (before the edits).
    */
   savedValue(path: string): string {
-    if (!this.e.isDirty) {
-      this.originals.clear();
-    }
-    return this.originals.has(path) ? this.originals.get(path)! : this.currentValue(path);
+    return this.e.savedValueOf(path);
   }
 
   /**
@@ -378,11 +372,36 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
    */
   edit(path: string, value: string): void {
     if (!this.e.canUpdate) return;
-    if (!this.originals.has(path)) {
-      this.originals.set(path, this.currentValue(path));
-    }
     this.e.updateValue(path, value);
     this.postDrafts();
+  }
+
+  /**
+   * @description Restores the saved text of a changed key (the panel link / ↺ of the list) - at
+   *   once on the page too; the other edits stay.
+   * @param path Translation key.
+   */
+  revert(path: string): void {
+    this.e.revertValue(path);
+    this.postDrafts();
+  }
+
+  /** The list "Upravené texty" shows all of them (else the first CHANGED_LIST_LIMIT). */
+  changedExpanded = false;
+
+  /** @returns The changed texts shown in the panel (the last edited first). */
+  get changedShown(): { path: string; value: string }[] {
+    const all = this.e.changedTexts;
+    return this.changedExpanded ? all : all.slice(0, CHANGED_LIST_LIMIT);
+  }
+
+  /**
+   * @param path Translation key.
+   * @returns Whether the page shown has the text (clickable, missing or hidden) - else the list
+   *   marks it "jiná stránka" and a click opens it in the panel only.
+   */
+  onThisPage(path: string): boolean {
+    return this.visibleKeys.includes(path) || this.missingKeys.includes(path) || this.hiddenTexts.some(text => text.key === path);
   }
 
   /**
