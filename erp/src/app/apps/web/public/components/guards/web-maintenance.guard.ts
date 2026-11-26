@@ -14,6 +14,8 @@
  * - Router: Enables redirection to the maintenance page.
  * - PublicDataService: Fetches the current operational status of the web from the API.
  * - RxJS operators: For handling the asynchronous status response.
+ * @note The visual text editor of the admin (PublicTextEditorService.active) passes - the pages
+ *   can be edited also while the website is in maintenance.
  */
 
 import { inject } from '@angular/core';
@@ -21,6 +23,7 @@ import { Router } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
 import { stripLanguagePrefix } from '../../../../../shared/utils/language-url';
+import { PublicTextEditorService } from '../../../../../public/text-editor/public-text-editor.service';
 
 /** Address of the maintenance page of the public web (the web lives at the domain root). */
 export const WEB_MAINTENANCE_URL = '/maintenance';
@@ -35,6 +38,11 @@ export const WEB_MAINTENANCE_URL = '/maintenance';
 export const webMaintenanceGuard = () => {
   const dataService = inject(PublicDataService);
   const router = inject(Router);
+
+  // The visual text editor of the admin edits the pages also while the website is in maintenance.
+  if (inject(PublicTextEditorService).active) {
+    return true;
+  }
 
   // Avoid infinite redirection loops by bypassing the guard if already on the maintenance page
   // (Router.url carries the language - `/cs/maintenance`).

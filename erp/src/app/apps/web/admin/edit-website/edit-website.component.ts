@@ -14,9 +14,11 @@
  * - TranslationEditorViewComponent: the page; the panels of the extra tabs are its content.
  * - FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, KnowledgeBaseEditorComponent:
  *   the extra tabs.
+ * @note `?tab=faq` (…) opens a tab - the visual text editor points to the part of a content.
  */
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   BaseTranslationEditorComponent, TranslationEditorTab
 } from '../../../../admin/components/translation-editor/base-translation-editor.component';
@@ -54,4 +56,15 @@ export class EditWebsiteComponent extends BaseTranslationEditorComponent {
     { key: 'references', labelKey: 'tab_references', icon: 'star', attentionKind: 'web_references_missing' },
     { key: 'knowledge_base', labelKey: 'tab_knowledge_base', icon: 'book', attentionKind: 'web_kb_missing' },
   ];
+
+  private readonly route = inject(ActivatedRoute);
+
+  /** @description Loads the page and opens the tab named in the address (`?tab=`). */
+  override ngOnInit(): void {
+    super.ngOnInit();
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab && this.tabs.some(t => t.key === tab)) {
+      this.switchTab(tab);
+    }
+  }
 }

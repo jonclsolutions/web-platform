@@ -10,7 +10,8 @@
 -->
 
 <!-- `compactActions`: JSON download / upload in the "⋯ Akce" menu, the save bar alone (pilot). -->
-<app-translation-editor-view [e]="this" [compactActions]="true">
+<!-- `editorRoute`: the "Otevřít editor" button (visual text editor of the website pages). -->
+<app-translation-editor-view [e]="this" [compactActions]="true" editorRoute="/admin/web/edit-website/editor">
   @if (isTabOpened('faq')) {
     <div class="ew-titles-wrap" [style.display]="activeTab === 'faq' ? null : 'none'">
       <app-faq-editor [hostLanguages]="languages" (dirtyChange)="setTabDirty('faq', $event)"></app-faq-editor>

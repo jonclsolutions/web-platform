@@ -16,6 +16,7 @@
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 
+import { PublicTextEditorService } from '../../public/text-editor/public-text-editor.service';
 import { AnalyticsService } from './analytics.service';
 import { PublicDataService } from './public-data.service';
 import { CookieConsentService, CookieConsentState } from './cookie-consent.service';
@@ -101,5 +102,19 @@ describe('AnalyticsService', () => {
     consent$.next(consent(false));
     expect(scripts.length).toBe(0);
     expect(layer()[layer().length - 1]).toEqual(['consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' }]);
+  });
+
+  /**
+   * @description In the visual text editor of the admin nothing runs: no consent state, no script.
+   * @input PublicTextEditorService active; init(); id G-1; analytics consent
+   * @output no dataLayer, no script
+   */
+  it('does nothing in the visual text editor', () => {
+    Object.defineProperty(TestBed.inject(PublicTextEditorService), 'active', { value: true });
+    service.init();
+    settings$.next({ settings: { google_analytics_id: 'G-1' } });
+    consent$.next(consent(true));
+    expect((window as any).dataLayer).toBeUndefined();
+    expect(scripts.length).toBe(0);
   });
 });

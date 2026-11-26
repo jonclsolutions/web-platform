@@ -6,11 +6,24 @@
     @created: 2026
     @description: Page of a translation editor (`e` = the editor, BaseTranslationEditorComponent):
         the page header, tabs, the texts of the module against the CZ reference (languages, search, missing
-        texts, the "Chybí" filter, JSON upload / download, saving / discarding), the browser page titles of the module, the panels
+        texts, the "Chybí" filter, JSON upload / download, saving / discarding, the "Otevřít editor"
+        button), the browser page titles of the module, the panels
         of the extra tabs (projected) and the language / upload / delete modals.
 -->
 
 <app-page-header [title]="e.t('page_title')">
+  <!-- `editorRoute`: the visual text editor (the texts right on the pages); a notice on a phone. -->
+  @if (editorRoute) {
+    <button type="button" class="ew-langs-btn ew-editor-btn" (click)="openEditor()"
+            [attr.aria-label]="e.t('editor_open_button')" [title]="e.t('editor_open_title')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+      </svg>
+      <span class="ew-langs-btn-label">{{ e.t('editor_open_button') }}</span>
+    </button>
+  }
   <!-- `compactActions`: everything about the languages (JSON per language included) in one window. -->
   @if (compactActions) {
     <button type="button" class="ew-langs-btn" (click)="openManage()"
@@ -539,6 +552,18 @@
     <ng-container modal-footer>
       <button type="button" class="am-btn am-btn--secondary" (click)="closeDiscard()">{{ e.t('discard_keep_button') }}</button>
       <button type="button" class="am-btn am-btn--danger" (click)="confirmDiscard()">{{ e.t('discard_changes_button') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}
+
+<!-- `editorRoute`: on a phone the visual text editor is not offered - a notice instead. -->
+@if (editorPhoneOpen) {
+  <app-admin-modal size="sm" [heading]="e.t('editor_phone_title')" (dismissed)="closeEditorPhone()">
+    <div class="ew-modal-content">
+      <p class="ew-modal-desc">{{ e.t('editor_phone_text') }}</p>
+    </div>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--primary" (click)="closeEditorPhone()">{{ e.t('editor_phone_ok') }}</button>
     </ng-container>
   </app-admin-modal>
 }

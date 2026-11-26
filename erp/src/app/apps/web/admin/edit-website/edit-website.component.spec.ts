@@ -20,6 +20,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush, discardPeriodicTasks } fro
 import { of, throwError } from 'rxjs';
 
 import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { PageTitlesEditorComponent } from '../../../../admin/components/page-titles-editor/page-titles-editor.component';
 import { EditWebsiteComponent } from './edit-website.component';
 import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
@@ -349,7 +350,7 @@ describe('EditWebsiteComponent', () => {
     // The row only switches the language - adding one is in the window.
     expect(el.querySelector('.ew-lang-tab--add')).toBeNull();
 
-    (el.querySelector('.ew-langs-btn') as HTMLButtonElement).click();
+    (el.querySelector('.ew-langs-btn:not(.ew-editor-btn)') as HTMLButtonElement).click();
     fixture.detectChanges();
     // The window lives in the document body (AdminModalComponent moves itself there).
     const rows = () => Array.from(document.querySelectorAll('.ew-manage-row')) as HTMLElement[];
@@ -413,7 +414,7 @@ describe('EditWebsiteComponent', () => {
     const en = component.languages.find(l => l.code === 'en')!;
     const rows = () => document.querySelectorAll('.ew-manage-row').length;
     const overlays = () => Array.from(document.querySelectorAll('.am-overlay')) as HTMLElement[];
-    (el.querySelector('.ew-langs-btn') as HTMLButtonElement).click();
+    (el.querySelector('.ew-langs-btn:not(.ew-editor-btn)') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(rows()).toBe(2);
 
@@ -584,6 +585,63 @@ describe('EditWebsiteComponent', () => {
     expect(key.textContent!.trim()).toBe('home.title');
     expect(key.getAttribute('title')).toBe('home.title');
     flush();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description "Otevřít editor" in the page header opens the visual text editor; on a phone a
+   *   notice explains it is not supported and nothing opens.
+   * @input render; click the editor button (desktop); matchMedia phone, click again; OK
+   * @output navigateByUrl('/admin/web/edit-website/editor') once; then the notice open, no other
+   *   navigation; closed by OK
+   */
+  it('opens the visual text editor, on a phone only a notice', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
+    const button = el.querySelector('.ew-editor-btn') as HTMLButtonElement;
+    expect(button).not.toBeNull();
+
+    const media = spyOn(window, 'matchMedia').and.returnValue({ matches: false } as MediaQueryList);
+    button.click();
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/admin/web/edit-website/editor');
+
+    media.and.returnValue({ matches: true } as MediaQueryList);
+    button.click();
+    fixture.detectChanges();
+    expect(view.editorPhoneOpen).toBeTrue();
+    expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+    (document.querySelector('.am-btn--primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(view.editorPhoneOpen).toBeFalse();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description `?tab=faq` in the address opens that tab (the editor points to a part of the
+   *   content); an unknown tab is ignored.
+   * @input navigate to '/?tab=faq', render; a new page with '/?tab=nope'
+   * @output activeTab 'faq'; then 'translations'
+   */
+  it('opens the tab named in the address', fakeAsync(() => {
+    const router = TestBed.inject(Router);
+    router.navigateByUrl('/?tab=faq');
+    flush();
+    fixture.detectChanges();
+    flush();
+    expect(component.activeTab).toBe('faq');
+
+    router.navigateByUrl('/?tab=nope');
+    flush();
+    const other = TestBed.createComponent(EditWebsiteComponent);
+    other.detectChanges();
+    flush();
+    expect(other.componentInstance.activeTab).toBe('translations');
+    other.destroy();
     discardPeriodicTasks();
   }));
 

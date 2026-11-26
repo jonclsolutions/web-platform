@@ -1,0 +1,135 @@
+<!--
+    @file: visual-text-editor-view.component.html
+    @path: /src/app/admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Visual text editor (full screen): top bar (EDITOR, page, language, Zahodit změny /
+        Uložit, close), the page of the website in a frame and the side panel of the selected
+        text / content; on a phone a notice instead. Logic: visual-text-editor-view.component.ts.
+-->
+
+@if (isPhone) {
+  <div class="te-phone">
+    <div class="te-phone-card" role="status">
+      <h1 class="te-phone-title">{{ e.t('editor_phone_title') }}</h1>
+      <p class="te-phone-text">{{ e.t('editor_phone_text') }}</p>
+      <button type="button" class="te-btn te-btn--primary" (click)="close()">{{ e.t('editor_back') }}</button>
+    </div>
+  </div>
+} @else {
+  <div class="te-root">
+    <header class="te-bar">
+      <span class="te-badge">{{ e.t('editor_badge') }}</span>
+
+      <label class="te-page">
+        <span class="te-sr">{{ e.t('editor_page_label') }}</span>
+        <select class="te-page-select" [ngModel]="framePath" (ngModelChange)="goToPage($event)">
+          @if (!knownPage) {
+            <option [ngValue]="framePath" disabled>{{ e.t('editor_page_other') }} ({{ framePath }})</option>
+          }
+          @for (page of pages; track page.path) {
+            <option [ngValue]="page.path">{{ e.t(page.labelKey) }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="te-langs" role="group" [attr.aria-label]="e.t('editor_languages_label')">
+        @for (lang of activeLanguages; track lang.code) {
+          <button type="button" class="te-lang" [class.te-lang--on]="lang.code === e.currentLang"
+                  [attr.aria-pressed]="lang.code === e.currentLang" [title]="lang.name" (click)="switchLang(lang.code)">
+            @if (lang.iconUrl) {
+              <img [src]="lang.iconUrl" class="te-lang-flag" alt="">
+            }
+            {{ lang.code.toUpperCase() }}
+          </button>
+        }
+      </div>
+
+      <span class="te-spacer"></span>
+
+      @if (e.canUpdate) {
+        @if (e.isDirty) {
+          <button type="button" class="te-btn te-btn--ghost" (click)="askDiscard()">{{ e.t('discard_changes_button') }}</button>
+        }
+        <button type="button" class="te-btn te-btn--primary" [disabled]="!e.isDirty" (click)="save()">{{ saveLabel }}</button>
+      }
+      <button type="button" class="te-close" (click)="close()" [attr.aria-label]="e.t('editor_close')" [title]="e.t('editor_close')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </header>
+
+    <div class="te-main">
+      <div class="te-stage">
+        <!-- The own website in editor mode: no forms, pop-ups or navigation of the admin (sandbox). -->
+        <iframe #frame class="te-frame" name="jsw-text-editor-frame" sandbox="allow-scripts allow-same-origin"
+                [title]="e.t('editor_frame_title')"></iframe>
+        @if (frameLoading) {
+          <div class="te-loading" role="status">{{ e.t('editor_loading') }}</div>
+        }
+      </div>
+
+      <aside class="te-panel" [attr.aria-label]="e.t('editor_panel_label')">
+        @if (selectedKey; as key) {
+          <div class="te-key">{{ key }}</div>
+          @if (e.currentLang !== 'cz') {
+            <div class="te-label">{{ e.t('editor_reference_label') }}</div>
+            <div class="te-ref">{{ czValue(key) || '—' }}</div>
+          }
+          <div class="te-label">{{ e.t('editor_saved_label').replace('{lang}', langName) }}</div>
+          <div class="te-ref">{{ savedValue(key) || '—' }}</div>
+          <label class="te-label" for="te-value">{{ e.t('editor_edit_label').replace('{lang}', langName) }}</label>
+          <textarea #valueField id="te-value" class="te-value" rows="3"
+                    [class.te-value--missing]="!currentValue(key).trim()"
+                    [ngModel]="currentValue(key)" (ngModelChange)="edit(key, $event)"
+                    [readonly]="!e.canUpdate"></textarea>
+          @if (!currentValue(key).trim()) {
+            <p class="te-missing">{{ e.t('editor_missing') }}</p>
+          }
+          <p class="te-hint">{{ e.t('editor_preview_hint') }}</p>
+        } @else if (contentSection; as section) {
+          <p class="te-note">{{ e.t('editor_content_note').replace('{part}', partLabel(section)) }}</p>
+          <button type="button" class="te-btn te-btn--ghost" (click)="openTab(section)">
+            {{ e.t('editor_content_open').replace('{part}', partLabel(section)) }}
+          </button>
+        } @else {
+          <p class="te-empty">{{ e.t('editor_empty_hint') }}</p>
+          <p class="te-count">{{ e.t('editor_texts_count').replace('{count}', '' + visibleKeys.length) }}</p>
+        }
+
+        <div class="te-section">
+          <div class="te-label">{{ e.t('editor_page_title_label') }}</div>
+          <div class="te-ref">{{ pageTitle || '—' }}</div>
+          <button type="button" class="te-link" (click)="openTab('page_titles')">{{ e.t('editor_page_title_link') }}</button>
+        </div>
+
+        @if (hiddenTexts.length) {
+          <div class="te-section">
+            <div class="te-label">{{ e.t('editor_hidden_label') }}</div>
+            <ul class="te-hidden">
+              @for (text of hiddenTexts; track text.key + text.where) {
+                <li>
+                  <button type="button" class="te-hidden-item" [class.te-hidden-item--on]="text.key === selectedKey" (click)="selectKey(text.key)">
+                    <span class="te-hidden-key">{{ text.key }}</span>
+                    <span class="te-hidden-where">{{ whereLabel(text.where) }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </aside>
+    </div>
+  </div>
+}
+
+<!-- Unsaved edits would be lost (discard, another language, leaving). -->
+@if (pendingAction) {
+  <app-admin-modal size="sm" level="prompt" [heading]="e.t('discard_confirm_heading')" (dismissed)="cancelPending()">
+    <p class="te-modal-text">{{ pendingMessage }}</p>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="cancelPending()">{{ e.t('discard_keep_button') }}</button>
+      <button type="button" class="am-btn am-btn--danger" (click)="confirmPending()">{{ e.t('discard_changes_button') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

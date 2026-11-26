@@ -13,14 +13,19 @@
  * per page load and shared by all components.
  * @note A text missing in the current language shows MISSING_TEXT ('Cannot load text', the same
  * placeholder as the localization services) - the admin warns about every missing translation.
+ * @note In the visual text editor of the admin every text of the content is marked with its part
+ * of the admin (PublicTextEditorService.markContent - blue outline, a click points to that part).
  * @dependencies
  * - PublicDataService: the GET requests (envelope unwrapped).
+ * - PublicTextEditorService: marks of the content in the editor.
  */
 
 import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay } from 'rxjs/operators';
 import { PublicDataService } from '../../../shared/services/public-data.service';
+import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
+import { TextEditorContentSection } from '../../../public/text-editor/text-editor-protocol';
 
 /** Text per language code. */
 export type I18nText = Record<string, string>;
@@ -103,6 +108,7 @@ export function optionalText(text: I18nText | null | undefined, lang: string): s
 @Injectable({ providedIn: 'root' })
 export class WebContentService {
   private readonly publicData = inject(PublicDataService);
+  private readonly textEditor = inject(PublicTextEditorService);
 
   /** Shared requests (one per page load; a failed one is tried again next time). */
   private faq$: Observable<PublicFaqCategory[]> | null = null;
@@ -116,7 +122,7 @@ export class WebContentService {
    */
   faq(): Observable<PublicFaqCategory[]> {
     if (!this.faq$) {
-      this.faq$ = this.load<PublicFaqCategory[]>('public/web/faq', () => (this.faq$ = null));
+      this.faq$ = this.load<PublicFaqCategory[]>('public/web/faq', 'faq', () => (this.faq$ = null));
     }
     return this.faq$;
   }
@@ -127,7 +133,7 @@ export class WebContentService {
    */
   jobs(): Observable<PublicJob[]> {
     if (!this.jobs$) {
-      this.jobs$ = this.load<PublicJob[]>('public/web/jobs', () => (this.jobs$ = null));
+      this.jobs$ = this.load<PublicJob[]>('public/web/jobs', 'jobs', () => (this.jobs$ = null));
     }
     return this.jobs$;
   }
@@ -138,7 +144,7 @@ export class WebContentService {
    */
   references(): Observable<PublicReference[]> {
     if (!this.references$) {
-      this.references$ = this.load<PublicReference[]>('public/web/references', () => (this.references$ = null));
+      this.references$ = this.load<PublicReference[]>('public/web/references', 'references', () => (this.references$ = null));
     }
     return this.references$;
   }
@@ -149,7 +155,7 @@ export class WebContentService {
    */
   knowledgeBase(): Observable<PublicKbSection[]> {
     if (!this.knowledgeBase$) {
-      this.knowledgeBase$ = this.load<PublicKbSection[]>('public/web/knowledge-base', () => (this.knowledgeBase$ = null));
+      this.knowledgeBase$ = this.load<PublicKbSection[]>('public/web/knowledge-base', 'knowledge_base', () => (this.knowledgeBase$ = null));
     }
     return this.knowledgeBase$;
   }
@@ -157,10 +163,12 @@ export class WebContentService {
   /**
    * @description Loads a list once and shares it; an error gives [] and forgets the request.
    * @param endpoint Public endpoint.
+   * @param section Its part of the admin (marks of the visual text editor).
    * @param forget Drops the shared request (after an error).
    */
-  private load<T extends unknown[]>(endpoint: string, forget: () => void): Observable<T> {
+  private load<T extends unknown[]>(endpoint: string, section: TextEditorContentSection, forget: () => void): Observable<T> {
     return this.publicData.get<T>(endpoint).pipe(
+      map(list => this.textEditor.markContent(list, section)),
       catchError(() => {
         forget();
         return of([] as unknown as T);

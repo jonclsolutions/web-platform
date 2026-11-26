@@ -11,6 +11,8 @@
  * - BasePublicComponent: Provides `t` (translations), `cdr`, `destroy$`.
  * - CookieConsentService: Storing / reading the consent state (localStorage) and the signal for
  *   reopening the bar.
+ * @note Never shown in the visual text editor of the admin (PublicTextEditorService) - no consent
+ *   asked or stored for the administrator looking at the page.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -19,6 +21,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { BasePublicComponent } from '../../base-public.component';
 import { CookieConsentCategories, CookieConsentService } from '../../../shared/services/cookie-consent.service';
+import { PublicTextEditorService } from '../../text-editor/public-text-editor.service';
 @Component({
   selector: 'app-cookie-consent',
   standalone: true,
@@ -32,6 +35,8 @@ export class CookieConsentComponent extends BasePublicComponent {
   protected readonly translationKey = 'cookie_consent';
 
   private consentService = inject(CookieConsentService);
+  /** Visual text editor of the admin: no bar (the administrator is not a visitor). */
+  private textEditor = inject(PublicTextEditorService);
 
   /** Whether the bar is visible at all (hidden once a valid consent is stored). */
   visible = false;
@@ -46,6 +51,9 @@ export class CookieConsentComponent extends BasePublicComponent {
   };
 
   protected override onInit(): void {
+    if (this.textEditor.active) {
+      return;
+    }
     if (!this.consentService.hasValidConsent()) {
       this.visible = true;
     }

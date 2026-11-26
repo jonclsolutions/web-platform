@@ -16,6 +16,8 @@ import { of, throwError } from 'rxjs';
 
 import { MISSING_TEXT, WebContentService, localizedText, optionalText } from './web-content.service';
 import { PublicDataService } from '../../../shared/services/public-data.service';
+import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
+import { scanMarks } from '../../../public/text-editor/text-editor-markers';
 
 describe('WebContentService', () => {
   let service: WebContentService;
@@ -83,5 +85,22 @@ describe('WebContentService', () => {
     expect(optionalText({ cz: '' }, 'cz')).toBeNull();
     expect(optionalText({ en: 'Remote' }, 'cz')).toBe(MISSING_TEXT);
     expect(optionalText({ cz: 'Praha' }, 'cz')).toBe('Praha');
+  });
+
+  /**
+   * @description In the visual text editor of the admin the texts of the content are marked with
+   *   their part of the admin (blue outline); identifiers stay.
+   * @input editor mode; GET public/web/faq answers a category
+   * @output name.cz marked as content of faq; id unchanged
+   */
+  it('marks the content for the visual text editor', () => {
+    const editor = TestBed.inject(PublicTextEditorService);
+    Object.defineProperty(editor, 'active', { value: true });
+    get.and.returnValue(of([{ id: 4, name: { cz: 'Obecné' }, items: [] }]));
+    let list: any[] = [];
+    service.faq().subscribe(r => (list = r));
+    const marks = scanMarks(list[0].name.cz);
+    expect(editor.entry(marks[0].index!)).toEqual({ kind: 'content', section: 'faq' });
+    expect(list[0].id).toBe(4);
   });
 });

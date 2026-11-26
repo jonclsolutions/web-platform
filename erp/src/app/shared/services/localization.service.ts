@@ -18,15 +18,20 @@
  *   English, otherwise the first active language (pickInitialLanguage) - that guess is not
  *   stored. Storing the explicit choice is a functional preference the visitor asked for (no
  *   consent needed).
+ * @note Visual text editor (2026-11): inside the frame of the editor the published texts are the
+ *   loaded ones with the unsaved texts of the admin applied and every text marked with its key
+ *   (PublicTextEditorService.decorate); saved texts are written into the cached ones. Outside
+ *   the editor the loaded texts are published unchanged.
  */
 
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, firstValueFrom } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../interfaces/api-envelope';
 import { DEFAULT_PUBLIC_LANGUAGE, browserLanguages, pickInitialLanguage } from '../utils/language-preference';
+import { PublicTextEditorService, setAtPath } from '../../public/text-editor/public-text-editor.service';
 
 /** localStorage key of the language the visitor chose in the switcher. */
 const LANGUAGE_STORAGE_KEY = 'selectedLanguage';
@@ -69,6 +74,12 @@ export class LocalizationService {
   private currentTranslationsSource = new BehaviorSubject<any>(null);
   public currentTranslations$ = this.currentTranslationsSource.asObservable();
 
+  /** Editor mode of the website (visual text editor of the admin). */
+  private readonly textEditor = inject(PublicTextEditorService);
+  /** Last published texts as loaded (without the marks of the editor) and their language. */
+  private publishedRaw: any = null;
+  private publishedLang = '';
+
   /**
    * @description Current language list of currentModule (filled by `fetchLanguages()`, e.g. by
    *   a module switch or the header of a public application).
@@ -84,6 +95,34 @@ export class LocalizationService {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
     this.chosenByVisitor = !!stored;
     this.currentLanguageSource.next(stored || DEFAULT_PUBLIC_LANGUAGE);
+    if (this.textEditor.active) {
+      // saved texts become the loaded ones (the cached object is the published one)
+      this.textEditor.commits$.subscribe(commit => {
+        const cached = this.translationsCache.get(commit.lang);
+        const published = this.publishedLang === commit.lang ? this.publishedRaw : null;
+        for (const [path, value] of Object.entries(commit.values)) {
+          if (cached) setAtPath(cached, path, value);
+          if (published && published !== cached) setAtPath(published, path, value);
+        }
+      });
+      // new drafts: publish the same texts again with them
+      this.textEditor.changes$.subscribe(() => {
+        if (this.publishedRaw) {
+          this.currentTranslationsSource.next(this.textEditor.decorate(this.publishedRaw, this.publishedLang));
+        }
+      });
+    }
+  }
+
+  /**
+   * @description Publishes the texts of a language - in the editor with the drafts and the marks.
+   * @param data Loaded translations.
+   * @param lang Their language.
+   */
+  private publish(data: any, lang: string): void {
+    this.publishedRaw = data;
+    this.publishedLang = lang;
+    this.currentTranslationsSource.next(this.textEditor.decorate(data, lang));
   }
 
   /**
@@ -110,7 +149,7 @@ export class LocalizationService {
     const lang = this.currentLanguageSource.getValue();
     return firstValueFrom(this.loadTranslations$(lang)).then(data => {
       if (data) {
-        this.currentTranslationsSource.next(data);
+        this.publish(data, lang);
       }
       return data;
     });
@@ -125,6 +164,7 @@ export class LocalizationService {
     if (this.currentModule !== module) {
       this.currentModule = module;
       this.translationsCache.clear();
+      this.publishedRaw = null;
       this.currentTranslationsSource.next(null);
       this.loadTranslations(this.currentLanguageSource.getValue());
       this.fetchLanguages().subscribe();
@@ -194,7 +234,7 @@ export class LocalizationService {
     this.loadTranslations$(lang).subscribe(data => {
       // a response for a module / language that is no longer active is dropped (see notes)
       if (data && module === this.currentModule && lang === this.currentLanguageSource.getValue()) {
-        this.currentTranslationsSource.next(data);
+        this.publish(data, lang);
       }
     });
   }

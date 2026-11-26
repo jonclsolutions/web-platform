@@ -13,7 +13,8 @@
  *   (frame of the add language / upload JSON / delete language popups).
  */
 
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { AsyncPipe, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -24,6 +25,7 @@ import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-bu
 import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
 import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 import { LangMeta } from './base-translation-editor.component';
+import { phoneQuery } from '../builders/table-cards';
 
 @Component({
   selector: 'app-translation-editor-view',
@@ -50,6 +52,32 @@ export class TranslationEditorViewComponent {
    * key as one small line above the text field over the whole width.
    */
   @Input() compactActions = false;
+
+  /**
+   * Route of the visual text editor of the module - the "Otevřít editor" button of the page
+   * header (null = no button). On a phone the button explains that the editor needs a bigger screen.
+   */
+  @Input() editorRoute: string | null = null;
+
+  private readonly router = inject(Router);
+
+  /** The notice "the editor is not supported on a phone" is open. */
+  editorPhoneOpen = false;
+
+  /** @description Opens the visual text editor; on a phone shows the notice instead. */
+  openEditor(): void {
+    if (!this.editorRoute) return;
+    if (phoneQuery()?.matches) {
+      this.editorPhoneOpen = true;
+      return;
+    }
+    this.router.navigateByUrl(this.editorRoute);
+  }
+
+  /** @description Closes the phone notice. */
+  closeEditorPhone(): void {
+    this.editorPhoneOpen = false;
+  }
 
   /** The window "Spravovat jazyky" is open. */
   manageOpen = false;

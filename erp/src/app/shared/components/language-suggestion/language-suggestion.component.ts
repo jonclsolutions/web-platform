@@ -16,6 +16,7 @@
  *   preference, no consent needed), the browser prefers another language the area offers and
  *   that language has the texts `language_suggestion.text` / `.action` / `.dismiss` (a language
  *   whose texts are not translated yet simply offers nothing).
+ * @note Never in the visual text editor of the admin (PublicTextEditorService).
  */
 
 import {
@@ -28,6 +29,7 @@ import { LocalizationService } from '../../services/localization.service';
 import { LanguageRoutingService } from '../../services/language-routing.service';
 import { browserLanguages, preferredBrowserLanguage } from '../../utils/language-preference';
 import { urlCodeOfLanguage } from '../../utils/language-url';
+import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
 
 /** localStorage key: the visitor closed or used the offer - never offer again. */
 export const LANGUAGE_SUGGESTION_DISMISSED_KEY = 'languageSuggestionDismissed';
@@ -65,13 +67,15 @@ export class LanguageSuggestionComponent implements OnInit {
   private readonly languageRouting = inject(LanguageRoutingService);
   private readonly cd = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  /** Visual text editor of the admin - no offer there (the language is chosen by the editor). */
+  private readonly textEditor = inject(PublicTextEditorService);
 
   /**
    * @description Decides whether to offer a language: for every current language, the first
    *   browser language the area offers that differs from it - with its texts.
    */
   ngOnInit(): void {
-    if (this.wasDismissed() || this.localization.isChosenByVisitor()) {
+    if (this.textEditor.active || this.wasDismissed() || this.localization.isChosenByVisitor()) {
       return;
     }
     combineLatest([this.localization.fetchLanguages(), this.localization.currentLanguage$]).pipe(

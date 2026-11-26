@@ -1,0 +1,339 @@
+/*
+    @file: visual-text-editor-view.component.css
+    @path: /src/app/admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Visual text editor: full screen above the admin (top bar, the frame of the
+        website, the side panel 320 px) and the phone notice.
+    @usage: .te-root > .te-bar + .te-main > (.te-stage > iframe.te-frame) + aside.te-panel; .te-phone > .te-phone-card
+*/
+
+:host { display: block; }
+
+/* ── Layout ─────────────────────────────────────────────────── */
+.te-root {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  font-family: var(--ff);
+  color: var(--text);
+}
+
+.te-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.te-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-rose-600);
+  color: var(--color-white, #fff);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.te-page-select {
+  height: 34px;
+  max-width: 260px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.te-langs {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.te-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-mid);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.te-lang--on {
+  background: var(--color-zinc-900);
+  border-color: var(--color-zinc-900);
+  color: var(--color-white, #fff);
+}
+
+.te-lang-flag {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.te-spacer { flex: 1; }
+
+.te-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.te-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.te-btn--primary { background: var(--color-zinc-900); color: var(--color-white, #fff); }
+.te-btn--primary:hover:not(:disabled) { background: var(--color-black, #000); }
+
+.te-btn--ghost { background: var(--surface); border-color: var(--border-mid); color: var(--text-dim); }
+.te-btn--ghost:hover:not(:disabled) { color: var(--text); background: var(--color-zinc-100); }
+
+.te-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-mid);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.te-close:hover { color: var(--text); }
+
+.te-btn:focus-visible,
+.te-close:focus-visible,
+.te-lang:focus-visible,
+.te-page-select:focus-visible,
+.te-hidden-item:focus-visible,
+.te-link:focus-visible {
+  outline: 2px solid var(--color-zinc-900);
+  outline-offset: 2px;
+}
+
+.te-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.te-stage {
+  position: relative;
+  min-width: 0;
+  background: var(--color-zinc-900);
+}
+
+.te-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.te-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(24, 24, 27, 0.55);
+  color: var(--color-white, #fff);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* ── Side panel ─────────────────────────────────────────────── */
+.te-panel {
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+
+.te-key {
+  display: inline-block;
+  max-width: 100%;
+  margin-bottom: 14px;
+  padding: 3px 8px;
+  border: 1px solid var(--color-rose-200);
+  border-radius: 6px;
+  background: var(--color-rose-50);
+  color: var(--color-rose-600);
+  font-family: var(--ff-mono);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.te-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.te-ref {
+  margin-bottom: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.te-value {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1.5px solid var(--color-zinc-900);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.te-value--missing { border-color: var(--warn); background: var(--warn-dim); }
+.te-value[readonly] { border-color: var(--border-mid); background: var(--bg); }
+
+.te-missing { margin: 6px 0 0; color: var(--warn); font-size: 0.8rem; font-weight: 600; }
+.te-hint, .te-count { margin: 8px 0 0; color: var(--text-dim); font-size: 0.8rem; }
+.te-empty { margin: 0; color: var(--text); line-height: 1.5; }
+
+.te-note {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-indigo-50);
+  border-radius: 10px;
+  background: var(--color-indigo-50);
+  color: var(--color-indigo-700);
+  line-height: 1.5;
+}
+
+.te-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.te-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.te-hidden {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-hidden-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.te-hidden-item:hover { background: var(--bg); }
+.te-hidden-item--on { border-color: var(--color-rose-200); background: var(--color-rose-50); }
+.te-hidden-key { color: var(--text); font-family: var(--ff-mono); font-size: 0.72rem; overflow-wrap: anywhere; }
+.te-hidden-where { color: var(--text-dim); font-size: 0.72rem; }
+
+.te-modal-text { margin: 0; line-height: 1.5; }
+
+.te-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Narrower screens: a narrower panel. */
+@media (max-width: 1100px) {
+  .te-main { grid-template-columns: minmax(0, 1fr) 280px; }
+  .te-page-select { max-width: 180px; }
+}
+
+/* ── Phone notice ───────────────────────────────────────────── */
+.te-phone {
+  display: flex;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.te-phone-card {
+  max-width: 360px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  font-family: var(--ff);
+  color: var(--text);
+}
+
+.te-phone-title { margin: 0 0 6px; font-size: 1.05rem; font-weight: 700; }
+.te-phone-text { margin: 0 0 14px; color: var(--text-dim); line-height: 1.5; }

@@ -25,7 +25,7 @@
  */
 
 import { ChangeDetectorRef, Directive, inject, OnInit, OnDestroy } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
@@ -228,6 +228,9 @@ export abstract class BaseTranslationEditorComponent
   flattenedKeys: FlatKey[] = [];
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
+
+  /** The texts of the current language were saved (the visual text editor hands its drafts over). */
+  readonly saved$ = new Subject<void>();
 
   /** Unsaved changes of the currently edited language (drives the state of the "Save changes" button). */
   isDirty: boolean = false;
@@ -646,6 +649,7 @@ export abstract class BaseTranslationEditorComponent
         );
         this.buildFlatList();
         this.applyFilter();
+        this.saved$.next();
         this.cd.markForCheck();
       },
       error: () => {

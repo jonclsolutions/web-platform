@@ -20,10 +20,12 @@
  * - BasePublicComponent: translations, site settings, social links.
  * - LocalizationService: languages of the module, current language, setLanguage().
  * - MaintenanceShellComponent: the look (imported by the page components).
+ * @note In the visual text editor of the admin the page never redirects (its texts are edited).
  */
 
 import { Directive, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { PublicTextEditorService } from '../../text-editor/public-text-editor.service';
 import { Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { BasePublicComponent } from '../../base-public.component';
@@ -36,6 +38,8 @@ import { LanguageRoutingService } from '../../../shared/services/language-routin
 export abstract class BaseMaintenanceComponent extends BasePublicComponent {
   protected override readonly loadSiteSettings = true;
   protected router = inject(Router);
+  /** Visual text editor of the admin (the page stays, no redirect). */
+  protected textEditor = inject(PublicTextEditorService);
   /** Switching the language together with the URL. */
   protected languageRouting = inject(LanguageRoutingService);
 
@@ -66,6 +70,10 @@ export abstract class BaseMaintenanceComponent extends BasePublicComponent {
    * logged. Run once on load.
    */
   checkStatusAndRedirect(): void {
+    // The visual text editor of the admin shows the page whatever the status is.
+    if (this.textEditor.active) {
+      return;
+    }
     this.isSectionActive()
       .pipe(takeUntil(this.destroy$))
       .subscribe({

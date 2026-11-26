@@ -543,7 +543,7 @@
               "items": [
                 "V okně Jazyky jazyk tlačítkem Deaktivovat nebo Aktivovat vypnete či zapnete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
                 "Tlačítkem Smazat jazyk smažete (po potvrzení; když dáte Zrušit, zůstanete v okně Jazyky). Smažou se i všechny jeho texty - překlady, obsah stránek, názvy stránek a texty e-mailů. Pokud jazyk chcete jen dočasně skrýt, deaktivujte ho.",
-                "Stáhnout JSON a Nahrát JSON jsou u každého jazyka v okně Jazyky (viz kapitola 05)."
+                "Stáhnout JSON a Nahrát JSON jsou u každého jazyka v okně Jazyky (viz kapitola 06)."
               ]
             }
           ]
@@ -653,7 +653,67 @@
           ]
         },
         {
-          "heading": "05. Překlady - stažení a nahrání JSON",
+          "heading": "05. Editor textů přímo na stránkách",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítko Otevřít editor v hlavičce stránky (vedle Jazyky) otevře skutečné stránky webu se všemi barvami a styly. Texty, které tady upravíte, jsou orámované červeně; obsah zadávaný v administraci (FAQ, pracovní pozice, reference, znalostní báze) modře. Seznam klíčů na záložce Překlady zůstává - editor je druhá cesta ke stejným textům."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Vyberte stránku a jazyk",
+                  "text": "V horní liště vyberte stránku webu a jazyk. Stránka vypadá přesně tak, jak ji uvidí návštěvník.",
+                  "active": true
+                },
+                {
+                  "label": "Klikněte na text",
+                  "text": "Po najetí myší se nad textem ukáže jeho klíč. Kliknutím text vyberete - odkazy se v editoru neotevírají, ostatní tlačítka (například rozbalení otázky) fungují jako na webu, takže upravíte i skrytou odpověď. Vpravo se ukáže panel s klíčem, českou předlohou, uloženou verzí a polem pro úpravu.",
+                  "active": false
+                },
+                {
+                  "label": "Upravte",
+                  "text": "Co píšete do pole, se hned ukazuje na stránce jako náhled. Na webu se změna objeví až po uložení.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Uložit v horní liště uloží upravené texty jazyka (v závorce jejich počet); Zahodit změny je po potvrzení vrátí. Při přepnutí jazyka nebo zavření editoru s neuloženými změnami se editor nejdřív zeptá.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Modrý rámeček",
+                  "text": "Obsah z administrace. Kliknutí ho otevře jako na webu (například odpověď na otázku) a panel nabídne odkaz do části, kde se upravuje."
+                },
+                {
+                  "title": "Další texty stránky",
+                  "text": "Texty, na které nejde kliknout: text v prázdném poli formuláře, popisek obrázku, popis pro vyhledávače nebo text skrytý na této velikosti obrazovky. V panelu je vyberete ze seznamu."
+                },
+                {
+                  "title": "Titulek v prohlížeči",
+                  "text": "Panel ukazuje název stránky v záložce prohlížeče; upravíte ho v části Názvy stránek."
+                },
+                {
+                  "title": "Telefon",
+                  "text": "Na telefonu se editor neotevře - zobrazí se upozornění. Texty upravíte v seznamu na záložce Překlady."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "V editoru se nezobrazuje lišta cookies, nespouští se analytika a formuláře se neodesílají - práce v editoru se nepočítá jako návštěva webu."
+            }
+          ]
+        },
+        {
+          "heading": "06. Překlady - stažení a nahrání JSON",
           "blocks": [
             {
               "type": "list",
@@ -673,7 +733,7 @@
           ]
         },
         {
-          "heading": "06. Názvy stránek",
+          "heading": "07. Názvy stránek",
           "blocks": [
             {
               "type": "text",
@@ -695,7 +755,7 @@
           ]
         },
         {
-          "heading": "07. FAQ - časté dotazy",
+          "heading": "08. FAQ - časté dotazy",
           "blocks": [
             {
               "type": "text",
@@ -715,7 +775,7 @@
           ]
         },
         {
-          "heading": "08. Pracovní pozice",
+          "heading": "09. Pracovní pozice",
           "blocks": [
             {
               "type": "text",
@@ -763,7 +823,7 @@
           ]
         },
         {
-          "heading": "09. Reference",
+          "heading": "10. Reference",
           "blocks": [
             {
               "type": "text",
@@ -810,7 +870,7 @@
           ]
         },
         {
-          "heading": "10. Znalostní báze (veřejná nápověda)",
+          "heading": "11. Znalostní báze (veřejná nápověda)",
           "blocks": [
             {
               "type": "text",
@@ -863,7 +923,7 @@
           ]
         },
         {
-          "heading": "11. Jazyky a chybějící texty v obsahových záložkách",
+          "heading": "12. Jazyky a chybějící texty v obsahových záložkách",
           "blocks": [
             {
               "type": "text",
@@ -872,7 +932,7 @@
           ]
         },
         {
-          "heading": "12. Kdo smí co",
+          "heading": "13. Kdo smí co",
           "blocks": [
             {
               "type": "grid",

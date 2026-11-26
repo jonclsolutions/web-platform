@@ -13,6 +13,7 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { PublicTextEditorService } from '../../text-editor/public-text-editor.service';
 import { CookieConsentComponent } from './cookie-consent.component';
 import { CookieConsentService } from '../../../shared/services/cookie-consent.service';
 import { createPublicPageContext } from '../../../../testing/public-test-helpers';
@@ -89,5 +90,21 @@ describe('CookieConsentComponent', () => {
     expect(consent.current!.analytics).toBeTrue();
     expect(banner.visible).toBeFalse();
     expect(banner.showSettings).toBeFalse();
+  });
+
+  /**
+   * @description In the visual text editor of the admin the bar is never shown (no consent asked
+   *   from the administrator), not even after a request to open the settings.
+   * @input PublicTextEditorService active; empty storage; openSettings requested
+   * @output visible false, no text of the bar
+   */
+  it('stays hidden in the visual text editor', () => {
+    const ctx = createPublicPageContext({ translations: { cookie_consent: t } });
+    TestBed.configureTestingModule({ imports: [CookieConsentComponent], providers: [...ctx.providers, { provide: PublicTextEditorService, useValue: { active: true } }] });
+    consent = TestBed.inject(CookieConsentService);
+    fixture = TestBed.createComponent(CookieConsentComponent);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.visible).toBeFalse();
+    expect(visible()).toBeFalse();
   });
 });

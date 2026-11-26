@@ -20,16 +20,21 @@
  *    known AND the user accepted the "Analytics" category.
  * 3) On any further consent change a `consent update` signal is sent - the script is not
  *    removed, GA only stops / starts collecting data by the signal.
+ * @note Off in the visual text editor of the admin (PublicTextEditorService.active): a look of
+ *   the administrator into the editor is not a visit - no script, no consent state.
  */
 
 import { Injectable, inject } from '@angular/core';
 import { PublicDataService } from './public-data.service';
 import { CookieConsentService, CookieConsentState } from './cookie-consent.service';
+import { PublicTextEditorService } from '../../public/text-editor/public-text-editor.service';
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
 
   private publicDataService = inject(PublicDataService);
+  /** Visual text editor of the admin - no analytics at all there. */
+  private textEditor = inject(PublicTextEditorService);
   private cookieConsentService = inject(CookieConsentService);
 
   private measurementId: string | null = null;
@@ -42,7 +47,7 @@ export class AnalyticsService {
    *              WebLayoutComponent) - calling it again is safe, the second call is ignored.
    */
   init(): void {
-    if (this.initialized) return;
+    if (this.initialized || this.textEditor.active) return;
     this.initialized = true;
 
     // 1) Default state AT ONCE, without waiting for anything else.

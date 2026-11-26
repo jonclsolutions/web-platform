@@ -543,7 +543,7 @@
               "items": [
                 "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see an inactive language, its texts stay.",
                 "Delete deletes the language (after a confirmation; Cancel keeps you in the Languages window). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
-                "Download JSON and Upload JSON are at every language in the Languages window (see chapter 05)."
+                "Download JSON and Upload JSON are at every language in the Languages window (see chapter 06)."
               ]
             }
           ]
@@ -653,7 +653,67 @@
           ]
         },
         {
-          "heading": "05. Translations - downloading and uploading JSON",
+          "heading": "05. Editing the texts right on the pages",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Open editor button in the page header (next to Languages) opens the real pages of the website with all their colours and styles. Texts edited here are outlined in red; content entered in the admin (FAQ, open positions, references, knowledge base) in blue. The list of keys on the Translations tab stays - the editor is a second way to the same texts."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Choose the page and language",
+                  "text": "Choose a page of the website and a language in the top bar. The page looks exactly as a visitor sees it.",
+                  "active": true
+                },
+                {
+                  "label": "Click a text",
+                  "text": "Pointing at a text shows its key. A click selects the text - links do not open in the editor, other buttons (for example opening a question) work as on the website, so a hidden answer can be edited too. The panel on the right shows the key, the Czech reference, the saved version and the field for the edit.",
+                  "active": false
+                },
+                {
+                  "label": "Edit",
+                  "text": "What you type shows on the page at once as a preview. The website changes only after saving.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "Save in the top bar stores the edited texts of the language (their count in brackets); Discard changes reverts them after a confirmation. Switching the language or closing the editor with unsaved changes asks first.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Blue outline",
+                  "text": "Content from the admin. A click opens it as on the website (for example the answer to a question) and the panel offers a link to the part where it is edited."
+                },
+                {
+                  "title": "Other texts of the page",
+                  "text": "Texts that cannot be clicked: the text in an empty form field, an image description, the description for search engines or a text hidden at this screen size. Pick them from the list in the panel."
+                },
+                {
+                  "title": "Title in the browser",
+                  "text": "The panel shows the name of the page in the browser tab; edit it in Page titles."
+                },
+                {
+                  "title": "Phone",
+                  "text": "The editor does not open on a phone - a notice is shown. Edit the texts in the list on the Translations tab."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The editor shows no cookie bar, runs no analytics and sends no forms - working in the editor is not counted as a visit of the website."
+            }
+          ]
+        },
+        {
+          "heading": "06. Translations - downloading and uploading JSON",
           "blocks": [
             {
               "type": "list",
@@ -673,7 +733,7 @@
           ]
         },
         {
-          "heading": "06. Page titles",
+          "heading": "07. Page titles",
           "blocks": [
             {
               "type": "text",
@@ -695,7 +755,7 @@
           ]
         },
         {
-          "heading": "07. FAQ - frequently asked questions",
+          "heading": "08. FAQ - frequently asked questions",
           "blocks": [
             {
               "type": "text",
@@ -715,7 +775,7 @@
           ]
         },
         {
-          "heading": "08. Jobs",
+          "heading": "09. Jobs",
           "blocks": [
             {
               "type": "text",
@@ -763,7 +823,7 @@
           ]
         },
         {
-          "heading": "09. References",
+          "heading": "10. References",
           "blocks": [
             {
               "type": "text",
@@ -810,7 +870,7 @@
           ]
         },
         {
-          "heading": "10. Knowledge base (public help)",
+          "heading": "11. Knowledge base (public help)",
           "blocks": [
             {
               "type": "text",
@@ -863,7 +923,7 @@
           ]
         },
         {
-          "heading": "11. Languages and missing texts in the content tabs",
+          "heading": "12. Languages and missing texts in the content tabs",
           "blocks": [
             {
               "type": "text",
@@ -872,7 +932,7 @@
           ]
         },
         {
-          "heading": "12. Who may do what",
+          "heading": "13. Who may do what",
           "blocks": [
             {
               "type": "grid",

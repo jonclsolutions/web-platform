@@ -18,7 +18,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
+import { Subject } from 'rxjs';
 import { LocalizationService } from './localization.service';
+import { PublicTextEditorService } from '../../public/text-editor/public-text-editor.service';
 import { environment } from '../../../environments/environment';
 
 const API = environment.base_api_url;
@@ -290,5 +292,36 @@ describe('LocalizationService', () => {
     service.fetchLanguages().subscribe(r => (result = r));
     http.expectOne(`${API}/languages/web`).flush('x', { status: 500, statusText: 'Error' });
     expect(result.languages).toEqual(expected);
+  });
+
+  /**
+   * @description Visual text editor: the published texts are decorated by the editor mode
+   *   (drafts, marks); new drafts publish the same texts again; saved drafts are written into
+   *   the loaded (cached) texts.
+   * @input editor stub (active, decorate adds the language); init 'cz' {faq: {title}}; changes;
+   *   commit {faq.title: 'Nové'} cz
+   * @output published = decorate(data, 'cz'); republished on changes; cached faq.title 'Nové'
+   */
+  it('publishes the texts through the editor mode in the visual text editor', async () => {
+    const changes$ = new Subject<void>();
+    const commits$ = new Subject<{ lang: string; values: Record<string, string> }>();
+    const editor = { active: true, changes$, commits$, decorate: jasmine.createSpy('decorate').and.callFake((d: any, lang: string) => ({ ...d, shownIn: lang })) };
+    localStorage.setItem('selectedLanguage', 'cz');
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: PublicTextEditorService, useValue: editor }] });
+    http = TestBed.inject(HttpTestingController);
+    const service = TestBed.inject(LocalizationService);
+    let published: any;
+    service.currentTranslations$.subscribe(t => (published = t));
+
+    const done = service.initTranslations('web');
+    http.expectOne(`${API}/translations/web/cz`).flush({ data: { faq: { title: 'Staré' } } });
+    await done;
+    expect(published).toEqual({ faq: { title: 'Staré' }, shownIn: 'cz' });
+
+    changes$.next();
+    expect(editor.decorate).toHaveBeenCalledTimes(2);
+    commits$.next({ lang: 'cz', values: { 'faq.title': 'Nové' } });
+    changes$.next();
+    expect(published.faq.title).toBe('Nové');
   });
 });

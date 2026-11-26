@@ -4,6 +4,30 @@
             "type": "fixed",
             "area": "web",
             "part": "admin",
+            "text": "Website text editor: a text in a button that is not a link (the question of an FAQ accordion, tabs) is selected and the button still works - hidden answers can be opened and edited; a click beside a text of a paragraph selects it."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website text editor: options of drop-down lists (contact form topics) are listed in the panel as options of a list instead of hidden texts; the check of the pages shown in the editor frame got its own tests."
+        },
+        {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: new visual editor (Open editor) - the real pages of the website with every text outlined, click a text and edit it in the side panel with a live preview, then Save; content parts are linked. Not on a phone (a notice instead)."
+        },
+        {
+            "type": "added",
+            "area": "web",
+            "part": "public",
+            "text": "Website: editor mode for the new visual text editor - inside the admin frame every text of the page is outlined with its key (content of the admin in blue), a click selects it, unsaved texts show live; no cookie bar or analytics there."
+        },
+        {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
             "text": "Website texts: on narrower (not phone) screens the page could be scrolled sideways - the hidden, measured row of the part tabs widened it. The row is now measured inside a zero-size clipping box."
         },
         {
