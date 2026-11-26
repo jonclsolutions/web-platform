@@ -44,7 +44,7 @@ describe('TextEditorOverlay', () => {
   const layer = () => document.querySelector('jsw-text-editor-layer')!.shadowRoot!;
 
   beforeEach(() => {
-    host = jasmine.createSpyObj<TextEditorOverlayHost>('host', ['entry', 'contentLabel', 'missingLabel', 'onSelect', 'onContent', 'onScan']);
+    host = jasmine.createSpyObj<TextEditorOverlayHost>('host', ['entry', 'contentLabel', 'missingLabel', 'onSelect', 'onContent', 'onScan', 'onKey']);
     host.entry.and.callFake(index => entries[index]);
     host.contentLabel.and.returnValue('FAQ – upravit v části FAQ');
     host.missingLabel.and.returnValue('Chybí');
@@ -184,6 +184,41 @@ describe('TextEditorOverlay', () => {
     menu.remove();
     await new Promise(resolve => setTimeout(resolve, 250));
     expect(overlay.hit(middle.clientX, middle.clientY)).not.toBeNull();
+  });
+
+  /**
+   * @description Shortcuts pressed in the page go to the admin: Ctrl/Cmd+S (the browser's save
+   *   stopped) and Esc; other keys not.
+   * @input keydown Ctrl+S, Meta+S, Escape, 's'
+   * @output onKey save ×2 (default prevented), escape ×1; nothing for 's'
+   */
+  it('passes the shortcuts of the editor to the admin', () => {
+    const press = (init: KeyboardEventInit) => { const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init }); document.body.dispatchEvent(event); return event; };
+    expect(press({ key: 's', ctrlKey: true }).defaultPrevented).toBeTrue();
+    expect(press({ key: 'S', metaKey: true }).defaultPrevented).toBeTrue();
+    press({ key: 'Escape' });
+    press({ key: 's' });
+    expect(host.onKey.calls.allArgs()).toEqual([['save'], ['save'], ['escape']]);
+  });
+
+  /**
+   * @description The label of the hovered text goes under its text when it would cover the label
+   *   of the selected text (two texts next to each other).
+   * @input select the first word of the heading, hover the second
+   * @output two labels that do not overlap; the hovered one under its text
+   */
+  it('keeps the label of the hovered text off the label of the selected one', () => {
+    const words = document.querySelectorAll('#heading span');
+    words[0].innerHTML = markText('Často', 1, 'text');
+    words[1].innerHTML = markText('kladené', 3, 'text');
+    (overlay as any).scan();
+    overlay.select('faq.header_1', false);
+    window.dispatchEvent(new MouseEvent('mousemove', center(words[1])));
+    const labels = Array.from(layer().querySelectorAll<HTMLElement>('.l')).map(l => l.getBoundingClientRect());
+    expect(labels.length).toBe(2);
+    const [a, b] = labels;
+    expect(a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom).toBeFalse();
+    expect(labels[1].top).toBeGreaterThan(words[1].getBoundingClientRect().top);
   });
 
   /**

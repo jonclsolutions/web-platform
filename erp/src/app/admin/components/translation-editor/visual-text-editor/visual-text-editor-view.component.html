@@ -69,6 +69,13 @@
 
       <span class="te-spacer"></span>
 
+      <!-- After a save: a quiet "Uloženo" by the button (a window would cover the bar). -->
+      @if (savedNotice) {
+        <span class="te-saved" role="status">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          {{ e.t('editor_saved_notice') }}
+        </span>
+      }
       @if (e.canUpdate) {
         @if (e.isDirty) {
           <button type="button" class="te-btn te-btn--ghost" (click)="askDiscard()">{{ e.t('discard_changes_button') }}</button>
@@ -111,6 +118,10 @@
           <div class="te-label">{{ e.t('editor_saved_label').replace('{lang}', langName) }}</div>
           <div class="te-ref">{{ savedValue(key) || '—' }}</div>
           <label class="te-label" for="te-value">{{ e.t('editor_edit_label').replace('{lang}', langName) }}</label>
+          <!-- Without the edit permission: the text can be read, not changed - say why. -->
+          @if (!e.canUpdate) {
+            <p class="te-readonly" role="note">{{ e.t('editor_readonly_note') }}</p>
+          }
           <textarea #valueField id="te-value" class="te-value" rows="3"
                     [class.te-value--missing]="!currentValue(key).trim()"
                     [ngModel]="currentValue(key)" (ngModelChange)="edit(key, $event)"
@@ -171,7 +182,15 @@
 
         <div class="te-section">
           <div class="te-label">{{ e.t('editor_page_title_label') }}</div>
-          <div class="te-ref">{{ pageTitle || '—' }}</div>
+          <!-- "Loading" is the title of a page until its own title is set (on purpose - nothing
+               wrong is shown meanwhile); when it stays, the page has no title of its own. -->
+          @if (!titlePending) {
+            <div class="te-ref">{{ pageTitle }}</div>
+          } @else if (titleMissing) {
+            <div class="te-ref te-ref--missing">{{ e.t('editor_page_title_missing') }}</div>
+          } @else {
+            <div class="te-ref te-ref--pending">{{ e.t('editor_page_title_loading') }}</div>
+          }
           <button type="button" class="te-link" (click)="openTab('page_titles')">{{ e.t('editor_page_title_link') }}</button>
         </div>
 
@@ -193,17 +212,25 @@
 
         @if (hiddenTexts.length) {
           <div class="te-section">
-            <div class="te-label">{{ e.t('editor_hidden_label') }}</div>
-            <ul class="te-hidden">
-              @for (text of hiddenTexts; track text.key + text.where) {
-                <li>
-                  <button type="button" class="te-hidden-item" [class.te-hidden-item--on]="text.key === selectedKey" (click)="selectKey(text.key)">
-                    <span class="te-hidden-key">{{ text.key }}</span>
-                    <span class="te-hidden-where">{{ whereLabel(text.where) }}</span>
-                  </button>
-                </li>
-              }
-            </ul>
+            <div class="te-label">{{ e.t('editor_hidden_label') }} ({{ hiddenTexts.length }})</div>
+            <!-- Grouped by where they are; long lists show the first ones and "zobrazit všechny". -->
+            @for (group of hiddenGroups; track group.where) {
+              <div class="te-hidden-group">{{ group.label }} <span class="te-hidden-count">{{ hiddenCount(group.where) }}</span></div>
+              <ul class="te-hidden">
+                @for (key of group.keys; track key) {
+                  <li>
+                    <button type="button" class="te-hidden-item" [class.te-hidden-item--on]="key === selectedKey" (click)="selectKey(key)">
+                      <span class="te-hidden-key">{{ key }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+            @if (hiddenTexts.length > 6) {
+              <button type="button" class="te-link" (click)="hiddenExpanded = !hiddenExpanded">
+                {{ hiddenExpanded ? e.t('editor_changed_less') : e.t('editor_changed_all').replace('{count}', '' + hiddenTexts.length) }}
+              </button>
+            }
           </div>
         }
       </aside>

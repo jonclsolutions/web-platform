@@ -291,6 +291,7 @@ export class PublicTextEditorService {
       onSelect: key => this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key }),
       onContent: section => this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'content', section }),
       onScan: scan => this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'scan', ...scan }),
+      onKey: key => this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'key', key }),
     });
     this.overlay.start();
     this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'ready' });

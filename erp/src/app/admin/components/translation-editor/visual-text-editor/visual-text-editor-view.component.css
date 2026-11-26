@@ -312,6 +312,9 @@
   font-size: 0.9rem;
   line-height: 1.5;
   resize: vertical;
+  /* grows with its text (fitField) up to half of the screen, then scrolls */
+  max-height: 50vh;
+  overflow-y: auto;
 }
 
 .te-value--missing { border-color: var(--warn); background: var(--warn-dim); }
@@ -375,6 +378,48 @@
 .te-hidden-item--on { border-color: var(--color-rose-200); background: var(--color-rose-50); }
 .te-hidden-key { color: var(--text); font-family: var(--ff-mono); font-size: 0.72rem; overflow-wrap: anywhere; }
 .te-hidden-where { color: var(--text-dim); font-size: 0.72rem; }
+
+/* Quiet "Uloženo" by the save button (instead of a window over the bar). */
+.te-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #2f7a4a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Without the edit permission: why the field cannot be changed. */
+.te-readonly {
+  margin: 0 0 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+/* Browser title of the page: loading (the placeholder) / missing. */
+.te-ref--pending { color: var(--text-dim); font-style: italic; }
+.te-ref--missing { color: #c2410c; }
+
+/* Other texts of the page grouped by where they are. */
+.te-hidden-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 2px;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.te-hidden-count {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  font-weight: 600;
+}
 
 /* "Vrátit uloženou verzi" under the field of a changed text. */
 .te-revert {

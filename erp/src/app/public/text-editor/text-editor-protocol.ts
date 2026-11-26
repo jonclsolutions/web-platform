@@ -80,7 +80,12 @@ export type TextEditorFromFrame =
   /** A text was clicked. */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'select'; key: string }
   /** Content of the admin was clicked (FAQ question, reference…). */
-  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'content'; section: TextEditorContentSection };
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'content'; section: TextEditorContentSection }
+  /** A shortcut pressed in the page: Ctrl/Cmd+S (save) or Esc (cancel the selection). */
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'key'; key: TextEditorShortcut };
+
+/** Shortcuts of the editor the page passes on (its keys never reach the window of the admin). */
+export type TextEditorShortcut = 'save' | 'escape';
 
 /**
  * @description Whether a received message belongs to the editor.

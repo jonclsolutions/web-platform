@@ -40,7 +40,7 @@ import { phoneQuery } from '../../builders/table-cards';
 import { withLanguagePrefix } from '../../../../shared/utils/language-url';
 import {
   TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME, TextEditorContentSection, TextEditorFromFrame,
-  TextEditorHiddenText, TextEditorToFrame, isTextEditorMessage,
+  TextEditorHiddenText, TextEditorShortcut, TextEditorToFrame, isTextEditorMessage,
 } from '../../../../public/text-editor/text-editor-protocol';
 
 /** A page of the website offered in the editor. */
@@ -62,6 +62,21 @@ export const DEVICE_STORAGE_KEY = 'jsw_text_editor_device';
 
 /** Changed texts listed before "zobrazit všechny". */
 export const CHANGED_LIST_LIMIT = 6;
+
+/** Other texts of the page listed before "zobrazit všechny". */
+export const HIDDEN_LIST_LIMIT = 6;
+
+/** Order of the groups of the other texts of the page (by where they are). */
+const HIDDEN_ORDER = ['hidden', 'aria-label', 'placeholder', 'value', 'alt', 'title', 'option', 'content'];
+
+/** The browser title of a page whose own title is not set yet (index.html - on purpose, no default). */
+export const PAGE_TITLE_PLACEHOLDER = 'Loading';
+
+/** Time after which a page still showing the placeholder title has no title of its own (ms). */
+export const PAGE_TITLE_WAIT_MS = 3000;
+
+/** Time the quiet "Uloženo" stays by the save button (ms). */
+export const SAVED_NOTICE_MS = 3000;
 
 /** Sections of the content and the tab of the admin that edits them. */
 const CONTENT_SECTIONS: TextEditorContentSection[] = ['faq', 'jobs', 'references', 'knowledge_base'];
@@ -116,6 +131,14 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   missingKeys: string[] = [];
   /** The window "Jazyky" is open. */
   languagesOpen = false;
+  /** The other texts of the page show all of them (else the first HIDDEN_LIST_LIMIT). */
+  hiddenExpanded = false;
+  /** The quiet "Uloženo" by the save button (after a save). */
+  savedNotice = false;
+  /** The page still has the placeholder title after PAGE_TITLE_WAIT_MS - it has no title of its own. */
+  titleMissing = false;
+  private titleTimer: ReturnType<typeof setTimeout> | null = null;
+  private savedTimer: ReturnType<typeof setTimeout> | null = null;
   /** Preview of the page (the last choice is remembered). */
   device: VisualEditorDevice = readDevice();
   /** Width of the phone preview (template). */
@@ -153,8 +176,11 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     this.isPhone = !!this.phone?.matches;
     this.phone?.addEventListener('change', this.onPhoneChange);
     window.addEventListener('message', this.onMessage);
+    // a window after saving would cover the bar of the editor - a quiet "Uloženo" by the button
+    this.e.saveAlert = false;
     this.e.saved$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'commit' });
+      this.showSavedNotice();
     });
   }
 
@@ -190,6 +216,9 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
 
   /** @description Stops listening. */
   ngOnDestroy(): void {
+    this.e.saveAlert = true;
+    if (this.titleTimer) clearTimeout(this.titleTimer);
+    if (this.savedTimer) clearTimeout(this.savedTimer);
     window.removeEventListener('message', this.onMessage);
     this.phone?.removeEventListener('change', this.onPhoneChange);
   }
@@ -198,6 +227,85 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
    * @description The browser asks before closing / reloading the tab with unsaved edits.
    * @param event beforeunload.
    */
+  @HostListener('window:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      this.shortcut('save');
+    } else if (event.key === 'Escape' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      this.shortcut('escape');
+    }
+  }
+
+  /**
+   * @description Shortcuts of the editor (also pressed in the page of the frame): Ctrl/Cmd+S
+   *   saves the edits, Esc cancels the selected text / content. Not while a window of the editor
+   *   is open (it has its own keys) and not on a phone.
+   * @param key Shortcut.
+   */
+  shortcut(key: TextEditorShortcut): void {
+    if (this.isPhone || this.pendingAction || this.languagesOpen || this.e.showAddForm || this.e.showUploadModal || this.e.langToDelete) {
+      return;
+    }
+    if (key === 'save') {
+      if (this.e.canUpdate && this.e.isDirty) this.save();
+      return;
+    }
+    if (this.selectedKey || this.contentSection) {
+      this.selectedKey = null;
+      this.contentSection = null;
+      this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key: null, reveal: false });
+      this.cd.markForCheck();
+    }
+  }
+
+  /** @description The quiet "Uloženo" by the save button for a moment. */
+  private showSavedNotice(): void {
+    this.savedNotice = true;
+    if (this.savedTimer) clearTimeout(this.savedTimer);
+    this.savedTimer = setTimeout(() => {
+      this.savedNotice = false;
+      this.cd.markForCheck();
+    }, SAVED_NOTICE_MS);
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @returns Whether the page shows the placeholder title (index.html) - it is loading, or it
+   *   has no title of its own (`titleMissing`).
+   */
+  get titlePending(): boolean {
+    return !this.pageTitle || this.pageTitle.trim() === PAGE_TITLE_PLACEHOLDER;
+  }
+
+  /**
+   * @returns The other texts of the page in groups by where they are (hidden at this screen
+   *   size, for screen readers, empty fields…); the first HIDDEN_LIST_LIMIT unless expanded.
+   */
+  get hiddenGroups(): { where: string; label: string; keys: string[] }[] {
+    const rank = (where: string) => { const index = HIDDEN_ORDER.indexOf(where); return index < 0 ? HIDDEN_ORDER.length : index; };
+    const sorted = [...this.hiddenTexts].sort((a, b) => rank(a.where) - rank(b.where));
+    const shown = this.hiddenExpanded ? sorted : sorted.slice(0, HIDDEN_LIST_LIMIT);
+    const groups: { where: string; label: string; keys: string[] }[] = [];
+    for (const text of shown) {
+      let group = groups.find(g => g.where === text.where);
+      if (!group) {
+        group = { where: text.where, label: this.whereLabel(text.where), keys: [] };
+        groups.push(group);
+      }
+      group.keys.push(text.key);
+    }
+    return groups;
+  }
+
+  /**
+   * @param where Place of the other texts.
+   * @returns How many texts of the page are there (the count of the group, also the cut ones).
+   */
+  hiddenCount(where: string): number {
+    return this.hiddenTexts.filter(text => text.where === where).length;
+  }
+
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent): void {
     if (this.e.isDirty) {
@@ -403,6 +511,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     if (!this.e.canUpdate) return;
     this.e.updateValue(path, value);
     this.postDrafts();
+    this.fitField();
   }
 
   /**
@@ -413,6 +522,20 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   revert(path: string): void {
     this.e.revertValue(path);
     this.postDrafts();
+    this.fitField();
+  }
+
+  /**
+   * @description The field of the selected text grows with its text (a long paragraph is read
+   *   whole), up to half of the screen (CSS max-height), then it scrolls.
+   */
+  fitField(): void {
+    setTimeout(() => {
+      const field = this.valueField?.nativeElement;
+      if (!field) return;
+      field.style.height = 'auto';
+      field.style.height = `${field.scrollHeight + 4}px`;
+    });
   }
 
   /** The list "Upravené texty" shows all of them (else the first CHANGED_LIST_LIMIT). */
@@ -461,6 +584,9 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     if (!frame) return;
     this.framePath = safeFramePath(path);
     this.frameLang = this.e.currentLang;
+    this.pageTitle = '';
+    this.hiddenExpanded = false;
+    this.watchTitle();
     this.frameLoading = true;
     frame.src = withLanguagePrefix(this.framePath, this.e.currentLang);
     this.cd.markForCheck();
@@ -524,7 +650,10 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
           break;
         case 'scan':
           this.framePath = safeFramePath(message.path);
-          this.pageTitle = message.title;
+          if (message.title !== this.pageTitle) {
+            this.pageTitle = message.title;
+            this.watchTitle();
+          }
           this.visibleKeys = message.visible;
           this.missingKeys = message.missing ?? [];
           this.hiddenTexts = message.hidden;
@@ -538,9 +667,29 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
           this.contentSection = message.section;
           this.selectedKey = null;
           break;
+        case 'key':
+          this.shortcut(message.key);
+          break;
       }
       this.cd.markForCheck();
     });
+  }
+
+  /**
+   * @description The placeholder title of a page while it loads is expected; when it stays
+   *   PAGE_TITLE_WAIT_MS, the page has no title of its own (the panel says so).
+   */
+  private watchTitle(): void {
+    if (this.titleTimer) clearTimeout(this.titleTimer);
+    this.titleTimer = null;
+    this.titleMissing = false;
+    if (this.titlePending) {
+      this.titleTimer = setTimeout(() => {
+        this.titleTimer = null;
+        this.titleMissing = this.titlePending;
+        this.cd.markForCheck();
+      }, PAGE_TITLE_WAIT_MS);
+    }
   }
 
   /** @returns Hover labels of the content (in the language of the admin). */
@@ -555,6 +704,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   /** @description Moves the focus to the field of the selected text once it is shown. */
   private focusField(): void {
     setTimeout(() => this.valueField?.nativeElement.focus({ preventScroll: true }));
+    this.fitField();
   }
 
   /**

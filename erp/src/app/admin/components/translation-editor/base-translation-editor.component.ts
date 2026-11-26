@@ -239,6 +239,8 @@ export abstract class BaseTranslationEditorComponent
 
   /** The texts of the current language were saved (the visual text editor hands its drafts over). */
   readonly saved$ = new Subject<void>();
+  /** The success window after saving the texts (the visual editor shows its own quiet "Uloženo"). */
+  saveAlert = true;
 
   /** Unsaved changes of the currently edited language (drives the state of the "Save changes" button). */
   isDirty: boolean = false;
@@ -690,11 +692,13 @@ export abstract class BaseTranslationEditorComponent
         this.changedPaths.clear();
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.currentLang}`);
         this.notifications.refresh(); // the orange numbers follow the saved texts at once
-        this.alertDialogService.open(
-          this.t('admin_title'),
-          this.t('translations_saved_message').replace('{lang}', this.currentLang),
-          'success'
-        );
+        if (this.saveAlert) {
+          this.alertDialogService.open(
+            this.t('admin_title'),
+            this.t('translations_saved_message').replace('{lang}', this.currentLang),
+            'success'
+          );
+        }
         this.buildFlatList();
         this.applyFilter();
         this.saved$.next();

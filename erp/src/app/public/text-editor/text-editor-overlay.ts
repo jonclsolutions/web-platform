@@ -19,7 +19,7 @@
  */
 
 import { FoundMark, hasMarks, scanMarks, stripMarks } from './text-editor-markers';
-import { TextEditorContentSection, TextEditorHiddenText } from './text-editor-protocol';
+import { TextEditorContentSection, TextEditorHiddenText, TextEditorShortcut } from './text-editor-protocol';
 import { stripLanguagePrefix } from '../../shared/utils/language-url';
 import { TEXT_EDITOR_BANNERS_PATH, isBannersQuery } from './text-editor-protocol';
 
@@ -42,6 +42,8 @@ export interface TextEditorOverlayHost {
   onContent(section: TextEditorContentSection): void;
   /** The page shows other texts than before. */
   onScan(scan: { path: string; title: string; visible: string[]; missing: string[]; hidden: TextEditorHiddenText[] }): void;
+  /** A shortcut of the editor was pressed in the page (Ctrl/Cmd+S, Esc). */
+  onKey(key: TextEditorShortcut): void;
 }
 
 /** One marked text on the page. */
@@ -108,6 +110,7 @@ export class TextEditorOverlay {
   private readonly onClick = (event: MouseEvent) => this.click(event);
   private readonly onAuxClick = (event: MouseEvent) => this.blockLeaving(event);
   private readonly onSubmit = (event: Event) => { event.preventDefault(); event.stopImmediatePropagation(); };
+  private readonly onKeyDown = (event: KeyboardEvent) => this.shortcut(event);
   private readonly onViewportChange = () => this.scheduleRedraw();
 
   constructor(private readonly doc: Document, private readonly host: TextEditorOverlayHost) {}
@@ -135,6 +138,7 @@ export class TextEditorOverlay {
     win.addEventListener('click', this.onClick, true);
     win.addEventListener('auxclick', this.onAuxClick, true);
     win.addEventListener('submit', this.onSubmit, true);
+    win.addEventListener('keydown', this.onKeyDown, true);
     win.addEventListener('scroll', this.onViewportChange, { capture: true, passive: true });
     win.addEventListener('resize', this.onViewportChange);
 
@@ -155,6 +159,7 @@ export class TextEditorOverlay {
     win.removeEventListener('click', this.onClick, true);
     win.removeEventListener('auxclick', this.onAuxClick, true);
     win.removeEventListener('submit', this.onSubmit, true);
+    win.removeEventListener('keydown', this.onKeyDown, true);
     win.removeEventListener('scroll', this.onViewportChange, true);
     win.removeEventListener('resize', this.onViewportChange);
     this.observer?.disconnect();
@@ -403,6 +408,21 @@ export class TextEditorOverlay {
     return layer;
   }
 
+  /**
+   * @description Shortcuts of the editor pressed in the page go to the admin: Ctrl/Cmd+S saves
+   *   (the browser's "save page" is stopped), Esc cancels the selection (an open control of the
+   *   page - a menu - still gets its Esc).
+   * @param event keydown (capture phase).
+   */
+  private shortcut(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      this.host.onKey('save');
+    } else if (event.key === 'Escape' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      this.host.onKey('escape');
+    }
+  }
+
   /** @returns Whether a measured box can be seen (has a size). */
   private isShown(rect: DOMRect | null): boolean {
     return !!rect && rect.width > 0.5 && rect.height > 0.5;
@@ -448,17 +468,26 @@ export class TextEditorOverlay {
         label.textContent = item.entry.missing ? `${this.host.missingLabel()} · ${name}` : name;
         const above = r!.top - OUTLINE_GAP - 20;
         label.style.cssText = `left:${r!.left - OUTLINE_GAP}px;top:${above >= 2 ? above : r!.bottom + OUTLINE_GAP + 2}px;`;
+        // the other place of the label (under its text) - used when it would cover another label
+        label.dataset['below'] = String(r!.bottom + OUTLINE_GAP + 2);
+        label.dataset['hovered'] = hovered && !selected ? '1' : '';
         parts.push(label);
       }
     }
     layer.replaceChildren(...parts);
     // a label of a text at the right edge would leave the screen - shift it left to fit
     const right = this.doc.documentElement.clientWidth - LABEL_MARGIN;
-    for (const label of layer.querySelectorAll<HTMLElement>('.l')) {
+    const labels = Array.from(layer.querySelectorAll<HTMLElement>('.l'));
+    for (const label of labels) {
       const box = label.getBoundingClientRect();
       if (box.right > right) {
         label.style.left = `${Math.max(LABEL_MARGIN, right - box.width)}px`;
       }
+    }
+    // the label of the hovered text would cover the one of the selected text - put it under its text
+    const hoveredLabel = labels.find(label => label.dataset['hovered'] === '1');
+    if (hoveredLabel && labels.some(label => label !== hoveredLabel && overlaps(label.getBoundingClientRect(), hoveredLabel.getBoundingClientRect()))) {
+      hoveredLabel.style.top = `${hoveredLabel.dataset['below']}px`;
     }
   }
 
@@ -558,4 +587,14 @@ export class TextEditorOverlay {
       event.stopImmediatePropagation();
     }
   }
+}
+
+/**
+ * @description Whether two boxes overlap.
+ * @param a Box.
+ * @param b Box.
+ * @returns true when they share an area.
+ */
+function overlaps(a: DOMRect, b: DOMRect): boolean {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 }

@@ -679,7 +679,7 @@
                 },
                 {
                   "label": "Save",
-                  "text": "Save in the top bar stores the edited texts of the language (their count in brackets); Discard changes reverts them after a confirmation. One text goes back without a confirmation with Restore the saved version under the field or the ↺ icon; the panel lists the Edited texts (the last edited on top, a text of another page marked) and the edited rows of the Translations tab have the same ↺ icon. Switching the language and leaving the editor with unsaved changes (closing it, the Back button of the browser or a link to another part) asks first; so does the Website texts page, for example before opening the editor.",
+                  "text": "Save in the top bar stores the edited texts of the language (their count in brackets); Discard changes reverts them after a confirmation. Ctrl+S (Cmd+S on a Mac) saves too, Esc cancels the selected text; a short \"Saved\" by the button confirms the save. One text goes back without a confirmation with Restore the saved version under the field or the ↺ icon; the panel lists the Edited texts (the last edited on top, a text of another page marked) and the edited rows of the Translations tab have the same ↺ icon. Switching the language and leaving the editor with unsaved changes (closing it, the Back button of the browser or a link to another part) asks first; so does the Website texts page, for example before opening the editor.",
                   "active": false
                 }
               ]

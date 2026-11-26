@@ -13,7 +13,7 @@
  *   createAdminTestContext
  */
 
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -384,6 +384,119 @@ describe('WebTextEditorComponent', () => {
     again.detectChanges();
     expect(again.debugElement.query(By.directive(VisualTextEditorViewComponent)).componentInstance.device).toBe('mobile');
     again.destroy();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Small helps of the panel: the title of the page while it loads ("Loading" is
+   *   the placeholder - "Načítá se…") and when it stays (no title of its own); the other texts
+   *   grouped by where they are, the first 6 and "zobrazit všechny"; the field grows with a long
+   *   text.
+   * @input scan with 'Loading' and 9 other texts (5 hidden, 3 for readers, 1 empty field); wait
+   *   3 s; scan with a title; a long text selected
+   * @output pending → missing → the title; groups hidden 5 + readers 1 at first, all 3 groups
+   *   after "zobrazit všechny"; the field taller than its 3 rows
+   */
+  it('helps with the title, the other texts and long texts', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    const hidden = [
+      ...['a', 'b', 'c', 'd', 'e'].map(k => ({ key: `faq.${k}`, where: 'hidden' })),
+      ...['r1', 'r2', 'r3'].map(k => ({ key: `faq.${k}`, where: 'aria-label' })),
+      { key: 'faq.sub', where: 'placeholder' },
+    ];
+    fromPage({ type: 'scan', path: '/faq', title: 'Loading', visible: ['faq.title'], missing: [], hidden });
+    expect(el.querySelector('.te-ref--pending')).not.toBeNull();
+    tick(3000);
+    fixture.detectChanges();
+    expect(el.querySelector('.te-ref--missing')!.textContent).toContain('editor_page_title_missing');
+    fromPage({ type: 'scan', path: '/faq', title: 'FAQ | Web', visible: ['faq.title'], missing: [], hidden });
+    expect(el.querySelector('.te-ref--missing')).toBeNull();
+
+    const groups = () => Array.from(el.querySelectorAll('.te-hidden-group')).map(g => g.textContent!.replace(/\s+/g, ' ').trim());
+    expect(groups().length).toBe(2);
+    expect(el.querySelectorAll('.te-hidden-group + .te-hidden .te-hidden-item').length).toBe(6);
+    const more = Array.from(el.querySelectorAll<HTMLButtonElement>('.te-link')).find(b => b.textContent!.includes('editor_changed_all'))!;
+    more.click();
+    fixture.detectChanges();
+    expect(groups().length).toBe(3);
+    expect(groups()[1]).toContain('3');
+
+    fromPage({ type: 'select', key: 'faq.title' });
+    view.edit('faq.title', 'Řádek\n'.repeat(12));
+    fixture.detectChanges();
+    flush();
+    const field = el.querySelector('.te-value') as HTMLTextAreaElement;
+    expect(field.style.height).not.toBe('');
+    expect(parseFloat(field.style.height)).toBeGreaterThan(100);
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Saving in the editor: no window over its bar, a quiet "Uloženo" by the button for
+   *   a moment; the list of the texts keeps its window (saveAlert back after leaving).
+   * @input edit; Ctrl+S in the admin window; wait 3 s; destroy
+   * @output post save_translations; no alert window; .te-saved, gone after 3 s; saveAlert true again
+   */
+  it('saves with Ctrl+S and confirms quietly', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    view.edit('faq.title', 'Dotazy');
+    const key = new KeyboardEvent('keydown', { key: 's', ctrlKey: true, cancelable: true });
+    window.dispatchEvent(key);
+    fixture.detectChanges();
+    expect(key.defaultPrevented).toBeTrue();
+    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/web', jasmine.objectContaining({ lang: 'cz' }));
+    expect(ctx.alert.open).not.toHaveBeenCalled();
+    expect(el.querySelector('.te-saved')).not.toBeNull();
+    tick(3000);
+    fixture.detectChanges();
+    expect(el.querySelector('.te-saved')).toBeNull();
+    expect(component.saveAlert).toBeFalse();
+    fixture.destroy();
+    expect(component.saveAlert).toBeTrue();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Shortcuts from the page (the frame passes them on): Esc cancels the selection
+   *   (and tells the page), Ctrl+S without edits does nothing; not while a window is open.
+   * @input select faq.title; key escape from the page; key save; pending window + escape
+   * @output nothing selected, select null sent; no save; the selection kept while a window is open
+   */
+  it('takes the shortcuts pressed in the page', fakeAsync(() => {
+    setup();
+    fromPage({ type: 'select', key: 'faq.title' });
+    flush();
+    fromPage({ type: 'key', key: 'escape' });
+    expect(view.selectedKey).toBeNull();
+    expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key: null, reveal: false });
+    fromPage({ type: 'key', key: 'save' });
+    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
+
+    fromPage({ type: 'select', key: 'faq.title' });
+    flush();
+    view.languagesOpen = true;
+    fromPage({ type: 'key', key: 'escape' });
+    expect(view.selectedKey).toBe('faq.title');
+    view.languagesOpen = false;
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Without the edit permission the panel says the text can only be read.
+   * @input permissions view only; select faq.title
+   * @output .te-readonly note; the field read-only
+   */
+  it('explains a read-only text', fakeAsync(() => {
+    setup();
+    ctx.permissions.granted = new Set(['web-edit-website-view']);
+    const el = fixture.nativeElement as HTMLElement;
+    fromPage({ type: 'select', key: 'faq.title' });
+    flush();
+    fixture.detectChanges();
+    expect(el.querySelector('.te-readonly')!.textContent).toContain('editor_readonly_note');
+    expect((el.querySelector('.te-value') as HTMLTextAreaElement).readOnly).toBeTrue();
     discardPeriodicTasks();
   }));
 

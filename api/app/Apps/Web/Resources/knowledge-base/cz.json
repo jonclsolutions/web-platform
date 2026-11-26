@@ -679,7 +679,7 @@
                 },
                 {
                   "label": "Uložit",
-                  "text": "Uložit v horní liště uloží upravené texty jazyka (v závorce jejich počet); Zahodit změny je po potvrzení vrátí. Jeden text vrátíte bez potvrzení odkazem Vrátit uloženou verzi pod polem nebo ikonou ↺; panel vypisuje Upravené texty (naposledy upravený nahoře, text z jiné stránky je označený) a stejnou ikonu ↺ mají upravené řádky na záložce Překlady. Při přepnutí jazyka a při odchodu z editoru s neuloženými změnami (zavřením, tlačítkem Zpět v prohlížeči nebo odkazem do jiné části) se editor nejdřív zeptá; stejně tak stránka Texty webu, například před otevřením editoru.",
+                  "text": "Uložit v horní liště uloží upravené texty jazyka (v závorce jejich počet); Zahodit změny je po potvrzení vrátí. Ukládat jde i zkratkou Ctrl+S (na Macu Cmd+S), Esc zruší výběr textu; uložení potvrdí krátké „Uloženo“ u tlačítka. Ukládat jde i zkratkou Ctrl+S (na Macu Cmd+S), Esc zruší výběr textu; uložení potvrdí krátké „Uloženo“ u tlačítka. Jeden text vrátíte bez potvrzení odkazem Vrátit uloženou verzi pod polem nebo ikonou ↺; panel vypisuje Upravené texty (naposledy upravený nahoře, text z jiné stránky je označený) a stejnou ikonu ↺ mají upravené řádky na záložce Překlady. Při přepnutí jazyka a při odchodu z editoru s neuloženými změnami (zavřením, tlačítkem Zpět v prohlížeči nebo odkazem do jiné části) se editor nejdřív zeptá; stejně tak stránka Texty webu, například před otevřením editoru.",
                   "active": false
                 }
               ]
