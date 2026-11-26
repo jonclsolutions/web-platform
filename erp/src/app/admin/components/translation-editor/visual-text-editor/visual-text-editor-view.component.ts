@@ -51,6 +51,14 @@ export interface VisualEditorPage {
   labelKey: string;
 }
 
+/** A page of the website not in the list, recognised by its path (a detail of a position…). */
+export interface VisualEditorDetailPage {
+  /** Path without the language (`/jobs/ui-designer`). */
+  pattern: RegExp;
+  /** Key of its name (`e.t()`). */
+  labelKey: string;
+}
+
 /** Preview of the page: the full width of the stage, or the width of a phone. */
 export type VisualEditorDevice = 'desktop' | 'mobile';
 
@@ -102,6 +110,8 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   @Input({ required: true }) e!: BaseTranslationEditorComponent;
   /** Pages of the website offered in the page list. */
   @Input() pages: VisualEditorPage[] = [];
+  /** Pages reached by a click in the preview (details), named in the page list when shown. */
+  @Input() detailPages: VisualEditorDetailPage[] = [];
   /** Page of the admin the editor returns to (the list of the texts). */
   @Input() backRoute = '';
 
@@ -363,6 +373,19 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   /** @returns Whether the page shown is one of the list (else "other page"). */
   get knownPage(): boolean {
     return this.pages.some(page => page.path === this.framePath);
+  }
+
+  /**
+   * @returns Name of a page shown that is not in the list: a known detail ("Kariéra – detail
+   *   pozice (ui-designer)"), else "Jiná stránka (/path)".
+   */
+  get otherPageLabel(): string {
+    const detail = this.detailPages.find(page => page.pattern.test(this.framePath.split('?')[0]));
+    if (detail) {
+      const last = this.framePath.split('?')[0].split('/').filter(Boolean).pop() ?? '';
+      return `${this.e.t(detail.labelKey)} (${decodeURIComponent(last)})`;
+    }
+    return `${this.e.t('editor_page_other')} (${this.framePath})`;
   }
 
   /** @returns Label of the save button with the count of the edits. */

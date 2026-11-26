@@ -701,7 +701,7 @@
                 },
                 {
                   "title": "Other texts of the page",
-                  "text": "Texts that cannot be clicked: the text in an empty form field, an image description, the description for search engines or a text hidden at this screen size. Pick them from the list in the panel."
+                  "text": "Texts that cannot be clicked: an image description, the description for search engines or a text hidden at this screen size. Pick them from the list in the panel. The text in an empty form field (for example your@email.com) is selected with a click into the field; a detail of a position opened from the preview is named in the page list."
                 },
                 {
                   "title": "Cookie bar and language offer",

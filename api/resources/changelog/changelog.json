@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů přímo na stránkách: pole formulářů v náhledu nejdou použít – nejde do nich psát, zaškrtávat, vybírat ani přikládat soubory, takže se neukazují chybové hlášky formuláře a nic nejde odeslat; kliknutí do pole jen vybere jeho text."
+        },
+        {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů přímo na stránkách: texty v prázdných polích formulářů (kontakt, přihláška na pozici) jdou vybrat kliknutím do pole a upravit s náhledem; po prokliku na detail pozice ukáže seznam stránek „Kariéra – detail pozice“ místo „Jiná stránka“."
+        },
+        {
             "type": "changed",
             "area": "web",
             "part": "admin",

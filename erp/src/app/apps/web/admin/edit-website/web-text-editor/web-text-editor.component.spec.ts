@@ -501,6 +501,29 @@ describe('WebTextEditorComponent', () => {
   }));
 
   /**
+   * @description A detail reached by a click in the preview is named in the page list (not "Jiná
+   *   stránka"); an unknown page keeps "Jiná stránka (path)".
+   * @input scan /jobs/ui-designer; scan /neco
+   * @output selected option 'pt_page_web_job_detail (ui-designer)'; then 'editor_page_other (/neco)'
+   */
+  it('names a detail page in the page list', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    const selected = () => { const select = el.querySelector('.te-page-select') as HTMLSelectElement; return select.options[select.selectedIndex].textContent!.trim(); };
+    fromPage({ type: 'scan', path: '/jobs/ui-designer', title: 'Volná pozice', visible: [], missing: [], hidden: [] });
+    flush();
+    fixture.detectChanges();
+    expect(selected()).toContain('pt_page_web_job_detail');
+    expect(selected()).toContain('(ui-designer)');
+    fromPage({ type: 'scan', path: '/neco', title: 'X', visible: [], missing: [], hidden: [] });
+    flush();
+    fixture.detectChanges();
+    expect(selected()).toContain('editor_page_other');
+    expect(selected()).toContain('(/neco)');
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description On a phone there is no editor - a notice with the way back.
    * @input phone
    * @output no frame; the notice

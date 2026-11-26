@@ -75,19 +75,19 @@ describe('TextEditorOverlay', () => {
   });
 
   /**
-   * @description The scan finds 7 texts (one split into word spans) and reports the page: the
-   *   path, the visible keys, the attribute text and the text hidden by CSS.
+   * @description The scan finds the texts (one split into word spans, the placeholder of an empty
+   *   field) and reports the page: the path, the visible keys and the text hidden by CSS.
    * @input the fixture
-   * @output count 9 (the placeholder is an attribute; an option of a select is listed as `option`); onScan visible [navigation.contact,
-   *   faq.header_1], hidden placeholder + hidden (menu.hidden); the middle word of the split
-   *   heading hits it
+   * @output count 10 (an option of a select is listed as `option`); onScan visible
+   *   [navigation.contact, faq.header_1, about.story_heading_2, contact.placeholder], hidden
+   *   (menu.hidden), no placeholder among the hidden; the middle word of the split heading hits it
    */
   it('finds the marked texts and reports the page', () => {
-    expect(overlay.count).toBe(9);
+    expect(overlay.count).toBe(10);
     const scan = host.onScan.calls.mostRecent().args[0];
-    expect(scan.visible).toEqual(jasmine.arrayWithExactContents(['navigation.contact', 'faq.header_1', 'about.story_heading_2']));
+    expect(scan.visible).toEqual(jasmine.arrayWithExactContents(['navigation.contact', 'faq.header_1', 'about.story_heading_2', 'contact.placeholder']));
     expect(scan.missing).toEqual(['about.story_heading_2']);
-    expect(scan.hidden).toContain({ key: 'contact.placeholder', where: 'placeholder' });
+    expect(scan.hidden).not.toContain({ key: 'contact.placeholder', where: 'placeholder' });
     expect(scan.hidden).toContain({ key: 'menu.hidden', where: 'hidden' });
     expect(scan.hidden).toContain({ key: 'contact.options.new', where: 'option' });
     expect(typeof scan.path).toBe('string');
@@ -184,6 +184,69 @@ describe('TextEditorOverlay', () => {
     menu.remove();
     await new Promise(resolve => setTimeout(resolve, 250));
     expect(overlay.hit(middle.clientX, middle.clientY)).not.toBeNull();
+  });
+
+  /**
+   * @description The placeholder of an empty form field is outlined around the field and a click
+   *   on the field selects it; once the field is filled the placeholder is not seen - it is listed
+   *   among the other texts as `placeholder` again.
+   * @input click on the empty search field; type into it; rescan
+   * @output onSelect('contact.placeholder'), a box around the field; after typing no hit, hidden
+   *   {contact.placeholder, placeholder}
+   */
+  it('selects the placeholder of an empty form field', async () => {
+    const field = document.getElementById('search') as HTMLInputElement;
+    clickOn(field);
+    expect(host.onSelect).toHaveBeenCalledWith('contact.placeholder');
+    const middle = center(field);
+    expect(overlay.hit(middle.clientX, middle.clientY)!.entry).toEqual({ kind: 'text', key: 'contact.placeholder' });
+    field.value = 'něco';
+    (overlay as any).scan();
+    expect(overlay.hit(middle.clientX, middle.clientY)).toBeNull();
+    expect(host.onScan.calls.mostRecent().args[0].hidden).toContain({ key: 'contact.placeholder', where: 'placeholder' });
+    field.value = '';
+  });
+
+  /**
+   * @description Fields of a form are not used in the editor: no focus by the pointer, no typing,
+   *   pasting, checking, file picker or dropped files - so no validation message and nothing to
+   *   send; a click on a field with a placeholder still selects it. Controls outside forms (an
+   *   accordion checkbox) work as on the website.
+   * @input a form with an e-mail field (placeholder), a checkbox and a file field; an accordion
+   *   checkbox outside it; mousedown / beforeinput / paste / focus / click / drop
+   * @output every default prevented, the field blurred, the checkbox unchanged, onSelect of the
+   *   placeholder; the accordion checkbox toggles
+   */
+  it('keeps the fields of the forms unused', () => {
+    const form = document.createElement('form');
+    form.innerHTML = `<input id="mail" type="email" placeholder="${markText('vas@email.cz', 2, 'text')}" style="width:200px;height:30px">
+      <input id="agree" type="checkbox"><input id="file" type="file"><div id="zone" style="width:100px;height:40px">zóna</div>`;
+    box.appendChild(form);
+    const accordion = document.createElement('input');
+    accordion.type = 'checkbox';
+    box.appendChild(accordion);
+    const fire = (target: Element, event: Event) => { target.dispatchEvent(event); return event.defaultPrevented; };
+    const mail = document.getElementById('mail') as HTMLInputElement;
+    expect(fire(mail, new MouseEvent('mousedown', { bubbles: true, cancelable: true }))).toBeTrue();
+    expect(fire(mail, new InputEvent('beforeinput', { bubbles: true, cancelable: true, data: 'x', inputType: 'insertText' }))).toBeTrue();
+    expect(fire(mail, new Event('paste', { bubbles: true, cancelable: true }))).toBeTrue();
+    expect(fire(mail, new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true }))).toBeTrue();
+    mail.focus();
+    expect(document.activeElement).not.toBe(mail);
+    (overlay as any).scan();
+    clickOn(mail);
+    expect(host.onSelect).toHaveBeenCalledWith('contact.placeholder');
+
+    const agree = document.getElementById('agree') as HTMLInputElement;
+    agree.click();
+    expect(agree.checked).toBeFalse();
+    expect(fire(document.getElementById('file')!, new MouseEvent('click', { bubbles: true, cancelable: true }))).toBeTrue();
+    expect(fire(document.getElementById('zone')!, new Event('drop', { bubbles: true, cancelable: true }))).toBeTrue();
+
+    accordion.click();
+    expect(accordion.checked).toBeTrue();
+    form.remove();
+    accordion.remove();
   });
 
   /**

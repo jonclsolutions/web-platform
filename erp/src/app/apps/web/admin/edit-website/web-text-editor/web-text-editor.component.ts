@@ -14,7 +14,7 @@
 import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { BaseTranslationEditorComponent } from '../../../../../admin/components/translation-editor/base-translation-editor.component';
 import {
-  VisualEditorPage, VisualTextEditorViewComponent,
+  VisualEditorDetailPage, VisualEditorPage, VisualTextEditorViewComponent,
 } from '../../../../../admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component';
 import { LeaveConfirmable } from '../../../../../admin/components/translation-editor/unsaved-texts.guard';
 import { TEXT_EDITOR_BANNERS_PATH } from '../../../../../public/text-editor/text-editor-protocol';
@@ -39,6 +39,11 @@ export const WEB_EDITOR_PAGES: VisualEditorPage[] = [
   { path: TEXT_EDITOR_BANNERS_PATH, labelKey: 'editor_page_banners' },
 ];
 
+/** Details of the website reached by a click in the preview (the page list names them). */
+export const WEB_EDITOR_DETAIL_PAGES: VisualEditorDetailPage[] = [
+  { pattern: /^\/jobs\/[^/]+$/, labelKey: 'pt_page_web_job_detail' },
+];
+
 /**
  * @description Visual text editor of the `web` module.
  * @usage Route `/admin/web/edit-website/editor` (button "Otevřít editor" of the texts page).
@@ -47,7 +52,7 @@ export const WEB_EDITOR_PAGES: VisualEditorPage[] = [
   selector: 'app-web-text-editor',
   standalone: true,
   imports: [VisualTextEditorViewComponent],
-  template: `<app-visual-text-editor-view [e]="this" [pages]="pages" backRoute="/admin/web/edit-website" />`,
+  template: `<app-visual-text-editor-view [e]="this" [pages]="pages" [detailPages]="detailPages" backRoute="/admin/web/edit-website" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WebTextEditorComponent extends BaseTranslationEditorComponent implements LeaveConfirmable {
@@ -60,6 +65,7 @@ export class WebTextEditorComponent extends BaseTranslationEditorComponent imple
 
   /** Pages offered in the editor. */
   readonly pages = WEB_EDITOR_PAGES;
+  readonly detailPages = WEB_EDITOR_DETAIL_PAGES;
 
   @ViewChild(VisualTextEditorViewComponent) private view?: VisualTextEditorViewComponent;
 

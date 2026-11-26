@@ -49,7 +49,10 @@ export interface TextEditorOverlayHost {
 /** One marked text on the page. */
 interface OverlayItem {
   entry: TextEditorEntry;
-  range: Range;
+  /** The text in the page; null for the placeholder of an empty field (`placeholder`). */
+  range: Range | null;
+  /** The placeholder of a form field (`placeholder`): outlined around the field while it is empty. */
+  placeholder?: boolean;
   /** Smallest element holding the whole text. */
   element: Element;
   /** Its ancestors that clip their content (overflow) - a collapsed answer is out of sight. */
@@ -59,6 +62,9 @@ interface OverlayItem {
   /** Covered by a fixed layer of the page (an open mobile menu, a bar) - not outlined, not hit. */
   covered?: boolean;
 }
+
+/** Events that would use a field of a form (focus by the pointer, typing, pasting, dropping). */
+const FIELD_EVENTS = ['mousedown', 'pointerdown', 'touchstart', 'beforeinput', 'paste', 'drop', 'dragover'];
 
 /** Attributes whose texts are listed as "not visible". */
 const TEXT_ATTRIBUTES = ['placeholder', 'title', 'aria-label', 'alt', 'value', 'content'];
@@ -110,7 +116,12 @@ export class TextEditorOverlay {
   private readonly onClick = (event: MouseEvent) => this.click(event);
   private readonly onAuxClick = (event: MouseEvent) => this.blockLeaving(event);
   private readonly onSubmit = (event: Event) => { event.preventDefault(); event.stopImmediatePropagation(); };
-  private readonly onKeyDown = (event: KeyboardEvent) => this.shortcut(event);
+  private readonly onKeyDown = (event: KeyboardEvent) => { this.shortcut(event); this.blockField(event); };
+  /** Fields of the forms are not used in the editor: no focus, typing, pasting or dropping files. */
+  private readonly onFieldEvent = (event: Event) => this.blockField(event);
+  private readonly onFocusIn = (event: FocusEvent) => {
+    if (this.isFormField(event.target)) (event.target as HTMLElement).blur();
+  };
   private readonly onViewportChange = () => this.scheduleRedraw();
 
   constructor(private readonly doc: Document, private readonly host: TextEditorOverlayHost) {}
@@ -139,6 +150,9 @@ export class TextEditorOverlay {
     win.addEventListener('auxclick', this.onAuxClick, true);
     win.addEventListener('submit', this.onSubmit, true);
     win.addEventListener('keydown', this.onKeyDown, true);
+    // not passive: a touch / drop on a field must be stoppable
+    for (const type of FIELD_EVENTS) win.addEventListener(type, this.onFieldEvent, { capture: true, passive: false });
+    win.addEventListener('focusin', this.onFocusIn, true);
     win.addEventListener('scroll', this.onViewportChange, { capture: true, passive: true });
     win.addEventListener('resize', this.onViewportChange);
 
@@ -160,6 +174,8 @@ export class TextEditorOverlay {
     win.removeEventListener('auxclick', this.onAuxClick, true);
     win.removeEventListener('submit', this.onSubmit, true);
     win.removeEventListener('keydown', this.onKeyDown, true);
+    for (const type of FIELD_EVENTS) win.removeEventListener(type, this.onFieldEvent, true);
+    win.removeEventListener('focusin', this.onFocusIn, true);
     win.removeEventListener('scroll', this.onViewportChange, true);
     win.removeEventListener('resize', this.onViewportChange);
     this.observer?.disconnect();
@@ -264,6 +280,14 @@ export class TextEditorOverlay {
         }
       }
     }
+    // placeholders of the form fields: clicked on the page like a text (contact, job application…)
+    this.doc.body.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(field => {
+      const mark = scanMarks(field.getAttribute('placeholder') ?? '').find(m => m.type === 'start');
+      const entry = mark ? this.host.entry(mark.index!) : undefined;
+      if (entry?.kind === 'text') {
+        items.push({ entry, range: null, element: field, clippers: this.clippersOf(field.parentElement ?? field), rect: null, placeholder: true });
+      }
+    });
     return items;
   }
 
@@ -313,9 +337,10 @@ export class TextEditorOverlay {
         visible.add(item.entry.key);
         if (item.entry.missing) missing.add(item.entry.key);
       } else {
-        // an option of a drop-down list is never drawn on the page itself
-        const where = item.element.closest('option, select, datalist') ? 'option' : 'hidden';
-        hidden.set(`${item.entry.key}|hidden`, { key: item.entry.key, where });
+        // an option of a drop-down list is never drawn on the page itself; a placeholder of a
+        // filled field is listed as its attribute
+        const where = item.placeholder ? 'placeholder' : item.element.closest('option, select, datalist') ? 'option' : 'hidden';
+        hidden.set(`${item.entry.key}|${where === 'placeholder' ? 'placeholder' : 'hidden'}`, { key: item.entry.key, where });
       }
     }
     for (const text of this.attributeTexts()) {
@@ -323,6 +348,7 @@ export class TextEditorOverlay {
     }
     for (const key of visible) {
       hidden.delete(`${key}|hidden`);
+      hidden.delete(`${key}|placeholder`);
     }
     const location = this.doc.defaultView!.location;
     const path = stripLanguagePrefix(location.pathname);
@@ -356,7 +382,12 @@ export class TextEditorOverlay {
         item.rect = new DOMRect(0, 0, 0, 0);
         continue;
       }
-      let { left, top, right, bottom } = item.range.getBoundingClientRect();
+      // a placeholder is seen only while its field is empty - then the field is its box
+      if (item.placeholder && (item.element as HTMLInputElement).value !== '') {
+        item.rect = new DOMRect(0, 0, 0, 0);
+        continue;
+      }
+      let { left, top, right, bottom } = (item.range ?? item.element).getBoundingClientRect();
       for (const clipper of item.clippers) {
         const c = clipper.getBoundingClientRect();
         left = Math.max(left, c.left);
@@ -511,6 +542,8 @@ export class TextEditorOverlay {
    * @param event Click (capture phase).
    */
   private click(event: MouseEvent): void {
+    // a field of a form is never used: a checkbox does not change, the file picker does not open
+    this.blockField(event);
     // a control may show / hide texts by CSS only (an accordion with a checkbox) - scan again
     // once its transition is over
     setTimeout(() => this.scheduleScan(), CLICK_RESCAN_MS);
@@ -533,6 +566,33 @@ export class TextEditorOverlay {
       this.host.onContent(item.entry.section);
     }
     this.blockLeaving(event);
+  }
+
+  /**
+   * @param target Target of an event.
+   * @returns Whether it is a field of a form of the page (or a field with an editable placeholder):
+   *   in the editor it only shows its texts - nothing is typed, chosen, checked or attached, so no
+   *   validation message appears and nothing can be sent.
+   */
+  private isFormField(target: EventTarget | null): boolean {
+    if (!(target instanceof Element) || !target.matches('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) {
+      return false;
+    }
+    return !!target.closest('form') || hasMarks(target.getAttribute('placeholder'));
+  }
+
+  /**
+   * @description Stops what an event would do in a field of a form (focus, typing, pasting,
+   *   dropping, checking, the file picker); the click still selects its text (placeholder).
+   * @param event Event in the capture phase.
+   */
+  private blockField(event: Event): void {
+    // files dropped anywhere in a form (a drop zone) are not attached either
+    const dropped = (event.type === 'drop' || event.type === 'dragover') && event.target instanceof Element && !!event.target.closest('form');
+    if (dropped || this.isFormField(event.target)) {
+      event.preventDefault();
+      if (dropped) event.stopImmediatePropagation();
+    }
   }
 
   /**

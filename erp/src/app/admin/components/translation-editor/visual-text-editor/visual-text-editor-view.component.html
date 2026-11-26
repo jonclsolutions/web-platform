@@ -26,7 +26,7 @@
         <span class="te-sr">{{ e.t('editor_page_label') }}</span>
         <select class="te-page-select" [ngModel]="framePath" (ngModelChange)="goToPage($event)">
           @if (!knownPage) {
-            <option [ngValue]="framePath" disabled>{{ e.t('editor_page_other') }} ({{ framePath }})</option>
+            <option [ngValue]="framePath" disabled>{{ otherPageLabel }}</option>
           }
           @for (page of pages; track page.path) {
             <option [ngValue]="page.path">{{ e.t(page.labelKey) }}</option>

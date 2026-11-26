@@ -701,7 +701,7 @@
                 },
                 {
                   "title": "Další texty stránky",
-                  "text": "Texty, na které nejde kliknout: text v prázdném poli formuláře, popisek obrázku, popis pro vyhledávače nebo text skrytý na této velikosti obrazovky. V panelu je vyberete ze seznamu."
+                  "text": "Texty, na které nejde kliknout: popisek obrázku, popis pro vyhledávače nebo text skrytý na této velikosti obrazovky. V panelu je vyberete ze seznamu. Text v prázdném poli formuláře (například vas@email.cz) vyberete kliknutím do pole; po prokliku na detail pozice ukáže seznam stránek její název."
                 },
                 {
                   "title": "Lišta cookies a nabídka jazyka",
