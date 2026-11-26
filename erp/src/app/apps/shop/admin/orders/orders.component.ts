@@ -18,10 +18,11 @@
  * - RowButtonBuilderComponent (SHARED_UI_BUILDERS): the tabs all / pending tasks / trash.
  * - EmailTemplateEditorComponent: texts of the order e-mails - confirmation, payment reminder and
  *   cancellation of an unpaid order (toolbar "Edit order e-mails", API
- *   shop/settings/order-email-template, languages of the e-shop).
+ *   shop/settings/order-email-template, languages of the e-shop); EmailTemplateStatusService: the
+ *   orange dot of the Actions menu while the e-mails lack texts.
  */
 
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builders';
@@ -36,6 +37,7 @@ import { GraphBuilderComponent } from '../../../../admin/components/builders/gra
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
+import { EmailTemplateStatusService, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 import { RecordActionsComponent } from '../../../../admin/components/record-actions/record-actions.component';
 import { DELIVERY_COUNTRIES, countryName, countryOptions } from '../../shared/delivery-countries';
@@ -114,18 +116,21 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   toolbarButtons: Core.Button[] = [];
 
   /** Cache of `visibleToolbarButtons` (stable array for the OnPush action menu). */
-  private visibleToolbarCache: { source: Core.Button[]; trash: boolean; buttons: Core.Button[] } | null = null;
+  private visibleToolbarCache: { source: Core.Button[]; trash: boolean; attention: boolean; buttons: Core.Button[] } | null = null;
 
   /**
    * @description Toolbar of the page as shown: adding a record is hidden while the trash is
-   *   shown (like on the other list pages) - the visible "+ Přidat" button follows it.
+   *   shown (like on the other list pages) - the visible "+ Přidat" button follows it; the
+   *   e-mail editor item carries the orange dot while the e-mails lack texts.
    */
   get visibleToolbarButtons(): Core.Button[] {
     const cache = this.visibleToolbarCache;
-    if (cache?.source === this.toolbarButtons && cache.trash === this.showTrashTable) return cache.buttons;
-    const buttons = this.toolbarButtons.map(btn =>
-      btn.action === 'handleCreateFormOpened' && this.showTrashTable ? { ...btn, showIf: false } : btn);
-    this.visibleToolbarCache = { source: this.toolbarButtons, trash: this.showTrashTable, buttons };
+    const attention = this.emailTemplateAttention;
+    if (cache?.source === this.toolbarButtons && cache.trash === this.showTrashTable && cache.attention === attention) return cache.buttons;
+    const title = this.i18n.getValue('email-template-editor.attention_title');
+    const buttons = this.toolbarButtons.map(btn => withEmailTemplateAttention(
+      btn.action === 'handleCreateFormOpened' && this.showTrashTable ? { ...btn, showIf: false } : btn, attention, title));
+    this.visibleToolbarCache = { source: this.toolbarButtons, trash: this.showTrashTable, attention, buttons };
     return buttons;
   }
 
@@ -188,6 +193,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.loadDependencies();
     // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
     this.watchRecordParam();
+    this.loadEmailTemplateStatus();
   }
 
   /**
@@ -340,6 +346,9 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   showEmailTemplateModal = false;
   /** Labels of the order confirmation e-mail with the preview sample values. */
   emailTemplateRows: EmailTemplateRow[] = [];
+  /** The confirmation e-mail lacks texts - orange dot on the Actions menu and its item. */
+  emailTemplateAttention = false;
+  private readonly emailTemplateStatus = inject(EmailTemplateStatusService);
 
   /**
    * @description Opens the template editor of the order confirmation e-mail with its labels and
@@ -385,10 +394,23 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.markForCheck();
   }
 
-  /** @description Closes the template editor. */
+  /** @description Closes the template editor (and asks again whether texts are missing). */
   closeEmailTemplateEditor(): void {
     this.showEmailTemplateModal = false;
+    this.loadEmailTemplateStatus();
     this.cd.markForCheck();
+  }
+
+  /**
+   * @description Asks the template API whether the confirmation e-mail lacks texts (the orange
+   *   dot of the Actions menu) - only with the permission to edit it.
+   */
+  private loadEmailTemplateStatus(): void {
+    if (!this.permissionService.hasPermission('shop-orders-update')) return;
+    this.emailTemplateStatus.needsAttention('shop/settings/order-email-template').subscribe(attention => {
+      this.emailTemplateAttention = attention;
+      this.cd.markForCheck();
+    });
   }
 
   // ── Unpaid bank transfers (modal, B-04): days to the payment reminder / the cancellation ──

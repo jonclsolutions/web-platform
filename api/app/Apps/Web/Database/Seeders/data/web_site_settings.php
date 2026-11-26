@@ -18,7 +18,17 @@ return [
     'raw_request_email_intro_i18n' => ['cz' => 'děkujeme za Vaši poptávku. Byla úspěšně přijata a náš tým se jí bude v nejbližší době věnovat.', 'en' => 'thank you for your request. It has been received and our team will look at it shortly.'],
     'raw_request_email_outro_i18n' => ['cz' => 'V případě dotazů nás neváhejte kontaktovat.', 'en' => 'If you have any questions, do not hesitate to contact us.'],
     'raw_request_email_labels_i18n' => [
-        'cz' => [],
+        // Czech = the default language: complete (the template is saved only so)
+        'cz' => [
+            'greeting' => 'Dobrý den,',
+            'summary_header' => 'Rekapitulace poptávky',
+            'label_thema' => 'Téma',
+            'label_email' => 'Kontaktní e-mail',
+            'label_phone' => 'Telefon',
+            'label_description' => 'Popis požadavku',
+            'label_attachments' => 'Přiložené soubory',
+            'label_date' => 'Datum přijetí',
+        ],
         'en' => [
             'greeting' => 'Hello,',
             'summary_header' => 'Recapitulation',

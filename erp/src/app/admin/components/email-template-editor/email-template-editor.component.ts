@@ -11,11 +11,14 @@
  * `sales_order_email`, VT-15) and the e-shop order confirmation (E-shop orders, `order_email`,
  * languages of the e-shop) - the pages differ only by the endpoint, the prefix, the i18n section
  * with the texts, the languages and the rows of the summary table.
- * @note The preview mirrors the language fallback of the backend (I18nEmailTemplate): text of
- * the language → Czech text → built-in default (the default texts are the `email_tpl_default_*`
- * keys of the section and must match the backend constants). A field left empty in the shown
- * language is marked orange and every language tab counts its empty fields, so that the
- * fallback is not forgotten (shared texts: admin i18n section `email-template-editor`).
+ * @note Czech is the default language (2026-11): the template is saved only with every Czech text
+ * filled in (the backend refuses it otherwise - I18nEmailTemplate::missingDefaults), and an
+ * empty text of another language falls back to the Czech one. The preview mirrors that: text of
+ * the language → Czech text → 'Cannot load text' (only while a Czech text is being emptied - it
+ * cannot be saved so). A field left empty in the shown language is marked orange, every
+ * language tab counts its empty fields; an incomplete Czech blocks the save with an explanation
+ * (shared texts: admin i18n section `email-template-editor`). The pages show an orange dot on
+ * their Actions menu while texts are missing (EmailTemplateStatusService).
  * @note Layout: the shared popup frame (AdminModalComponent) - the header (title, close) and the
  *   footer (buttons) stay in place, only the body scrolls; Escape / backdrop close it (not while saving).
  * @usage `<app-email-template-editor endpoint="web/settings/raw-request-email-template"
@@ -35,6 +38,10 @@ import { AlertDialogService } from '../../../core/services/alert-dialog.service'
 import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-button-builder.component';
 import { RowButton, RowButtonItems, languageRowButtons } from '../builders/row-button-builder/row-button';
 import { AdminModalComponent } from '../admin-modal/admin-modal.component';
+import { MISSING_TEXT } from '../../../shared/utils/missing-text';
+
+/** The default language: every text of the template must be filled in it. */
+export const EMAIL_TEMPLATE_PRIMARY_LANG = 'cz';
 
 /** @description One language of `GET languages/web`. */
 export interface EmailTemplateLang {
@@ -110,6 +117,9 @@ export class EmailTemplateEditorComponent implements OnInit {
   currentLang = 'cz';
   template: EmailTemplateState = { subject_i18n: {}, title_i18n: {}, intro_i18n: {}, outro_i18n: {}, labels_i18n: {} };
 
+  /** The default language (Czech) - the template is saved only with all its texts. */
+  readonly primaryLang = EMAIL_TEMPLATE_PRIMARY_LANG;
+
   /** @description Text of the section of this template. */
   t(key: string): string {
     return this.i18n.getValue(`${this.i18nSection}.${key}`);
@@ -129,9 +139,9 @@ export class EmailTemplateEditorComponent implements OnInit {
   }
 
   /**
-   * @description Number of the fields of a language that are empty (they would fall back to the
-   *   Czech text or the default wording): the four texts, the greeting, the summary heading and
-   *   every row of the summary.
+   * @description Number of the fields of a language that are empty (another language falls back
+   *   to the Czech text; an empty Czech text blocks the save): the four texts, the greeting, the
+   *   summary heading and every row of the summary.
    * @param lang Language code.
    */
   missingCount(lang: string): number {
@@ -144,6 +154,21 @@ export class EmailTemplateEditorComponent implements OnInit {
       texts.push(labels[key]);
     }
     return texts.filter(text => !this.isFilled(text)).length;
+  }
+
+  /** @description Empty Czech fields - while there are any, the template cannot be saved. */
+  get primaryMissing(): number {
+    return this.missingCount(this.primaryLang);
+  }
+
+  /** @description Text of the banner of an incomplete Czech ('{count}' = the empty fields). */
+  get primaryMissingText(): string {
+    return this.shared('primary_missing').replace('{count}', String(this.primaryMissing));
+  }
+
+  /** @description The save is possible: loaded, not saving, Czech complete. */
+  get canSave(): boolean {
+    return !this.loading && !this.saving && this.primaryMissing === 0;
   }
 
   /**
@@ -240,9 +265,10 @@ export class EmailTemplateEditorComponent implements OnInit {
   /**
    * @description Saves all languages of the template and closes the modal - no
    * `confirm_password`, only the permission of the route (editing a text is not sensitive).
+   * Not with an incomplete Czech (the button is disabled; the backend refuses it too).
    */
   save(): void {
-    if (this.saving) return;
+    if (this.saving || this.primaryMissing > 0) return;
     this.saving = true;
     this.cd.markForCheck();
 
@@ -270,42 +296,43 @@ export class EmailTemplateEditorComponent implements OnInit {
 
   /**
    * @description Preview of a flat field: the text of the shown language, otherwise the Czech
-   * text, otherwise the default (as the backend sends it).
+   * text (as the backend sends it), otherwise 'Cannot load text' (an empty Czech text - it
+   * cannot be saved so).
    * @param field subject / title / intro / outro.
    */
   preview(field: TextField): string {
     const texts = this.template[`${field}_i18n`];
-    return texts[this.currentLang]?.trim() || texts['cz']?.trim() || this.t(`email_tpl_default_${field}`);
+    return texts[this.currentLang]?.trim() || texts[this.primaryLang]?.trim() || MISSING_TEXT;
   }
 
   /**
    * @description Preview of a label (greeting, summary_header, label_*): the text of the shown
-   * language, otherwise the Czech text, otherwise the default (as the backend sends it).
+   * language, otherwise the Czech text, otherwise 'Cannot load text'.
    * @param key Label key.
    */
   previewLabel(key: string): string {
     return this.template.labels_i18n[this.currentLang]?.[key]?.trim()
-      || this.template.labels_i18n['cz']?.[key]?.trim()
-      || this.t(`email_tpl_default_${key}`);
+      || this.template.labels_i18n[this.primaryLang]?.[key]?.trim()
+      || MISSING_TEXT;
   }
 
   /**
    * @description Placeholder of a flat field: what an empty field sends - the Czech text in
-   * another language, otherwise the default wording.
+   * another language, otherwise an example wording.
    * @param field subject / title / intro / outro.
    */
   textPlaceholder(field: TextField): string {
-    const cz = this.currentLang !== 'cz' ? this.template[`${field}_i18n`]['cz']?.trim() : '';
+    const cz = this.currentLang !== this.primaryLang ? this.template[`${field}_i18n`][this.primaryLang]?.trim() : '';
     return cz || this.t(`email_tpl_placeholder_${field}`);
   }
 
   /**
    * @description Placeholder of a label (greeting, summary_header, label_* …): the Czech text in
-   * another language, otherwise the default wording.
+   * another language, otherwise an example wording.
    * @param key Label key.
    */
   labelPlaceholder(key: string): string {
-    const cz = this.currentLang !== 'cz' ? this.template.labels_i18n['cz']?.[key]?.trim() : '';
+    const cz = this.currentLang !== this.primaryLang ? this.template.labels_i18n[this.primaryLang]?.[key]?.trim() : '';
     return cz || this.t(this.placeholderKey(key));
   }
 

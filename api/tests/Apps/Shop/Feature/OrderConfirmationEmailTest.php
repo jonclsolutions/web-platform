@@ -41,6 +41,16 @@ class OrderConfirmationEmailTest extends TestCase
     /** @var string Temporary storage directory of the test. */
     private string $storage;
 
+    /**
+     * @var array<string, string> An English template of the admin (the e-mail has no built-in
+     *   English since 2026-11 - Czech is the default language, other languages fall back to it).
+     */
+    private const ENGLISH = [
+        'subject' => 'Order confirmation', 'title' => 'Thank you for your order', 'label_total' => 'Total incl. VAT',
+        'withdrawal_info' => 'As a consumer you may withdraw from the contract within 14 days of receiving the goods.',
+        'terms_link' => 'Terms and conditions',
+    ];
+
     /** @var array<string, int>|null Ids of the product "Mug" and the methods of the orders (created once). */
     private ?array $ids = null;
 
@@ -98,7 +108,8 @@ class OrderConfirmationEmailTest extends TestCase
     /**
      * @description The checkout queues the confirmation to the buyer in the language of the
      *   storefront; the e-mail carries the whole order and the legal information.
-     * @input Checkout in 'en' with 2 × Mug, coupon 10 %, shipping PPL 5 EUR, a two-line note.
+     * @input English texts of the template (ENGLISH); checkout in 'en' with 2 × Mug, coupon 10 %,
+     *   shipping PPL 5 EUR, a two-line note.
      * @output 201; order lang 'en'; one ShopOrderConfirmation to jan@example.com; subject
      *   "Order confirmation <number>"; html lang en; number, "Mug", 2, 121.00 €, 242.00 €,
      *   −24.20 € (SAVE10), PPL 5.00 €, Bank transfer, total 222.80 €, address, contact, the note,
@@ -107,6 +118,12 @@ class OrderConfirmationEmailTest extends TestCase
     public function test_checkout_sends_the_confirmation_in_the_storefront_language(): void
     {
         Mail::fake();
+        ShopSiteSetting::create([
+            'is_shop_active' => true,
+            'order_email_subject_i18n' => ['en' => self::ENGLISH['subject']],
+            'order_email_title_i18n' => ['en' => self::ENGLISH['title']],
+            'order_email_labels_i18n' => ['en' => array_diff_key(self::ENGLISH, array_flip(ShopOrderEmailTemplate::FLAT))],
+        ]);
         $number = $this->checkout(['lang' => 'EN'])->assertCreated()->json('data.order_number');
         $order = ShopOrder::where('order_number', $number)->firstOrFail();
         $this->assertSame('en', $order->lang);
@@ -188,26 +205,27 @@ class OrderConfirmationEmailTest extends TestCase
     }
 
     /**
-     * @description The texts of the admin: the language of the order, otherwise Czech, otherwise
-     *   the built-in default - for every text and label.
-     * @input Template: cz subject / intro / label_total / withdrawal; en subject only. Order in en.
-     * @output subject 'Order no.' (en); intro and label_total from cz; label_product default
-     *   'Product'; withdrawal from cz.
+     * @description The texts of the admin: the language of the order, otherwise Czech (also for an
+     *   empty text of the language), otherwise the built-in Czech text - never English.
+     * @input Template: cz subject / intro / label_total / withdrawal; en subject, an empty en intro
+     *   and label_total. Order in en.
+     * @output subject 'Order no.' (en); intro and label_total from cz; label_product the built-in
+     *   Czech 'Zboží'; withdrawal from cz; title the built-in Czech one.
      */
     public function test_texts_use_the_language_fallback(): void
     {
         ShopSiteSetting::create([
             'is_shop_active' => true,
             'order_email_subject_i18n' => ['cz' => 'Potvrzení objednávky', 'en' => 'Order no.'],
-            'order_email_intro_i18n' => ['cz' => 'děkujeme za objednávku.'],
-            'order_email_labels_i18n' => ['cz' => ['label_total' => 'Celkem s DPH', 'withdrawal_info' => 'Do 14 dnů můžete odstoupit.']],
+            'order_email_intro_i18n' => ['cz' => 'děkujeme za objednávku.', 'en' => '  '],
+            'order_email_labels_i18n' => ['cz' => ['label_total' => 'Celkem s DPH', 'withdrawal_info' => 'Do 14 dnů můžete odstoupit.'], 'en' => ['label_total' => '']],
         ]);
 
         $texts = ShopOrderEmailTemplate::forLang('en');
         $this->assertSame('Order no.', $texts['subject']);
         $this->assertSame('děkujeme za objednávku.', $texts['intro']);
         $this->assertSame('Celkem s DPH', $texts['labels']['label_total']);
-        $this->assertSame('Product', $texts['labels']['label_product']);
+        $this->assertSame('Zboží', $texts['labels']['label_product']);
         $this->assertSame('Do 14 dnů můžete odstoupit.', $texts['labels']['withdrawal_info']);
         $this->assertSame(ShopOrderEmailTemplate::DEFAULTS['title'], $texts['title']);
     }
@@ -230,13 +248,15 @@ class OrderConfirmationEmailTest extends TestCase
     /**
      * @description The template API needs shop-orders-update; it keeps only the e-shop languages
      *   and the known labels, plain text (line breaks only in intro / outro / withdrawal_info) and
-     *   drops empty texts; the answer is the stored template.
-     * @input No permission: GET; with it: GET empty, PUT with cz / en / de (web-only) / xx texts,
-     *   a tag, an unknown label, a two-line withdrawal text / reminder intro / pay-by label, an
-     *   empty en intro.
-     * @output 403; {} objects; saved subject {cz, en}; title without the tag; intro {cz};
-     *   labels cz {label_total, label_pay_by on one line, reminder_intro and withdrawal_info
-     *   with their line break} (order of DEFAULTS); log entry.
+     *   drops empty texts; it refuses a template without every Czech text (the default language);
+     *   the answer is the stored template with the texts missing per active language.
+     * @input No permission: GET; with it: GET empty; PUT with only some Czech texts; PUT with the
+     *   complete Czech texts and cz / en / de (web-only) / xx texts, a tag, an unknown label, a
+     *   two-line withdrawal text / reminder intro / pay-by label, an empty en intro.
+     * @output 403; {} objects, missing: cz and en every key; 422 errors.missing (outro …), nothing
+     *   stored; saved subject {cz, en}; title without the tag; intro {cz}; labels cz complete with
+     *   label_total, label_pay_by on one line, reminder_intro and withdrawal_info with their line
+     *   break (order of DEFAULTS); missing: no cz, en everything but the subject; log entry.
      */
     public function test_admin_template_api(): void
     {
@@ -244,20 +264,30 @@ class OrderConfirmationEmailTest extends TestCase
         $this->getJson('/api/shop/settings/order-email-template')->assertForbidden();
 
         $this->signIn($this->userWith(['shop-orders-update']));
+        $all = array_keys(ShopOrderEmailTemplate::DEFAULTS);
         $this->getJson('/api/shop/settings/order-email-template')->assertOk()
-            ->assertExactJson(['data' => array_fill_keys(ShopOrderEmailTemplate::FIELDS, [])]);
+            ->assertExactJson(['data' => array_fill_keys(ShopOrderEmailTemplate::FIELDS, []) + ['missing' => ['cz' => $all, 'en' => $all]]]);
 
+        $this->putJson('/api/shop/settings/order-email-template', [
+            'order_email_subject_i18n' => ['cz' => 'Potvrzení'],
+            'order_email_labels_i18n'  => ['cz' => ['label_total' => 'Celkem']],
+        ])->assertStatus(422)->assertJsonPath('errors.missing.0', 'title')->assertJsonPath('message', ShopOrderEmailTemplate::MISSING_MESSAGE);
+        $this->assertNull(ShopSiteSetting::first()?->order_email_subject_i18n);
+
+        $czLabels = array_diff_key(ShopOrderEmailTemplate::DEFAULTS, array_flip(ShopOrderEmailTemplate::FLAT));
         $data = $this->putJson('/api/shop/settings/order-email-template', [
             'order_email_subject_i18n' => ['cz' => 'Potvrzení', 'en' => 'Confirmation', 'de' => 'Bestätigung', 'xx' => 'X'],
             'order_email_title_i18n'   => ['cz' => '<b>Děkujeme</b>'],
             'order_email_intro_i18n'   => ['cz' => "Řádek 1\nŘádek 2", 'en' => '  '],
-            'order_email_labels_i18n'  => ['cz' => ['label_total' => 'Celkem', 'unknown' => 'x', 'withdrawal_info' => "A\nB", 'reminder_intro' => "R\nS", 'label_pay_by' => "P\nQ"], 'de' => ['label_total' => 'Summe']],
+            'order_email_outro_i18n'   => ['cz' => 'Kontaktujte nás.'],
+            'order_email_labels_i18n'  => ['cz' => array_merge($czLabels, ['label_total' => 'Celkem', 'unknown' => 'x', 'withdrawal_info' => "A\nB", 'reminder_intro' => "R\nS", 'label_pay_by' => "P\nQ"]), 'de' => ['label_total' => 'Summe']],
         ])->assertOk()->json('data');
 
         $this->assertSame(['cz' => 'Potvrzení', 'en' => 'Confirmation'], $data['order_email_subject_i18n']);
         $this->assertSame(['cz' => 'Děkujeme'], $data['order_email_title_i18n']);
         $this->assertSame(['cz' => "Řádek 1\nŘádek 2"], $data['order_email_intro_i18n']);
-        $this->assertSame(['cz' => ['label_total' => 'Celkem', 'label_pay_by' => 'P Q', 'reminder_intro' => "R\nS", 'withdrawal_info' => "A\nB"]], $data['order_email_labels_i18n']);
+        $this->assertSame(['cz' => array_merge($czLabels, ['label_total' => 'Celkem', 'label_pay_by' => 'P Q', 'reminder_intro' => "R\nS", 'withdrawal_info' => "A\nB"])], $data['order_email_labels_i18n']);
+        $this->assertSame(['en' => array_values(array_diff($all, ['subject']))], $data['missing']);
         $this->assertShopLog('update', 'order confirmation e-mail template');
     }
 

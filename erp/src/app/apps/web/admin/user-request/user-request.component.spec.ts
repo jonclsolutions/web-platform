@@ -216,7 +216,8 @@ describe('UserRequestComponent', () => {
   /**
    * @description The page and the open template modal render.
    * @input  detectChanges(); then modal open with one language
-   * @output text contains 'user-request.table_header'; the editor shows the preview subject default with the inquiry endpoint
+   * @output text contains 'user-request.table_header'; the editor (inquiry endpoint) shows the
+   *   preview - nothing stored: 'Cannot load text' and the Czech banner
    */
   it('renders the page and the template modal', fakeAsync(() => {
     fixture.detectChanges();
@@ -225,10 +226,38 @@ describe('UserRequestComponent', () => {
     component.openEmailTemplateEditor();
     fixture.componentRef.changeDetectorRef.markForCheck();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('user-request.email_tpl_default_subject');
+    expect(fixture.nativeElement.textContent).toContain('Cannot load text');
+    expect(fixture.nativeElement.querySelector('.email-tpl-primary-error')).not.toBeNull();
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('web/settings/raw-request-email-template');
     discardPeriodicTasks();
   }));
+
+  /**
+   * @description While the confirmation e-mail lacks texts (the API lists them in `missing`), the
+   *   item of the Actions menu carries the orange dot; closing the editor asks again; without the
+   *   permission to edit it nothing is asked.
+   * @input getQuietly answers missing cz [title]; ngOnInit; then answers no missing + close the
+   *   editor; then granted [] and ngOnInit.
+   * @output getQuietly(template endpoint); editor button attention + title
+   *   'email-template-editor.attention_title'; then no attention; then no new request.
+   */
+  it('marks the e-mail item while the template lacks texts', () => {
+    const quietly = (ctx.dataHandler as any).getQuietly;
+    quietly.and.returnValue(of({ missing: { cz: ['title'] } }));
+    component.ngOnInit();
+    expect(quietly).toHaveBeenCalledWith('web/settings/raw-request-email-template');
+    expect([toolbar()['openEmailTemplateEditor'].attention, toolbar()['openEmailTemplateEditor'].attentionTitle])
+      .toEqual([true, 'email-template-editor.attention_title']);
+
+    quietly.and.returnValue(of({ missing: {} }));
+    component.closeEmailTemplateEditor();
+    expect(toolbar()['openEmailTemplateEditor'].attention).toBeUndefined();
+
+    quietly.calls.reset();
+    ctx.permissions.granted = new Set();
+    component.ngOnInit();
+    expect(quietly).not.toHaveBeenCalled();
+  });
 
   describe('record popup (clickable rows)', () => {
     let query: BehaviorSubject<ParamMap>;

@@ -18,6 +18,7 @@ namespace Tests\Apps\Web\Feature;
 use App\Models\User;
 use App\Apps\Web\Models\WebLog;
 use App\Apps\Web\Models\WebSiteSetting;
+use App\Apps\Web\Support\RawRequestEmailTemplate;
 use Illuminate\Support\Facades\Cache;
 use Tests\Apps\Web\Support\WebFixtures;
 use Tests\TestCase;
@@ -116,20 +117,36 @@ class SiteSettingTest extends TestCase
     }
 
     /**
-     * @description The e-mail template: shown (settings created when missing), saved and logged.
-     * @input GET template (empty table); PUT subject + labels i18n.
-     * @output 200 with null fields; 200 {success, data} with the arrays; web log 'update'.
+     * @description The e-mail template: shown (settings created when missing) with the texts
+     *   missing per active web language, saved only with every Czech text (the default language)
+     *   and logged.
+     * @input GET template (empty table); PUT subject + labels i18n without the other Czech texts;
+     *   PUT with the complete Czech texts + English subject / greeting; PUT title 'x'.
+     * @output 200 with null fields and missing cz (every key); 422 errors.missing (title …),
+     *   nothing stored; 200 {success, data} with the arrays; web log 'update'; 422.
      */
     public function test_raw_request_email_template(): void
     {
         $this->admin();
+        $all = array_keys(RawRequestEmailTemplate::DEFAULTS);
 
         $this->getJson('/api/web/settings/raw-request-email-template')
-            ->assertOk()->assertJson(['data' => ['raw_request_email_subject_i18n' => null, 'raw_request_email_labels_i18n' => null]]);
+            ->assertOk()->assertJson(['data' => ['raw_request_email_subject_i18n' => null, 'raw_request_email_labels_i18n' => null]])
+            ->assertJsonPath('data.missing.cz', $all);
 
         $this->putJson('/api/web/settings/raw-request-email-template', [
             'raw_request_email_subject_i18n' => ['cz' => 'Dekujeme', 'en' => 'Thank you'],
             'raw_request_email_labels_i18n'  => ['en' => ['greeting' => 'Hi,']],
+        ])->assertStatus(422)->assertJsonPath('errors.missing', array_values(array_diff($all, ['subject'])));
+        $this->assertNull(WebSiteSetting::first()->raw_request_email_subject_i18n);
+
+        $czech = RawRequestEmailTemplate::DEFAULTS;
+        $this->putJson('/api/web/settings/raw-request-email-template', [
+            'raw_request_email_subject_i18n' => ['cz' => 'Dekujeme', 'en' => 'Thank you'],
+            'raw_request_email_title_i18n'   => ['cz' => $czech['title']],
+            'raw_request_email_intro_i18n'   => ['cz' => $czech['intro']],
+            'raw_request_email_outro_i18n'   => ['cz' => $czech['outro']],
+            'raw_request_email_labels_i18n'  => ['cz' => array_diff_key($czech, array_flip(RawRequestEmailTemplate::FLAT)), 'en' => ['greeting' => 'Hi,']],
         ])->assertOk()->assertJsonPath('data.raw_request_email_subject_i18n.en', 'Thank you');
 
         $this->assertSame('Hi,', WebSiteSetting::first()->raw_request_email_labels_i18n['en']['greeting']);

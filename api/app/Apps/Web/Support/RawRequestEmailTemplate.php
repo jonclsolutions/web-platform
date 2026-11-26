@@ -22,22 +22,35 @@ use App\Support\Mail\I18nEmailTemplate;
 
 class RawRequestEmailTemplate extends I18nEmailTemplate
 {
+    /** @description Column prefix of the template (web_site_settings `raw_request_email_*_i18n`). */
+    public const PREFIX = 'raw_request_email';
+
     /**
-     * @description Default texts used when the admin never filled in anything for the language
-     * (nor for 'cz').
+     * @description Built-in Czech texts (Czech = the default language): the last resort of a text
+     *   the admin could not fill in yet - the Czech template must be complete to be saved, and the
+     *   migration of 2026-11 filled the empty Czech texts with these.
      */
-    private const DEFAULT_TITLE = 'Your request has been received';
-    private const DEFAULT_SUBJECT = 'Your request has been received';
-    private const DEFAULT_INTRO = 'thank you for your request. It has been successfully received and our team will attend to it shortly.';
-    private const DEFAULT_OUTRO = 'If you have any questions, please do not hesitate to contact us.';
-    private const DEFAULT_GREETING = 'Hello,';
-    private const DEFAULT_SUMMARY_HEADER = 'Request Summary';
-    private const DEFAULT_LABEL_THEMA = 'Topic';
-    private const DEFAULT_LABEL_EMAIL = 'Contact Email';
-    private const DEFAULT_LABEL_PHONE = 'Phone';
-    private const DEFAULT_LABEL_DESCRIPTION = 'Request Description';
-    private const DEFAULT_LABEL_ATTACHMENTS = 'Attached Files';
-    private const DEFAULT_LABEL_DATE = 'Date Received';
+    public const DEFAULTS = [
+        'subject'           => 'Vaše poptávka byla přijata',
+        'title'             => 'Vaše poptávka byla přijata',
+        'intro'             => 'děkujeme za Vaši poptávku. Byla úspěšně přijata a náš tým se jí bude v nejbližší době věnovat.',
+        'outro'             => 'V případě dotazů nás neváhejte kontaktovat.',
+        'greeting'          => 'Dobrý den,',
+        'summary_header'    => 'Rekapitulace poptávky',
+        'label_thema'       => 'Téma',
+        'label_email'       => 'Kontaktní e-mail',
+        'label_phone'       => 'Telefon',
+        'label_description' => 'Popis požadavku',
+        'label_attachments' => 'Přiložené soubory',
+        'label_date'        => 'Datum přijetí',
+    ];
+
+    /** @description Label keys of `raw_request_email_labels_i18n` → variable of the view. */
+    private const LABELS = [
+        'greeting' => 'emailGreeting', 'summary_header' => 'emailSummaryHeader', 'label_thema' => 'emailLabelThema',
+        'label_email' => 'emailLabelEmail', 'label_phone' => 'emailLabelPhone', 'label_description' => 'emailLabelDescription',
+        'label_attachments' => 'emailLabelAttachments', 'label_date' => 'emailLabelDate',
+    ];
 
     /** @description Language codes allowed in the path of a translation file. */
     private const LANG_PATTERN = '/^[a-z]{2,5}$/';
@@ -47,8 +60,8 @@ class RawRequestEmailTemplate extends I18nEmailTemplate
 
     /**
      * @description Returns the `Content::with()` array of texts for the language. Priority:
-     * (1) the text filled in for `$lang`, (2) the text for `'cz'` (fallback language),
-     * (3) the hard-coded default - never an empty / missing text, not even without a
+     * (1) the text filled in for `$lang`, (2) the text for `'cz'` (the default language),
+     * (3) the built-in Czech text - never an empty / missing text, not even without a
      * `WebSiteSetting` row (new installation).
      * @param string|null $lang Language of the record (`WebRawRequestCommission::lang`) -
      * `null` / empty string behaves like `'cz'`.
@@ -61,30 +74,19 @@ class RawRequestEmailTemplate extends I18nEmailTemplate
     {
         $lang = $lang ?: 'cz';
         $settings = WebSiteSetting::first();
+        $labels = self::textMap($settings->raw_request_email_labels_i18n ?? null);
 
-        $titleI18n = $settings->raw_request_email_title_i18n ?? [];
-        $introI18n = $settings->raw_request_email_intro_i18n ?? [];
-        $outroI18n = $settings->raw_request_email_outro_i18n ?? [];
-        $subjectI18n = $settings->raw_request_email_subject_i18n ?? [];
-        $labelsI18n = $settings->raw_request_email_labels_i18n ?? [];
-
-        $labelsForLang = $labelsI18n[$lang] ?? [];
-        $labelsForCz   = $labelsI18n['cz'] ?? [];
-
-        return [
-            'emailSubject'          => self::resolve($subjectI18n, $lang, self::DEFAULT_SUBJECT),
-            'emailTitle'            => self::resolve($titleI18n, $lang, self::DEFAULT_TITLE),
-            'emailIntro'            => self::resolve($introI18n, $lang, self::DEFAULT_INTRO),
-            'emailOutro'            => self::resolve($outroI18n, $lang, self::DEFAULT_OUTRO),
-            'emailGreeting'         => self::resolveLabel($labelsForLang, $labelsForCz, 'greeting', self::DEFAULT_GREETING),
-            'emailSummaryHeader'    => self::resolveLabel($labelsForLang, $labelsForCz, 'summary_header', self::DEFAULT_SUMMARY_HEADER),
-            'emailLabelThema'       => self::resolveLabel($labelsForLang, $labelsForCz, 'label_thema', self::DEFAULT_LABEL_THEMA),
-            'emailLabelEmail'       => self::resolveLabel($labelsForLang, $labelsForCz, 'label_email', self::DEFAULT_LABEL_EMAIL),
-            'emailLabelPhone'       => self::resolveLabel($labelsForLang, $labelsForCz, 'label_phone', self::DEFAULT_LABEL_PHONE),
-            'emailLabelDescription' => self::resolveLabel($labelsForLang, $labelsForCz, 'label_description', self::DEFAULT_LABEL_DESCRIPTION),
-            'emailLabelAttachments' => self::resolveLabel($labelsForLang, $labelsForCz, 'label_attachments', self::DEFAULT_LABEL_ATTACHMENTS),
-            'emailLabelDate'        => self::resolveLabel($labelsForLang, $labelsForCz, 'label_date', self::DEFAULT_LABEL_DATE),
+        $texts = [
+            'emailSubject' => self::resolve(self::textMap($settings->raw_request_email_subject_i18n ?? null), $lang, self::DEFAULTS['subject']),
+            'emailTitle'   => self::resolve(self::textMap($settings->raw_request_email_title_i18n ?? null), $lang, self::DEFAULTS['title']),
+            'emailIntro'   => self::resolve(self::textMap($settings->raw_request_email_intro_i18n ?? null), $lang, self::DEFAULTS['intro']),
+            'emailOutro'   => self::resolve(self::textMap($settings->raw_request_email_outro_i18n ?? null), $lang, self::DEFAULTS['outro']),
         ];
+        foreach (self::LABELS as $key => $variable) {
+            $texts[$variable] = self::resolveLabel(self::textMap($labels[$lang] ?? null), self::textMap($labels['cz'] ?? null), $key, self::DEFAULTS[$key]);
+        }
+
+        return $texts;
     }
 
     /**

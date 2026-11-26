@@ -4,6 +4,24 @@
             "type": "changed",
             "area": "core",
             "part": "admin",
+            "text": "Potvrzovací e-maily (poptávky, objednávky webu i e-shopu): čeština je výchozí jazyk a musí být vyplněná celá – jinak e-mail nejde uložit. Chybějící text jiného jazyka použije češtinu, nikdy anglické náhradní znění. Prázdná česká pole se při aktualizaci doplní výchozím textem."
+        },
+        {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Nabídka Akce u poptávek a objednávek ukazuje oranžovou tečku (i u položky „Editovat potvrzovací e-mail“), dokud e-mailu v některém zapnutém jazyce chybí texty."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Potvrzovací e-mail: prázdný (ne chybějící) text jazyka zákazníka teď správně použije český text místo vestavěného znění."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
             "text": "Firemní profil: záložka Názvy stránek zmizela – název administrace v záložce prohlížeče se needituje, je to „Administrace | název firmy“ v jazyce administrace (CZ/EN). Dosavadní upravené názvy administrace se smažou."
         },
         {

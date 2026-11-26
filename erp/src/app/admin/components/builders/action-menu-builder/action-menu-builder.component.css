@@ -129,3 +129,24 @@
 }
 
 .btn-icon { flex-shrink: 0; }
+
+/* Attention dot (an item needs attention, e.g. the e-mail lacks texts) - the orange of the
+   dots of the tabs (.rbb-dot); on the trigger too, so it is seen with the menu closed. */
+.action-menu-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-amber-600);
+  flex-shrink: 0;
+}
+.action-menu-item .action-menu-dot { margin-left: auto; }
+
+/* Text of the dot for screen readers only. */
+.action-menu-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

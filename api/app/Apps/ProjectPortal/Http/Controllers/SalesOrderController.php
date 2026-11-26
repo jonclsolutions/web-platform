@@ -22,6 +22,8 @@ use App\Apps\ProjectPortal\Models\SalesOrder;
 use App\Apps\ProjectPortal\Models\SalesLead;
 use App\Apps\ProjectPortal\Models\ProjectPortalLog;
 use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
+use App\Apps\ProjectPortal\Support\SalesOrderEmailTemplate;
+use App\Http\Controllers\Api\TranslationController;
 use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
 use App\Apps\ProjectPortal\Http\Resources\SalesOrderResource;
@@ -341,17 +343,24 @@ class SalesOrderController extends Controller
 
     /**
      * @description Editable confirmation e-mail of an order (VT-15) - subject / title / intro /
-     *   outro / labels, each an i18n object keyed by language code.
-     * @return JsonResponse { data: { sales_order_email_*_i18n } }
+     *   outro / labels, each an i18n object keyed by language code - and `missing` (language →
+     *   keys of the empty texts, the active web languages + Czech).
+     * @return JsonResponse { data: { sales_order_email_*_i18n, missing } }
      */
     public function emailTemplate(): JsonResponse
     {
-        return $this->respond(ProjectPortalSetting::current()->only(ProjectPortalSetting::SALES_ORDER_TEMPLATE_FIELDS));
+        $settings = ProjectPortalSetting::current();
+
+        return $this->respond($settings->only(ProjectPortalSetting::SALES_ORDER_TEMPLATE_FIELDS) + [
+            // texts missing per active language of the editor (the web languages; Czech always)
+            'missing' => (object) SalesOrderEmailTemplate::missingByLanguage($settings, TranslationController::activeLanguageCodes('web')),
+        ]);
     }
 
     /**
      * @description Saves the editable confirmation e-mail of an order (only the permission of the
-     *   route, no password confirmation - texts only).
+     *   route, no password confirmation - texts only). Refused (422, `errors.missing`) while a
+     *   Czech text is empty - Czech is the default language every other language falls back to.
      * @param Request $request { sales_order_email_*_i18n }.
      * @return JsonResponse { data: { sales_order_email_*_i18n } }
      */
@@ -360,7 +369,11 @@ class SalesOrderController extends Controller
         $validated = $request->validate(array_fill_keys(ProjectPortalSetting::SALES_ORDER_TEMPLATE_FIELDS, 'sometimes|nullable|array'));
 
         $settings = ProjectPortalSetting::current();
-        $settings->fill($validated)->save();
+        $settings->fill($validated);
+        if (($missing = SalesOrderEmailTemplate::missingDefaults($settings)) !== []) {
+            return response()->json(['message' => SalesOrderEmailTemplate::MISSING_MESSAGE, 'errors' => ['missing' => $missing]], 422);
+        }
+        $settings->save();
 
         $this->logAction($request, ProjectPortalLog::class, 'update', 'ProjectPortalSetting', 'Updated confirmation email template (orders).', $settings->id, 'ProjectPortalSetting');
 

@@ -11,12 +11,13 @@
  * - Config.create* factory functions: Domain-specific, i18n-aware definitions for UI
  *   columns, form fields, and toolbar actions.
  * - EmailTemplateEditorComponent: modal editor of the order confirmation e-mail (sent in the
- *   language of the page, VT-15).
+ *   language of the page, VT-15); EmailTemplateStatusService: the orange dot of the Actions menu
+ *   while the e-mail lacks texts.
  * @note `createProject(item)` navigates to the projects page with the `order_id` query parameter
  * (it opens the project of the order or the create form with the order prefilled).
  */
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builders';
@@ -26,6 +27,7 @@ import { ActionMenuBuilderComponent } from '../../../../admin/components/builder
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
+import { EmailTemplateStatusService, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 
 /**
@@ -90,6 +92,9 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
   showEmailTemplateModal = false;
   /** Rows of the summary table of the order e-mail with the preview sample values. */
   emailTemplateRows: EmailTemplateRow[] = [];
+  /** The confirmation e-mail lacks texts - orange dot on the Actions menu and its item. */
+  emailTemplateAttention = false;
+  private readonly emailTemplateStatus = inject(EmailTemplateStatusService);
 
   /**
    * @description Opens the template editor of the order confirmation with its summary rows and
@@ -113,10 +118,23 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     this.cd.markForCheck();
   }
 
-  /** @description Closes the template editor. */
+  /** @description Closes the template editor (and asks again whether texts are missing). */
   closeEmailTemplateEditor(): void {
     this.showEmailTemplateModal = false;
+    this.loadEmailTemplateStatus();
     this.cd.markForCheck();
+  }
+
+  /**
+   * @description Asks the template API whether the confirmation e-mail lacks texts (the orange
+   *   dot of the Actions menu) - only with the permission to edit it.
+   */
+  private loadEmailTemplateStatus(): void {
+    if (!this.permissionService.hasPermission('project-portal-sales-orders-update')) return;
+    this.emailTemplateStatus.needsAttention('project-portal/sales_orders/email-template').subscribe(attention => {
+      this.emailTemplateAttention = attention;
+      this.cd.markForCheck();
+    });
   }
 
   get toolbarButtons(): Core.Button[] {
@@ -147,7 +165,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
           break;
       }
 
-      return updatedBtn;
+      return withEmailTemplateAttention(updatedBtn, this.emailTemplateAttention, this.i18n.getValue('email-template-editor.attention_title'));
     });
   }
 
@@ -167,6 +185,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     this.initWithAuthCheck(this.router);
     // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
     this.watchRecordParam();
+    this.loadEmailTemplateStatus();
   }
 
   override refreshData(): void {

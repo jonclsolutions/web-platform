@@ -26,10 +26,11 @@ class WebMailsTest extends TestCase
     use WebFixtures;
 
     /**
-     * @description The raw request confirmation uses the template texts (default subject
-     *   without settings) plus the topic, and lists the request data and attachment names.
+     * @description The raw request confirmation uses the template texts (the built-in Czech
+     *   subject without settings - never English) plus the topic, and lists the request data and
+     *   attachment names.
      * @input Raw request 'Website redesign' with attachment brief.pdf, no site settings.
-     * @output Subject 'Your request has been received – Website redesign'; HTML contains e-mail,
+     * @output Subject 'Vaše poptávka byla přijata – Website redesign'; HTML contains e-mail,
      *   description and brief.pdf; no attachments on the mail itself.
      */
     public function test_raw_request_confirmation(): void
@@ -40,7 +41,7 @@ class WebMailsTest extends TestCase
         $mail = new WebRawRequestCommissionReceived($request->load('attachments'));
         $html = $mail->render();
 
-        $mail->assertHasSubject('Your request has been received – Website redesign');
+        $mail->assertHasSubject('Vaše poptávka byla přijata – Website redesign');
         $this->assertStringContainsString('client@example.com', $html);
         $this->assertStringContainsString('We need a new website.', $html);
         $this->assertStringContainsString('brief.pdf', $html);
@@ -54,7 +55,8 @@ class WebMailsTest extends TestCase
      * @input Translations cz (new_project, support) + en (new_project) in a temporary storage;
      *   requests new_project/en, support/en, careers/cz, 'Website redesign'.
      * @output subjects '… – New project / inquiry', '… – Podpora', '… – careers', '… – Website
-     *   redesign'; the HTML shows 'New project / inquiry' and not the slug.
+     *   redesign' (the built-in Czech subject - no template stored); the HTML shows 'New project /
+     *   inquiry' and not the slug.
      */
     public function test_raw_request_topic_is_translated(): void
     {
@@ -67,17 +69,17 @@ class WebMailsTest extends TestCase
 
         try {
             $mail = new WebRawRequestCommissionReceived($this->rawRequest(['thema' => 'new_project', 'lang' => 'en']));
-            $mail->assertHasSubject('Your request has been received – New project / inquiry');
+            $mail->assertHasSubject('Vaše poptávka byla přijata – New project / inquiry');
             $html = $mail->render();
             $this->assertStringContainsString('New project / inquiry', $html);
             $this->assertStringNotContainsString('new_project', $html);
 
             (new WebRawRequestCommissionReceived($this->rawRequest(['thema' => 'support', 'lang' => 'en'])))
-                ->assertHasSubject('Your request has been received – Podpora');
+                ->assertHasSubject('Vaše poptávka byla přijata – Podpora');
             (new WebRawRequestCommissionReceived($this->rawRequest(['thema' => 'careers'])))
-                ->assertHasSubject('Your request has been received – careers');
+                ->assertHasSubject('Vaše poptávka byla přijata – careers');
             (new WebRawRequestCommissionReceived($this->rawRequest()))
-                ->assertHasSubject('Your request has been received – Website redesign');
+                ->assertHasSubject('Vaše poptávka byla přijata – Website redesign');
         } finally {
             $this->app->useStoragePath($original);
             array_map('unlink', glob("{$storage}/app/public/translations/web/*.json"));

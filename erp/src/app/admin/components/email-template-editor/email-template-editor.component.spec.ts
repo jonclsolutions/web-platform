@@ -6,9 +6,10 @@
  * @created 2026
  * @description Unit tests of EmailTemplateEditorComponent (shared confirmation e-mail editor of
  *   the inquiries and the orders): loading of the languages and the stored texts (by the field
- *   prefix), the preview with the fallback to the defaults of the section, language switch,
- *   saving and closing; empty fields of the shown language marked orange, their number on the
- *   language tabs and the hint; texts of a language stored as an empty array are saved.
+ *   prefix), the preview with the fallback to Czech (the default language) and 'Cannot load
+ *   text', language switch, saving and closing - not with an incomplete Czech; empty fields of the
+ *   shown language marked orange, their number on the language tabs, the hint / the Czech
+ *   banner; texts of a language stored as an empty array are saved.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, i18n stub returning `section.key`, alert spy).
  */
@@ -30,6 +31,12 @@ describe('EmailTemplateEditorComponent', () => {
     sales_order_email_intro_i18n: { cz: 'Úvod' },
     sales_order_email_outro_i18n: { cz: 'Závěr' },
     sales_order_email_labels_i18n: { cz: { greeting: 'Dobrý den', summary_header: 'Shrnutí', label_ico: 'IČO' } }
+  };
+  /** `stored` with every Czech text (label_email too) - the only state that can be saved. */
+  const complete = () => {
+    const texts = JSON.parse(JSON.stringify(stored));
+    texts.sales_order_email_labels_i18n.cz.label_email = 'E-mail';
+    return texts;
   };
   const dh = () => ctx.dataHandler as any;
 
@@ -54,10 +61,10 @@ describe('EmailTemplateEditorComponent', () => {
    * @description Loads the languages (a switched off one too - muted tab, the e-mail is prepared
    *   before the language is switched on) and the texts of the prefix; the preview shows the
    *   stored texts of the shown language, the rows with their samples and the subject suffix;
-   *   missing texts fall back to the defaults of the section.
-   * @input  languages cz, en, de (inactive); stored texts.
+   *   a text empty in Czech too is 'Cannot load text' (never another wording).
+   * @input  languages cz, en, de (inactive); stored texts (no Czech label_email).
    * @output languages cz/en/de (de muted); get(endpoint); preview subject/title/intro/outro, greeting, IČO;
-   *   email label default; rendered rows + 'Předmět – X'.
+   *   email label 'Cannot load text'; rendered rows + 'Předmět – X'.
    */
   it('loads and previews the template', () => {
     create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }]), of(stored));
@@ -67,7 +74,7 @@ describe('EmailTemplateEditorComponent', () => {
     expect(component.loading).toBeFalse();
     expect(['subject', 'title', 'intro', 'outro'].map(f => component.preview(f as any))).toEqual(['Předmět', 'Titulek', 'Úvod', 'Závěr']);
     expect([component.previewLabel('greeting'), component.previewLabel('summary_header'), component.previewLabel('label_ico')]).toEqual(['Dobrý den', 'Shrnutí', 'IČO']);
-    expect(component.previewLabel('label_email')).toBe('sales-orders.email_tpl_default_label_email');
+    expect(component.previewLabel('label_email')).toBe('Cannot load text');
     expect(component.placeholderKey('label_email')).toBe('email_tpl_placeholder_email');
 
     fixture.detectChanges();
@@ -79,19 +86,19 @@ describe('EmailTemplateEditorComponent', () => {
   });
 
   /**
-   * @description Switching the language shows its texts (the Czech ones, then the defaults
-   *   where empty - as the backend sends them) and prepares its labels; a missing current language selects the first offered one; failed answers
-   *   keep Czech and end the loading.
+   * @description Switching the language shows its texts (the Czech ones where empty - as the
+   *   backend sends them) and prepares its labels; a missing current language selects the first
+   *   offered one; failed answers keep Czech and end the loading.
    * @input  switchLang('en'), switchLang('sk'); languages en, de + null template; both requests fail.
    * @output en subject 'Subject', title 'Titulek' (Czech), greeting 'Dobrý den' (Czech), email
-   *   label default - the placeholders the same (Czech / default); labels sk {}; currentLang 'en' and an empty template;
-   *   languages [cz], loading false.
+   *   label 'Cannot load text' - the placeholders Czech / the example wording; labels sk {};
+   *   currentLang 'en' and an empty template; languages [cz], loading false.
    */
   it('switches languages and survives missing data', () => {
     create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]), of(stored));
     component.switchLang('en');
     expect([component.currentLang, component.preview('subject'), component.preview('title')]).toEqual(['en', 'Subject', 'Titulek']);
-    expect([component.previewLabel('greeting'), component.previewLabel('label_email')]).toEqual(['Dobrý den', 'sales-orders.email_tpl_default_label_email']);
+    expect([component.previewLabel('greeting'), component.previewLabel('label_email')]).toEqual(['Dobrý den', 'Cannot load text']);
     expect([component.textPlaceholder('title'), component.labelPlaceholder('greeting'), component.labelPlaceholder('label_email')])
       .toEqual(['Titulek', 'Dobrý den', 'sales-orders.email_tpl_placeholder_email']);
     component.switchLang('sk');
@@ -116,11 +123,14 @@ describe('EmailTemplateEditorComponent', () => {
   /**
    * @description Save sends every field of the prefix once, closes and confirms; while saving
    *   neither a second save nor closing happens; a failure keeps the modal; close emits.
-   * @input  save() pending + save() + close(); success; failing save; close().
-   * @output one put(endpoint, sales_order_email_*); closed once after success + alert; failure: no close; close → 2.
+   * @input  complete Czech texts; save() pending + save() + close(); success; failing save; close().
+   * @output canSave; one put(endpoint, sales_order_email_*); closed once after success + alert;
+   *   failure: no close; close → 2.
    */
   it('saves and closes', () => {
-    create(of([{ code: 'cz', name: 'Čeština' }]), of(stored));
+    const texts = complete();
+    create(of([{ code: 'cz', name: 'Čeština' }]), of(texts));
+    expect(component.canSave).toBeTrue();
     const response$ = new Subject<any>();
     dh().put.and.returnValue(response$);
     component.save();
@@ -128,11 +138,11 @@ describe('EmailTemplateEditorComponent', () => {
     component.close();
     expect(closed).toBe(0);
     expect(dh().put).toHaveBeenCalledOnceWith('web/settings/sales-order-email-template', {
-      sales_order_email_subject_i18n: stored.sales_order_email_subject_i18n,
-      sales_order_email_title_i18n: stored.sales_order_email_title_i18n,
-      sales_order_email_intro_i18n: stored.sales_order_email_intro_i18n,
-      sales_order_email_outro_i18n: stored.sales_order_email_outro_i18n,
-      sales_order_email_labels_i18n: stored.sales_order_email_labels_i18n,
+      sales_order_email_subject_i18n: texts.sales_order_email_subject_i18n,
+      sales_order_email_title_i18n: texts.sales_order_email_title_i18n,
+      sales_order_email_intro_i18n: texts.sales_order_email_intro_i18n,
+      sales_order_email_outro_i18n: texts.sales_order_email_outro_i18n,
+      sales_order_email_labels_i18n: texts.sales_order_email_labels_i18n,
     });
     response$.next({});
     response$.complete();
@@ -180,7 +190,8 @@ describe('EmailTemplateEditorComponent', () => {
    *   not shown in the preview; `section` puts a full-width heading before its row.
    * @input  rows label_ico (sample), reminder_subject (no sample, preview false, section
    *   'email_tpl_section_unpaid'), label_pay_by (sample, preview false).
-   * @output 3 fields; 1 table row; no reminder paragraph; heading 'shop-orders.email_tpl_section_unpaid'.
+   * @output 3 fields; 1 table row; no reminder paragraph (only greeting, intro, outro); heading
+   *   'shop-orders.email_tpl_section_unpaid'.
    */
   it('edits texts of another e-mail outside the preview', () => {
     ctx = createAdminTestContext();
@@ -199,55 +210,77 @@ describe('EmailTemplateEditorComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('.email-tpl-labels-grid .email-tpl-field').length).toBe(3);
     expect(el.querySelectorAll('.email-tpl-preview-table tr').length).toBe(1);
+    // greeting, intro, outro (nothing stored - 'Cannot load text'); no paragraph of the reminder
     expect(Array.from(el.querySelectorAll('.email-tpl-preview-text')).map(p => p.textContent!.trim()))
-      .not.toContain('shop-orders.email_tpl_default_reminder_subject');
+      .toEqual(['Cannot load text', 'Cannot load text', 'Cannot load text']);
     expect(el.querySelector('.email-tpl-labels-grid-heading')!.textContent!.trim()).toBe('shop-orders.email_tpl_section_unpaid');
   });
   /**
-   * @description Empty fields: every field empty in the shown language gets the orange class, the
-   *   hint is shown and each language tab carries its number of empty fields; filling a field
-   *   removes its mark; a language with everything filled has no hint.
-   * @input languages cz, en; stored texts (cz: all but label_email; en: subject only).
-   * @output cz: 1 missing (label_email), 1 marked input, hint 'email-template-editor.missing_hint';
-   *   en: 7 missing; after filling label_email in cz: 0, no mark, no hint.
+   * @description Empty fields: every field empty in the shown language gets the orange class and
+   *   each language tab carries its number of empty fields. An incomplete Czech (the default
+   *   language) blocks the save with a banner in every tab - in another tab with a button back to
+   *   Czech; another language gets the orange hint (its empty fields use the Czech text).
+   * @input languages cz, en; stored texts (cz: all but label_email; en: subject only); save();
+   *   switch to en; the banner button; fill label_email in cz.
+   * @output cz: 1 missing, 1 marked input, banner 'email-template-editor.primary_missing' without
+   *   a button, no hint, save disabled with a title, save() sends nothing; en: 7 missing, hint +
+   *   banner with the button → back to cz; after filling: 0, no mark, no banner, save enabled.
    */
-  it('marks the empty fields of a language', () => {
+  it('marks the empty fields and needs the whole Czech', () => {
     create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]), of(JSON.parse(JSON.stringify(stored))));
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
+    const saveButton = () => el.querySelector('.am-btn--primary') as HTMLButtonElement;
     expect(component.missingCount('cz')).toBe(1);
     expect(component.missingCount('en')).toBe(7);
     expect(el.querySelectorAll('.email-tpl-input--missing').length).toBe(1);
-    expect(el.querySelector('.email-tpl-missing-hint')!.textContent!.trim()).toBe('email-template-editor.missing_hint');
+    expect(el.querySelector('.email-tpl-primary-error span')!.textContent!.trim()).toBe('email-template-editor.primary_missing');
+    expect(el.querySelector('.email-tpl-primary-btn')).toBeNull();
+    expect(el.querySelector('.email-tpl-missing-hint')).toBeNull();
     expect(component.langItems.map(i => i.count)).toEqual([1, 7]);
     expect(component.isFilled('  ')).toBeFalse();
+    expect([component.canSave, saveButton().disabled, saveButton().title]).toEqual([false, true, 'email-template-editor.save_blocked_title']);
+    component.save();
+    expect(dh().put).not.toHaveBeenCalled();
+
+    component.switchLang('en');
+    fixture.detectChanges();
+    expect(el.querySelector('.email-tpl-missing-hint')!.textContent!.trim()).toBe('email-template-editor.missing_hint');
+    (el.querySelector('.email-tpl-primary-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.currentLang).toBe('cz');
 
     component.template.labels_i18n['cz']['label_email'] = 'E-mail';
     (component as any).cd.markForCheck(); // OnPush - typing into the field marks it in the app
     fixture.detectChanges();
     expect(component.missingCount('cz')).toBe(0);
     expect(el.querySelectorAll('.email-tpl-input--missing').length).toBe(0);
-    expect(el.querySelector('.email-tpl-missing-hint')).toBeNull();
+    expect(el.querySelector('.email-tpl-primary-error')).toBeNull();
+    expect([component.canSave, saveButton().disabled]).toEqual([true, false]);
   });
 
   /**
    * @description A language saved without any text comes back from the API as an empty JSON
    *   array (an empty PHP array); texts typed into it must reach the request body (regression:
    *   the save reported success and stored nothing).
-   * @input stored subject `[]`, labels { cz: {greeting}, en: [] }; en subject + greeting typed; save().
-   * @output the JSON body of the PUT carries subject.en and labels.en.greeting, cz kept.
+   * @input stored subject `[]`, the other Czech texts complete, labels { cz: complete, en: [] };
+   *   cz subject, en subject + greeting typed; save().
+   * @output the JSON body of the PUT carries subject cz / en and labels.en.greeting, cz kept.
    */
   it('saves the texts of a language stored as an empty array', () => {
-    create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]),
-      of({ sales_order_email_subject_i18n: [], sales_order_email_labels_i18n: { cz: { greeting: 'Dobrý den' }, en: [] } }));
+    const texts = complete();
+    texts.sales_order_email_subject_i18n = [];
+    texts.sales_order_email_labels_i18n.en = [];
+    create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]), of(texts));
     dh().put.and.returnValue(of({}));
+    component.template.subject_i18n['cz'] = 'Předmět';
     component.switchLang('en');
     component.template.subject_i18n['en'] = 'Thank you';
     component.template.labels_i18n['en']['greeting'] = 'Hello';
     component.save();
 
     const body = JSON.parse(JSON.stringify(dh().put.calls.mostRecent().args[1]));
-    expect(body.sales_order_email_subject_i18n).toEqual({ en: 'Thank you' });
-    expect(body.sales_order_email_labels_i18n).toEqual({ cz: { greeting: 'Dobrý den' }, en: { greeting: 'Hello' } });
+    expect(body.sales_order_email_subject_i18n).toEqual({ cz: 'Předmět', en: 'Thank you' });
+    expect(body.sales_order_email_labels_i18n).toEqual({ cz: complete().sales_order_email_labels_i18n.cz, en: { greeting: 'Hello' } });
   });
 });

@@ -14,6 +14,7 @@
 
 import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { SalesOrdersComponent } from './sales-orders.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
@@ -119,6 +120,23 @@ describe('SalesOrdersComponent', () => {
     expect(t['toggleTable'].isActive).toBeTrue();
     expect(t['toggleFilters'].label).toBe('sales-orders.toolbar_hide_filters');
     expect(t['toggleFilters'].isActive).toBeTrue();
+  });
+
+  /**
+   * @description While the order confirmation e-mail lacks texts, its item of the Actions menu
+   *   carries the orange dot; closing the editor asks again.
+   * @input getQuietly answers missing cz [label_ico]; ngOnInit; then no missing + editor closed.
+   * @output getQuietly('project-portal/sales_orders/email-template'); attention true; then none.
+   */
+  it('marks the e-mail item while the template lacks texts', () => {
+    const quietly = (ctx.dataHandler as any).getQuietly;
+    quietly.and.returnValue(of({ missing: { cz: ['label_ico'] } }));
+    component.ngOnInit();
+    expect(quietly).toHaveBeenCalledWith('project-portal/sales_orders/email-template');
+    expect(toolbar()['openEmailTemplateEditor'].attention).toBeTrue();
+    quietly.and.returnValue(of({ missing: {} }));
+    component.closeEmailTemplateEditor();
+    expect(toolbar()['openEmailTemplateEditor'].attention).toBeUndefined();
   });
 
   /**

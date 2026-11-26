@@ -144,7 +144,7 @@ class ShopSiteSettingController extends Controller
     /**
      * @description Editable texts of the order confirmation e-mail - subject / title / intro /
      *   outro (`{ lang: text }`) and the labels (`{ lang: { key: text } }`).
-     * @return JsonResponse { data: { order_email_*_i18n } }
+     * @return JsonResponse { data: { order_email_*_i18n, missing } }
      */
     public function showOrderEmailTemplate(): JsonResponse
     {
@@ -156,7 +156,8 @@ class ShopSiteSettingController extends Controller
      *   password re-confirmation - only the permission of the route, editing a text is not
      *   sensitive). Only the languages of the e-shop and the known labels are kept; texts are
      *   plain text (tags removed, line breaks kept in intro / outro / LONG_LABELS), empty
-     *   texts are dropped (the e-mail then uses the Czech one / the default).
+     *   texts are dropped (the e-mail then uses the Czech one). Refused (422, `errors.missing`)
+     *   while a Czech text is empty - Czech is the default language.
      * @param Request $request { order_email_*_i18n }.
      * @return JsonResponse { data: { order_email_*_i18n } }
      */
@@ -183,7 +184,7 @@ class ShopSiteSettingController extends Controller
                     continue;
                 }
                 foreach (array_keys(ShopOrderEmailTemplate::DEFAULTS) as $label) {
-                    if (in_array($label, ['subject', 'title', 'intro', 'outro'], true)) {
+                    if (in_array($label, ShopOrderEmailTemplate::FLAT, true)) {
                         continue;
                     }
                     $long = in_array($label, self::LONG_LABELS, true);
@@ -195,6 +196,9 @@ class ShopSiteSettingController extends Controller
                 }
             }
             $settings->order_email_labels_i18n = $labels;
+        }
+        if (($missing = ShopOrderEmailTemplate::missingDefaults($settings)) !== []) {
+            return response()->json(['message' => ShopOrderEmailTemplate::MISSING_MESSAGE, 'errors' => ['missing' => $missing]], 422);
         }
         $settings->save();
 
@@ -258,7 +262,8 @@ class ShopSiteSettingController extends Controller
     }
 
     /**
-     * @description The template fields of the settings (empty objects when not set yet).
+     * @description The template fields of the settings (empty objects when not set yet) and
+     *   `missing` (language → keys of the empty texts, active languages of the e-shop + Czech).
      * @param ShopSiteSetting|null $settings
      * @return array<string, object>
      */
@@ -268,6 +273,8 @@ class ShopSiteSettingController extends Controller
         foreach (ShopOrderEmailTemplate::FIELDS as $field) {
             $template[$field] = (object) ($settings?->{$field} ?? []);
         }
+        // texts missing per active language of the e-shop (Czech always) - the orange dot of Actions
+        $template['missing'] = (object) ShopOrderEmailTemplate::missingByLanguage($settings, TranslationController::activeLanguageCodes('shop'));
 
         return $template;
     }

@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of ActionMenuBuilderComponent – the "⋯ Actions" dropdown of the admin
- *   toolbars (open/close, outside click, action emit, position inside the viewport).
+ *   toolbars (open/close, outside click, action emit, position inside the viewport, the attention
+ *   dot of an item and of the trigger).
  * @dependencies
  * - AdminLocalizationService (stub: the label of the main button)
  */
@@ -196,4 +197,34 @@ describe('ActionMenuBuilderComponent', () => {
     expect(el.querySelector('.action-menu-primary')).toBeNull();
     expect(openMenuLabels()).toEqual(['Export', 'Import']);
   });
+
+  /**
+   * @description An item that needs attention gets an orange dot (+ its title for the tooltip and
+   *   the screen readers), and so does the trigger - seen with the menu closed; a hidden item
+   *   with attention does not mark the trigger.
+   * @input configs: hidden item with attention; then Export with attention + title 'Texts missing'.
+   * @output no trigger dot / title; then trigger dot + title 'Texts missing'; open: Export with a
+   *   dot and title, Import without.
+   */
+  it('marks an item that needs attention and the trigger', fakeAsync(() => {
+    const trigger = () => fixture.nativeElement.querySelector('.action-menu-trigger') as HTMLButtonElement;
+    fixture.componentRef.setInput('configs', [{ action: 'hidden', label: 'Hidden', showIf: false, attention: true }]);
+    fixture.detectChanges();
+    expect([trigger().querySelector('.action-menu-dot'), trigger().getAttribute('title')]).toEqual([null, null]);
+
+    fixture.componentRef.setInput('configs', [
+      { action: 'export', label: 'Export', attention: true, attentionTitle: 'Texts missing' },
+      { action: 'import', label: 'Import' }
+    ]);
+    fixture.detectChanges();
+    expect(trigger().querySelector('.action-menu-dot')).not.toBeNull();
+    expect(trigger().getAttribute('title')).toBe('Texts missing');
+    expect(trigger().querySelector('.action-menu-sr')!.textContent!.trim()).toBe('Texts missing');
+
+    trigger().click();
+    fixture.detectChanges();
+    tick();
+    expect(items().map(item => [!!item.querySelector('.action-menu-dot'), item.getAttribute('title')]))
+      .toEqual([[true, 'Texts missing'], [false, null]]);
+  }));
 });

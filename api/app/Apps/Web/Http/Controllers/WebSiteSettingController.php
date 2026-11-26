@@ -21,6 +21,8 @@ namespace App\Apps\Web\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Apps\Web\Models\WebSiteSetting;
 use App\Apps\Web\Models\WebLog;
+use App\Apps\Web\Support\RawRequestEmailTemplate;
+use App\Http\Controllers\Api\TranslationController;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -120,9 +122,10 @@ class WebSiteSettingController extends Controller
     /**
      * @description Returns only the editable fields of the WebRawRequestCommission
      * confirmation email template (subject/title/intro/outro/labels, each as an i18n object keyed
-     * by language code). Returns DIRECTLY the object (not wrapped in `{data: ...}`) - consistent
-     * with how `DataHandler.get<T>()` on the frontend does NOT wrap the response, unlike
-     * `put()`.
+     * by language code) and `missing` (language → keys of the empty texts, the active web
+     * languages + Czech - the orange dot of the Actions menu of Inquiries). Returns DIRECTLY the
+     * object (not wrapped in `{data: ...}`) - consistent with how `DataHandler.get<T>()` on the
+     * frontend does NOT wrap the response, unlike `put()`.
      */
     public function showRawRequestEmailTemplate(): JsonResponse
     {
@@ -137,13 +140,16 @@ class WebSiteSettingController extends Controller
             'raw_request_email_intro_i18n'   => $settings->raw_request_email_intro_i18n,
             'raw_request_email_outro_i18n'   => $settings->raw_request_email_outro_i18n,
             'raw_request_email_labels_i18n'  => $settings->raw_request_email_labels_i18n,
+            // texts missing per active language (Czech always) - the orange dot of the Actions menu
+            'missing' => (object) RawRequestEmailTemplate::missingByLanguage($settings, TranslationController::activeLanguageCodes('web')),
         ]);
     }
 
     /**
      * @description Saves the editable WebRawRequestCommission confirmation email template.
      * INTENTIONALLY WITHOUT `confirm_password` -
-     * only permission middleware at route level.
+     * only permission middleware at route level. Refused (422, `errors.missing` = the keys) while
+     * a Czech text is empty - Czech is the default language every other language falls back to.
      */
     public function updateRawRequestEmailTemplate(Request $request): JsonResponse
     {
@@ -157,6 +163,9 @@ class WebSiteSettingController extends Controller
 
         $settings = WebSiteSetting::first() ?? new WebSiteSetting();
         $settings->fill($validated);
+        if (($missing = RawRequestEmailTemplate::missingDefaults($settings)) !== []) {
+            return response()->json(['message' => RawRequestEmailTemplate::MISSING_MESSAGE, 'errors' => ['missing' => $missing]], 422);
+        }
         $settings->save();
 
         $this->logAction(

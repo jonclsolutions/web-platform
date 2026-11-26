@@ -6,7 +6,8 @@
     @created: 2026
     @description: Modal editor of a confirmation e-mail in the shared popup frame (AdminModalComponent:
         fixed header and footer, scrolling body) - language tabs (with the number of empty fields),
-        the texts (an empty field is marked orange), the summary labels and a live preview.
+        the texts (an empty field is marked orange; an incomplete Czech - the default language -
+        blocks the save with an explanation), the summary labels and a live preview.
     @dependencies: EmailTemplateEditorComponent, AdminModalComponent
 -->
 <app-admin-modal size="md" [heading]="t('email_tpl_title')" [subheading]="t('email_tpl_subtitle')"
@@ -20,8 +21,17 @@
 <app-row-button-builder class="email-tpl-lang-tabs" size="sm" [items]="langItems" [active]="currentLang" (selected)="switchLang($event)" />
       }
 
-<!-- Empty fields of the shown language fall back to Czech / the default wording - marked orange -->
-@if (missingCount(currentLang) > 0) {
+<!-- Czech (the default language) must be complete - without it the template cannot be saved -->
+@if (primaryMissing > 0) {
+<div class="email-tpl-primary-error" role="alert">
+<span>{{ primaryMissingText }}</span>
+@if (currentLang !== primaryLang) {
+<button type="button" class="email-tpl-primary-btn" (click)="switchLang(primaryLang)">{{ shared('primary_missing_button') }}</button>
+}
+</div>
+}
+<!-- Empty fields of another language fall back to the Czech text - marked orange -->
+@if (currentLang !== primaryLang && missingCount(currentLang) > 0) {
 <p class="email-tpl-missing-hint">{{ shared('missing_hint') }}</p>
 }
 
@@ -137,14 +147,15 @@
 </div>
 
 <p class="email-tpl-hint">
-{{ t('email_tpl_lang_fallback_hint') }}
+{{ shared('lang_fallback_hint') }}
 </p>
 
     }
 
 <ng-container modal-footer>
 <button type="button" class="am-btn am-btn--secondary" (click)="close()" [disabled]="saving">{{ t('email_tpl_cancel') }}</button>
-<button type="button" class="am-btn am-btn--primary" (click)="save()" [disabled]="saving || loading">
+<button type="button" class="am-btn am-btn--primary" (click)="save()" [disabled]="!canSave"
+        [attr.title]="primaryMissing > 0 ? shared('save_blocked_title') : null">
 {{ saving ? t('email_tpl_saving') : t('email_tpl_save') }}
 </button>
 </ng-container>

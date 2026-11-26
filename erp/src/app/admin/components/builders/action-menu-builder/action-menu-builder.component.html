@@ -31,9 +31,15 @@
     [class.active]="isOpen"
     (click)="toggleMenu()"
     aria-haspopup="true"
-    [attr.aria-expanded]="isOpen">
+    [attr.aria-expanded]="isOpen"
+    [attr.title]="attentionTitle">
     <span class="btn-icon">{{ triggerIcon }}</span>
     <span class="btn-label">{{ triggerLabel }}</span>
+    <!-- An item needs attention (e.g. the e-mail lacks texts) - seen without opening the menu -->
+    @if (attentionTitle; as hint) {
+      <span class="action-menu-dot" aria-hidden="true"></span>
+      <span class="action-menu-sr">{{ hint }}</span>
+    }
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
          stroke-linecap="round" stroke-linejoin="round"
          [class.action-menu-chevron-open]="isOpen" aria-hidden="true">
@@ -52,9 +58,14 @@
             type="button"
             class="action-menu-item"
             [class.active]="btn.isActive"
+            [attr.title]="btn.attention ? (btn.attentionTitle || null) : null"
             (click)="onSelect(btn.action)">
             @if (btn.icon) { <span class="btn-icon">{{ btn.icon }}</span> }
             <span class="btn-label">{{ btn.label }}</span>
+            @if (btn.attention) {
+              <span class="action-menu-dot" aria-hidden="true"></span>
+              @if (btn.attentionTitle) { <span class="action-menu-sr">{{ btn.attentionTitle }}</span> }
+            }
           </button>
         }
       }

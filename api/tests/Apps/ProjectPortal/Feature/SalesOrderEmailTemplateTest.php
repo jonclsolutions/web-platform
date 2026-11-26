@@ -33,7 +33,8 @@ class SalesOrderEmailTemplateTest extends TestCase
     use ProjectFixtures;
 
     /**
-     * @description Fake disk / mailer, accepted captcha.
+     * @description Fake disk / mailer, accepted captcha; own storage with the web languages cz + en
+     *   (the languages of the template editor).
      * @return void
      */
     protected function setUp(): void
@@ -42,6 +43,15 @@ class SalesOrderEmailTemplateTest extends TestCase
         Storage::fake('private');
         Mail::fake();
         $this->fakeCaptcha();
+        $storage = sys_get_temp_dir() . '/jsw-portal-mail-' . bin2hex(random_bytes(6));
+        mkdir($storage . '/app/public/translations', 0777, true);
+        file_put_contents($storage . '/app/public/translations/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'name' => 'Čeština', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'en', 'module' => 'web', 'name' => 'English', 'active' => true],
+            ['code' => 'de', 'module' => 'web', 'name' => 'Deutsch', 'active' => false],
+        ]));
+        $this->app->useStoragePath($storage);
+        $this->beforeApplicationDestroyed(fn () => \Illuminate\Support\Facades\File::deleteDirectory($storage));
     }
 
     /**
@@ -86,8 +96,8 @@ class SalesOrderEmailTemplateTest extends TestCase
     }
 
     /**
-     * @description Without any text the built-in English defaults are used, empty texts count
-     *   as missing; a language without texts takes the Czech ones.
+     * @description Without any text the built-in Czech texts are used (never English), empty
+     *   texts count as missing; a language without texts takes the Czech ones.
      * @input No settings row; then cz subject '  ' and title 'Díky'; forLang('de').
      * @output Defaults; subject default + title 'Díky' + htmlLang 'de'.
      */
@@ -105,22 +115,42 @@ class SalesOrderEmailTemplateTest extends TestCase
 
     /**
      * @description The admin reads and saves the template with project-portal-sales-orders-update; the save
-     *   is logged and validated; without the permission both are refused.
-     * @input GET / PUT as editor; PUT title 'x'; GET / PUT without the permission.
-     * @output 200 null fields (row created); 200 with the saved arrays + portal log; 422; 403 ×2.
+     *   is logged and validated, refused without every Czech text (the default language); the read
+     *   lists the texts missing per active web language; without the permission both are refused.
+     * @input GET / PUT as editor; PUT of English texts only; PUT of the complete Czech texts + the
+     *   English ones; PUT title 'x'; GET / PUT without the permission.
+     * @output 200 null fields + missing cz / en every key (de switched off - not listed); 422
+     *   errors.missing (all keys); 200 with the saved arrays + portal log; GET missing: en only
+     *   without subject / label_ico; 422; 403 ×2.
      */
     public function test_template_endpoints(): void
     {
         $this->signIn($this->userWith(['project-portal-sales-orders-update']));
 
+        $all = array_keys(SalesOrderEmailTemplate::DEFAULTS);
         $this->getJson('/api/project-portal/sales_orders/email-template')->assertOk()
             ->assertExactJson(['data' => array_fill_keys(['sales_order_email_subject_i18n', 'sales_order_email_title_i18n',
-                'sales_order_email_intro_i18n', 'sales_order_email_outro_i18n', 'sales_order_email_labels_i18n'], null)]);
+                'sales_order_email_intro_i18n', 'sales_order_email_outro_i18n', 'sales_order_email_labels_i18n'], null)
+                + ['missing' => ['cz' => $all, 'en' => $all]]]);
 
-        $this->putJson('/api/project-portal/sales_orders/email-template', [
+        $english = [
             'sales_order_email_subject_i18n' => ['en' => 'Thanks'],
             'sales_order_email_labels_i18n'  => ['en' => ['label_ico' => 'Company ID']],
+        ];
+        $this->putJson('/api/project-portal/sales_orders/email-template', $english)
+            ->assertStatus(422)->assertJsonPath('errors.missing', $all);
+
+        $czech = SalesOrderEmailTemplate::DEFAULTS;
+        $labels = array_diff_key($czech, array_flip(SalesOrderEmailTemplate::FLAT));
+        $this->putJson('/api/project-portal/sales_orders/email-template', [
+            'sales_order_email_subject_i18n' => ['cz' => $czech['subject'], 'en' => 'Thanks'],
+            'sales_order_email_title_i18n'   => ['cz' => $czech['title']],
+            'sales_order_email_intro_i18n'   => ['cz' => $czech['intro']],
+            'sales_order_email_outro_i18n'   => ['cz' => $czech['outro']],
+            'sales_order_email_labels_i18n'  => ['cz' => $labels, 'en' => ['label_ico' => 'Company ID']],
         ])->assertOk()->assertJsonPath('data.sales_order_email_subject_i18n.en', 'Thanks')->assertJsonMissingPath('data.id');
+        $this->assertSame(['en' => array_values(array_diff($all, ['subject', 'label_ico']))],
+            $this->getJson('/api/project-portal/sales_orders/email-template')->json('data.missing'));
         $this->assertSame('Company ID', ProjectPortalSetting::current()->sales_order_email_labels_i18n['en']['label_ico']);
         $this->assertPortalLog('update', 'Updated confirmation email template (orders).');
         $this->putJson('/api/project-portal/sales_orders/email-template', ['sales_order_email_title_i18n' => 'x'])->assertStatus(422);

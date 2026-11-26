@@ -1875,8 +1875,13 @@
   }
 },
 "email-template-editor": {
-  "missing_hint": "Oranžově označená pole nejsou v tomto jazyce vyplněná. E-mail místo nich použije český text, a když chybí i ten, výchozí anglické znění. Doplňte je, aby zákazník dostal celý e-mail ve svém jazyce.",
-  "missing_tab_title": "Počet nevyplněných polí v tomto jazyce"
+  "missing_hint": "Oranžově označená pole nejsou v tomto jazyce vyplněná – zákazník v nich dostane český text. Doplňte je, aby dostal celý e-mail ve svém jazyce.",
+  "missing_tab_title": "Počet nevyplněných polí v tomto jazyce",
+  "primary_missing": "Čeština je výchozí jazyk – e-mail musí být česky vyplněný celý, jinak ho nejde uložit. Nevyplněná česká pole: {count}.",
+  "primary_missing_button": "Doplnit češtinu",
+  "save_blocked_title": "Nejdřív vyplňte všechna česká pole",
+  "lang_fallback_hint": "ⓘ Prázdné pole jiného jazyka použije český text. Čeština (výchozí jazyk) musí být vyplněná celá.",
+  "attention_title": "Potvrzovací e-mail nemá vyplněné všechny texty"
 },
   "notifications": {
     "kind_generic": "Nové záznamy",

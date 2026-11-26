@@ -8,7 +8,8 @@
  * pages with one trigger + a slide-out list. Takes the SAME `Button[]` config as
  * `ButtonBuilderComponent` - no new configuration layer. The main action of the page
  * (`primaryAction`, 2026-11) is a button of its own next to the menu ("+ Přidat"; on a phone a
- * round green "+") and is not repeated in the menu.
+ * round green "+") and is not repeated in the menu. An item with `attention` gets an orange
+ * dot, and so does the trigger (the problem is seen without opening the menu).
  */
 import {
   Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef,
@@ -67,6 +68,15 @@ export class ActionMenuBuilderComponent {
   /** @description Items of the menu - every config except the main action (never twice). */
   get menuConfigs(): Button[] {
     return this.primaryAction ? this.configs.filter(btn => btn.action !== this.primaryAction) : this.configs;
+  }
+
+  /**
+   * @description Tooltip of the trigger when a shown item needs attention (`attention`), else
+   *   null - the trigger then carries the orange dot so the user sees it without opening the menu.
+   */
+  get attentionTitle(): string | null {
+    const item = this.menuConfigs.find(btn => btn.attention && btn.showIf !== false);
+    return item ? (item.attentionTitle || item.label) : null;
   }
 
   isOpen = false;

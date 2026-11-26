@@ -13,17 +13,19 @@
  * - TableBuilderComponent: UI component for rendering the request data tables and handling CSV exports and imports.
  * - ActionMenuBuilderComponent: Dropdown ("Actions") rendering the `toolbarButtons` config.
  * - GraphBuilderComponent: Generic date-range analytics/report popup (charts + PDF export).
- * - EmailTemplateEditorComponent: modal editor of the confirmation e-mail template.
+ * - EmailTemplateEditorComponent: modal editor of the confirmation e-mail template;
+ *   EmailTemplateStatusService: the orange dot of the Actions menu while the e-mail lacks texts.
  * - USER_REQUEST Config: Domain-specific definitions for form fields, table columns, and button configurations.
  */
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builders';
 import { ActionMenuBuilderComponent } from '../../../../admin/components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
+import { EmailTemplateStatusService, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { BaseDataComponent } from '../../../../admin/components/base-data/base-data.component';
 import * as Config from './user-request.config';
@@ -60,6 +62,9 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   showEmailTemplateModal = false;
   /** Rows of the summary table of the inquiry e-mail with the preview sample values. */
   emailTemplateRows: EmailTemplateRow[] = [];
+  /** The confirmation e-mail lacks texts - orange dot on the Actions menu and its item. */
+  emailTemplateAttention = false;
+  private readonly emailTemplateStatus = inject(EmailTemplateStatusService);
   /** Preview subject suffix - the real subject ends with ' – <topic>'. */
   emailTemplateSubjectSuffix = '';
 
@@ -135,7 +140,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
           break;
       }
 
-      return updatedBtn;
+      return withEmailTemplateAttention(updatedBtn, this.emailTemplateAttention, this.i18n.getValue('email-template-editor.attention_title'));
     });
   }
 
@@ -161,6 +166,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     this.initWithAuthCheck(this.router);
     // Record popup of the clickable rows - also opens `?record=ID` of a link or a reload.
     this.watchRecordParam();
+    this.loadEmailTemplateStatus();
   }
 
   override refreshData(): void {
@@ -214,10 +220,23 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     this.cd.markForCheck();
   }
 
-  /** @description Closes the template editor. */
+  /** @description Closes the template editor (and asks again whether texts are missing). */
   closeEmailTemplateEditor(): void {
     this.showEmailTemplateModal = false;
+    this.loadEmailTemplateStatus();
     this.cd.markForCheck();
+  }
+
+  /**
+   * @description Asks the template API whether the confirmation e-mail lacks texts (the orange
+   *   dot of the Actions menu) - only with the permission to edit it.
+   */
+  private loadEmailTemplateStatus(): void {
+    if (!this.permissionService.hasPermission('web-user-requests-update')) return;
+    this.emailTemplateStatus.needsAttention('web/settings/raw-request-email-template').subscribe(attention => {
+      this.emailTemplateAttention = attention;
+      this.cd.markForCheck();
+    });
   }
 
 }

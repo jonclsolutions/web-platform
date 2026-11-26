@@ -1875,8 +1875,13 @@
     }
   },
 "email-template-editor": {
-  "missing_hint": "Fields marked orange are not filled in for this language. The e-mail uses the Czech text instead, and when that is missing too, the default English wording. Fill them in so that the customer gets the whole e-mail in their language.",
-  "missing_tab_title": "Number of empty fields in this language"
+  "missing_hint": "Fields marked orange are not filled in for this language – the customer gets the Czech text in them. Fill them in so that the customer gets the whole e-mail in their language.",
+  "missing_tab_title": "Number of empty fields in this language",
+  "primary_missing": "Czech is the default language – the e-mail must be filled in completely in Czech, otherwise it cannot be saved. Empty Czech fields: {count}.",
+  "primary_missing_button": "Fill in Czech",
+  "save_blocked_title": "Fill in all Czech fields first",
+  "lang_fallback_hint": "ⓘ An empty field of another language uses the Czech text. Czech (the default language) must be filled in completely.",
+  "attention_title": "The confirmation e-mail does not have all texts filled in"
 },
   "notifications": {
     "kind_generic": "New records",

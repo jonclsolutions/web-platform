@@ -323,7 +323,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "The text is filled in separately for every language of the website. An empty field uses the Czech text, and when that is empty too, the default English wording. Empty fields are therefore marked orange and every language shows its number of empty fields.",
+                "The text is filled in separately for every language of the website. Czech is the default language: it must be filled in completely, otherwise the e-mail cannot be saved (the window says so and offers Fill in Czech). An empty field of another language uses the Czech text. Empty fields are marked orange, every language shows their number and while something is missing, an orange dot is shown at the Actions menu.",
                 "The Live preview at the bottom shows how the e-mail looks; the summary in the preview is filled with sample data.",
                 "Save stores the template, Cancel closes the editor without saving."
               ]

@@ -120,6 +120,27 @@ describe('OrdersComponent', () => {
     });
 
     /**
+     * @description The e-mail item of the Actions menu carries the orange dot while the order
+     *   e-mails lack texts (the cached toolbar follows the change).
+     * @input all permissions; getQuietly answers missing en [subject]; ngOnInit; then no missing +
+     *   the editor closed.
+     * @output getQuietly('shop/settings/order-email-template'); attention true; then false.
+     */
+    it('marks the e-mail item while the e-mails lack texts', () => {
+      ctx.permissions.granted = 'all';
+      ctx.i18n.translations$.next({});
+      const quietly = dh().getQuietly;
+      const item = () => component.visibleToolbarButtons.find(b => b.action === 'openEmailTemplateEditor')!;
+      quietly.and.returnValue(of({ missing: { en: ['subject'] } }));
+      loadLookups();
+      expect(quietly).toHaveBeenCalledWith('shop/settings/order-email-template');
+      expect(item().attention).toBeTrue();
+      quietly.and.returnValue(of({ missing: {} }));
+      component.closeEmailTemplateEditor();
+      expect(item().attention).toBeUndefined();
+    });
+
+    /**
      * @description Tabs with icons; the trash tab (danger) needs 'view-deleted'.
      * @input  currentMode 'pending_tasks'; granted []
      * @output icons box / clock / trash (danger); trash hidden, the others shown

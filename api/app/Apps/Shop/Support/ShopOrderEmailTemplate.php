@@ -32,52 +32,58 @@ class ShopOrderEmailTemplate extends I18nEmailTemplate
     /** @description Template fields of shop_site_settings (admin API, language purge). */
     public const FIELDS = ['order_email_subject_i18n', 'order_email_title_i18n', 'order_email_intro_i18n', 'order_email_outro_i18n', 'order_email_labels_i18n'];
 
+    /** @description Column prefix of the template (shop_site_settings `order_email_*_i18n`). */
+    public const PREFIX = 'order_email';
+
     /**
-     * @description Built-in texts used when the admin filled in nothing for the language (nor for
-     * 'cz'). MUST match the defaults of the admin editor (`orders.email_tpl_default_*`).
+     * @description Built-in Czech texts (Czech = the default language): the last resort of a text
+     *   the admin could not fill in yet - the Czech template must be complete to be saved, and the
+     *   migration of 2026-11 filled the empty Czech texts with these (the same as the seed,
+     *   data/shop_order_email.php).
      */
     public const DEFAULTS = [
-        'subject'               => 'Order confirmation',
-        'title'                 => 'Thank you for your order',
-        'intro'                 => 'we confirm the receipt of your order. Its summary is below; we will let you know when it is on its way.',
-        'outro'                 => 'If you have any questions, please do not hesitate to contact us.',
-        'greeting'              => 'Hello',
-        'summary_header'        => 'Order summary',
-        'label_order_number'    => 'Order number',
-        'label_date'            => 'Order date',
-        'label_product'         => 'Product',
-        'label_quantity'        => 'Qty',
-        'label_unit_price'      => 'Unit price',
-        'label_line_total'      => 'Total',
-        'label_subtotal'        => 'Goods',
-        'label_discount'        => 'Discount',
-        'label_shipping'        => 'Shipping',
-        'label_payment'         => 'Payment',
-        'label_total'           => 'Total incl. VAT',
-        'label_vat'             => 'of which VAT',
-        'label_delivery'        => 'Delivery address',
-        'label_contact'         => 'Contact',
-        'label_company_ids'     => 'Company ID / VAT ID',
-        'label_notes'           => 'Note',
+        'subject'               => 'Potvrzení objednávky',
+        'title'                 => 'Děkujeme za Vaši objednávku',
+        'intro'                 => 'potvrzujeme přijetí Vaší objednávky. Její rekapitulaci najdete níže; jakmile ji odešleme, dáme Vám vědět.',
+        'outro'                 => 'V případě dotazů nás neváhejte kontaktovat.',
+        'greeting'              => 'Dobrý den',
+        'summary_header'        => 'Rekapitulace objednávky',
+        'label_order_number'    => 'Číslo objednávky',
+        'label_date'            => 'Datum objednávky',
+        'label_product'         => 'Zboží',
+        'label_quantity'        => 'Ks',
+        'label_unit_price'      => 'Cena / ks',
+        'label_line_total'      => 'Celkem',
+        'label_subtotal'        => 'Zboží celkem',
+        'label_discount'        => 'Sleva',
+        'label_shipping'        => 'Doprava',
+        'label_payment'         => 'Platba',
+        'label_total'           => 'Celkem k úhradě vč. DPH',
+        'label_vat'             => 'z toho DPH',
+        'label_delivery'        => 'Doručovací adresa',
+        'label_contact'         => 'Kontakt',
+        'label_company_ids'     => 'IČO / DIČ',
+        'label_notes'           => 'Poznámka',
         // Payment details of a bank transfer (confirmation and reminder).
-        'payment_details_header' => 'Payment details',
-        'label_account'         => 'Account number',
+        'payment_details_header' => 'Platební údaje',
+        'label_account'         => 'Číslo účtu',
         'label_iban'            => 'IBAN',
         'label_swift'           => 'SWIFT / BIC',
-        'label_variable_symbol' => 'Variable symbol',
+        'label_variable_symbol' => 'Variabilní symbol',
         // Payment reminder / automatic cancellation of an unpaid order (UnpaidOrders, audit B-04).
-        'label_pay_by'          => 'Pay by',
-        'reminder_subject'      => 'Payment reminder',
-        'reminder_intro'        => 'we have not received the payment for your order yet. Please pay it by the date below, otherwise we will cancel the order. If you have already paid, please ignore this e-mail.',
-        'canceled_subject'      => 'Order cancelled',
-        'canceled_intro'        => 'we have cancelled your order because we did not receive its payment in time. If you are still interested in the goods, please order them again.',
-        'withdrawal_info'       => 'As a consumer you may withdraw from the contract within 14 days of receiving the goods without giving any reason. The conditions of the withdrawal are part of our terms and conditions.',
-        'terms_link'            => 'Terms and conditions',
+        'label_pay_by'          => 'Uhradit do',
+        'reminder_subject'      => 'Připomínka platby objednávky',
+        'reminder_intro'        => 'zatím jsme neobdrželi platbu za Vaši objednávku. Uhraďte ji prosím do níže uvedeného data, jinak objednávku zrušíme. Pokud jste již zaplatili, tento e-mail prosím ignorujte.',
+        'canceled_subject'      => 'Zrušení objednávky',
+        'canceled_intro'        => 'Vaši objednávku jsme zrušili, protože jsme za ni ve stanovené lhůtě neobdrželi platbu. Pokud o zboží stále máte zájem, objednejte ho prosím znovu.',
+        'withdrawal_info'       => 'Jako spotřebitel máte právo od smlouvy odstoupit bez udání důvodu do 14 dnů od převzetí zboží. Podmínky odstoupení jsou součástí našich obchodních podmínek.',
+        'terms_link'            => 'Obchodní podmínky',
     ];
 
     /**
      * @description Returns the `Content::with()` array of texts for the language. Priority:
-     * (1) the text filled in for `$lang`, (2) the text for 'cz', (3) the built-in default.
+     * (1) the text filled in for `$lang`, (2) the text for 'cz' (the default language), (3) the
+     * built-in Czech text.
      * @param string|null $lang Language of the order - null / empty behaves like 'cz'.
      * @return array{subject: string, title: string, intro: string, outro: string, htmlLang: string,
      *   labels: array<string, string>}
@@ -86,19 +92,19 @@ class ShopOrderEmailTemplate extends I18nEmailTemplate
     {
         $lang = $lang ?: 'cz';
         $settings = ShopSiteSetting::first();
-        $labels = $settings?->order_email_labels_i18n ?? [];
+        $labels = self::textMap($settings?->order_email_labels_i18n);
 
         $texts = [
-            'subject'  => self::resolve($settings?->order_email_subject_i18n ?? [], $lang, self::DEFAULTS['subject']),
-            'title'    => self::resolve($settings?->order_email_title_i18n ?? [], $lang, self::DEFAULTS['title']),
-            'intro'    => self::resolve($settings?->order_email_intro_i18n ?? [], $lang, self::DEFAULTS['intro']),
-            'outro'    => self::resolve($settings?->order_email_outro_i18n ?? [], $lang, self::DEFAULTS['outro']),
+            'subject'  => self::resolve(self::textMap($settings?->order_email_subject_i18n), $lang, self::DEFAULTS['subject']),
+            'title'    => self::resolve(self::textMap($settings?->order_email_title_i18n), $lang, self::DEFAULTS['title']),
+            'intro'    => self::resolve(self::textMap($settings?->order_email_intro_i18n), $lang, self::DEFAULTS['intro']),
+            'outro'    => self::resolve(self::textMap($settings?->order_email_outro_i18n), $lang, self::DEFAULTS['outro']),
             'htmlLang' => self::htmlLang($lang),
             'labels'   => [],
         ];
         foreach (array_keys(self::DEFAULTS) as $key) {
-            if (!in_array($key, ['subject', 'title', 'intro', 'outro'], true)) {
-                $texts['labels'][$key] = self::resolveLabel($labels[$lang] ?? [], $labels['cz'] ?? [], $key, self::DEFAULTS[$key]);
+            if (!in_array($key, self::FLAT, true)) {
+                $texts['labels'][$key] = self::resolveLabel(self::textMap($labels[$lang] ?? null), self::textMap($labels['cz'] ?? null), $key, self::DEFAULTS[$key]);
             }
         }
 
