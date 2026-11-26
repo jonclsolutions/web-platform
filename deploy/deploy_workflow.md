@@ -336,9 +336,11 @@ Lokálně po sloučení PR: `git pull`, pak `./dev.sh composer install` (změnil
 a `./dev.sh npm ci` (změnil se `erp/package-lock.json`) a `./dev.sh test`.
 
 **Texty webu a e-shopu (překlady).** V repozitáři jsou výchozí texty
-(`api/storage/app/public/translations/{web,shop}/cz.json` – lokální editor překladů zapisuje přímo
-do nich), na serveru texty upravované v adminu. Při startu každého vydání je kontejner `app`
-sloučí (`php artisan translations:sync`, výpis v `docker compose logs app`):
+(`api/resources/translations/{web,shop}/cz.json` – součást kódu, mění se jen commitem), každá
+instalace má vlastní texty upravované v adminu (`api/storage/app/public/translations`, mimo git –
+lokálně i na serveru). Při startu každého vydání je kontejner `app` sloučí (`php artisan
+translations:sync`, výpis v `docker compose logs app`); lokálně totéž udělá `./dev.sh up` a
+`init-workspace.sh` před migracemi:
 
 | Klíč | Co se stane |
 |---|---|
@@ -353,7 +355,7 @@ Server si pamatuje výchozí texty minulého vydání (`storage/app/private/tran
 toho pozná úpravu v adminu. První vydání s touto funkcí je ještě nemá – jen doplní chybějící
 klíče. Ručně nahrávat JSON po vydání už není potřeba; náhled bez změn:
 `cd /srv/app && docker compose exec app php artisan translations:sync --dry-run`.
-Podrobně pro vývojáře (přidání / přejmenování / smazání klíče): `api/storage/app/public/translations/README.md`.
+Podrobně pro vývojáře (přidání / přejmenování / smazání klíče): `api/resources/translations/README.md`.
 
 ---
 

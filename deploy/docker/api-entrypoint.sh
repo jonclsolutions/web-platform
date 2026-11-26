@@ -31,7 +31,7 @@ mkdir -p storage/logs storage/app/private storage/app/public \
 # a release adds its new keys and texts, the texts edited in the admin are kept. Only in `app`
 # (one container, so queue / scheduler starting at the same time never write the same files).
 # A failure is reported but does not stop the start - the app works with the texts it has.
-if [ "$role" = app ] && [ -d /opt/seed/translations ]; then
+if [ "$role" = app ] && [ -d resources/translations ]; then
     php artisan translations:sync --no-interaction \
         || echo "api-entrypoint: translations:sync failed - the texts of the release were not synchronised (docker compose logs app)" >&2
 fi

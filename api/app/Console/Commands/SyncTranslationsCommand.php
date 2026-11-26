@@ -6,10 +6,13 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Brings the base translations of a release (the seed - `storage/app/public/translations`
- * of the repository, in the production image /opt/seed/translations) into the translations of the
- * server (storage volume) without losing the texts edited in the admin. Run by
- * deploy/docker/api-entrypoint.sh at the start of the `app` container of every release.
+ * @description Brings the base translations of a release (the seed - `resources/translations` of
+ * the repository, read-only, part of the code) into the translations of the installation
+ * (`storage/app/public/translations` - runtime data, edited in the admin, not in git) without
+ * losing the texts edited in the admin. Run by deploy/docker/api-entrypoint.sh at the start of
+ * the `app` container of every release and by init-workspace.sh / dev.sh before the migrations
+ * of a local installation (a change of the seed in a patch then never collides with the texts
+ * edited in the local admin).
  *   - `<module>/<lang>.json`: three-way merge (TranslationSeedMerger) against the seed applied by
  *     the previous sync (kept in storage/app/private/translation-seed) - new keys are added, texts
  *     nobody edited follow the release, edited texts stay, keys removed by the release disappear
@@ -19,7 +22,7 @@
  * Languages added in the admin (e.g. de.json, not in the seed) keep their texts; only the keys the
  * Czech texts of the server no longer have are removed from them (the application does not use
  * them). Their new keys are not added - the editor compares with Czech and shows them as missing.
- * @usage php artisan translations:sync [--seed=/opt/seed/translations] [--dry-run]
+ * @usage php artisan translations:sync [--seed=<folder, default resources/translations>] [--dry-run]
  * @note The first sync on a server has no previous seed: it only adds the missing keys (it cannot
  * tell an edited text from an old one). From then on texts are updated and removed too.
  * @note A file of the server that is not valid JSON is left as it is (warning) and its previous
@@ -36,8 +39,8 @@ use Illuminate\Support\Facades\Log;
 
 class SyncTranslationsCommand extends Command
 {
-    /** @description Seed folder of the production image (api.Dockerfile). */
-    public const DEFAULT_SEED = '/opt/seed/translations';
+    /** @description Seed folder, relative to the application root (resources/ - code, never written). */
+    public const SEED = 'resources/translations';
 
     /** @description Translations of the server, relative to the storage folder. */
     public const TARGET = 'app/public/translations';
@@ -56,7 +59,7 @@ class SyncTranslationsCommand extends Command
      * @var string
      */
     protected $signature = 'translations:sync
-        {--seed=' . self::DEFAULT_SEED . ' : Folder of the base translations of this release}
+        {--seed= : Folder of the base translations of this release (default: resources/translations)}
         {--dry-run : Only report, change nothing}';
 
     /**
@@ -66,12 +69,21 @@ class SyncTranslationsCommand extends Command
     protected $description = 'Adds the new and updated base translations of the release, keeps the texts edited in the admin.';
 
     /**
+     * @description Absolute path of the seed of the release.
+     * @return string
+     */
+    public static function defaultSeed(): string
+    {
+        return base_path(self::SEED);
+    }
+
+    /**
      * @description Synchronises every file of the seed.
      * @return int Exit code (0 = success, 1 = a seed file is not valid JSON).
      */
     public function handle(): int
     {
-        $seedDir = rtrim((string) $this->option('seed'), '/');
+        $seedDir = rtrim((string) ($this->option('seed') ?: self::defaultSeed()), '/');
         if (!File::isDirectory($seedDir)) {
             $this->warn("No base translations in {$seedDir} - nothing to synchronise.");
             return self::SUCCESS;

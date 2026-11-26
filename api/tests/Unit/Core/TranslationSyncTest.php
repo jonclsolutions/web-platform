@@ -8,7 +8,8 @@
  * @created 2026
  * @description Unit tests of the release sync of the base translations: the three-way merge
  *   (App\Support\I18n\TranslationSeedMerger) and the command `translations:sync` on a temporary
- *   storage folder and a temporary seed folder (as /opt/seed/translations of the image).
+ *   storage folder and a temporary seed folder (as resources/translations of the release); the
+ *   default seed is resources/translations.
  * @dependencies
  * - Tests\TestCase; a temporary storage folder (useStoragePath).
  */
@@ -305,12 +306,14 @@ class TranslationSyncTest extends TestCase
     /**
      * @description The real base translations of the repository merge into themselves unchanged
      *   (valid JSON objects, no structure collisions).
-     * @input storage/app/public/translations of the repository as both the seed and the server.
+     * @input resources/translations of the repository (the seed) as both the seed and the server;
+     *   the default seed of the command.
      * @output For every module file: nothing added, updated, removed or kept; data identical.
      */
     public function test_repository_translations_merge_cleanly(): void
     {
-        $files = File::glob(base_path('storage/app/public/translations/*/*.json'));
+        $this->assertSame(base_path('resources/translations'), SyncTranslationsCommand::defaultSeed());
+        $files = File::glob(SyncTranslationsCommand::defaultSeed() . '/*/*.json');
         $this->assertNotEmpty($files);
 
         foreach ($files as $file) {

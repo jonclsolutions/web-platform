@@ -377,7 +377,9 @@ The scheduler currently contains only nightly GDPR clean-up jobs (see `api/route
   `faq.items`, `jobs.job_N_*`, `jobs.{slug}`, `jobs.item_meta_*`) of every language into the
   tables and removes those keys from the files (the HTML of a job detail becomes blocks). Without
   that content it fills in the former Czech texts. Back up `storage/app/public/translations/`
-  before the release.
+  before the release. (Since 2026-11 the base texts of the repository are in
+  `api/resources/translations`; `storage/app/public/translations` is runtime data, not in git -
+  `translations:sync` fills it.)
 
 ## Production (VPS with Docker)
 
@@ -502,7 +504,8 @@ Run once on the first release that contains them (back up the database first):
    it at every start)
 4. **Runtime translations** – the public web / shop texts live in
    `laravel/storage/app/public/translations/{web,shop}/<lang>.json` on the server and are **not**
-   part of the package (they are edited in the admin). Add the new keys to every language file
+   part of the package (they are edited in the admin; the base texts of the repository are in
+   `api/resources/translations`, the Docker release merges them with `translations:sync`). Add the new keys to every language file
    there (admin → translations, or copy the values from the repo `cz.json`); a missing key shows
    an empty text:
    - web: `login.errors.{too_many_attempts, login_failed, verification_failed, request_failed}`,

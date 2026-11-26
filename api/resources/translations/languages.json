@@ -1,0 +1,50 @@
+[
+    {
+        "code": "cz",
+        "module": "shop",
+        "name": "Čeština",
+        "active": true,
+        "isBuiltIn": true,
+        "icon_path": "translation_images\/shop\/czech-republic-default.png"
+    },
+    {
+        "code": "cz",
+        "module": "web",
+        "name": "Čeština",
+        "active": true,
+        "isBuiltIn": true,
+        "icon_path": "translation_images\/web\/czech-republic-default.png"
+    },
+    {
+        "code": "en",
+        "name": "English",
+        "active": true,
+        "isBuiltIn": false,
+        "module": "web",
+        "icon_path": null
+    },
+    {
+        "code": "pl",
+        "name": "Polski",
+        "active": true,
+        "isBuiltIn": false,
+        "module": "web",
+        "icon_path": null
+    },
+    {
+        "code": "fr",
+        "name": "Français",
+        "active": true,
+        "isBuiltIn": false,
+        "module": "web",
+        "icon_path": null
+    },
+    {
+        "code": "de",
+        "name": "Deutsch",
+        "active": true,
+        "isBuiltIn": false,
+        "module": "web",
+        "icon_path": null
+    }
+]

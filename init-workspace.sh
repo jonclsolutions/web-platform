@@ -703,6 +703,10 @@ setup_database() {
         warn "database '${db:-?}' could not be created – check DB_DATABASE in api/.env, then run this script again"
         return 0
     fi
+    # The runtime texts of the web / e-shop (storage, not in git) from the base texts of the
+    # repository (resources/translations) - before the migrations, some of them read the texts.
+    in_app_db api php artisan translations:sync --no-interaction \
+        || warn "the base texts were not copied – see the output above, then run: ./dev.sh artisan translations:sync"
     if ! in_app_db api php artisan migrate --force --no-interaction; then
         warn "migrations failed – see the output above, then run this script again"
         return 0

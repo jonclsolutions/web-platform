@@ -8,7 +8,9 @@
  * @created 2026
  * @description Base class of every api test. Boots the application against a fresh
  *   SQLite in-memory database with the test schema (Tests\Support\TestSchema) and refuses
- *   to run against any other database.
+ *   to run against any other database. A checkout without the runtime translations (a new
+ *   clone, CI - storage/app/public/translations is not in git) gets the base translations of
+ *   the repository (resources/translations) copied there once per run.
  * @dependencies
  * - phpunit.xml forces DB_CONNECTION=sqlite and DB_DATABASE=:memory:.
  * - Tests\Support\TestSchema, Tests\Support\InteractsWithAccounts.
@@ -17,8 +19,10 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use App\Console\Commands\SyncTranslationsCommand;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Tests\Support\InteractsWithAccounts;
 use Tests\Support\TestSchema;
@@ -52,6 +56,35 @@ abstract class TestCase extends BaseTestCase
         }
 
         TestSchema::create();
+        self::ensureTranslations();
+    }
+
+    /** @var bool The runtime translations were checked in this run. */
+    private static bool $translationsChecked = false;
+
+    /**
+     * @description Copies the base translations (resources/translations, *.json only) into the
+     *   runtime folder when it has none yet - the state of a new installation after
+     *   translations:sync. An existing folder (the texts of the local admin) is never touched.
+     * @return void
+     */
+    private static function ensureTranslations(): void
+    {
+        if (self::$translationsChecked) {
+            return;
+        }
+        self::$translationsChecked = true;
+        $target = storage_path(SyncTranslationsCommand::TARGET);
+        if (File::exists($target . '/languages.json')) {
+            return;
+        }
+        $seed = SyncTranslationsCommand::defaultSeed();
+        foreach (File::allFiles($seed) as $file) {
+            if ($file->getExtension() === 'json') {
+                File::ensureDirectoryExists($target . '/' . $file->getRelativePath());
+                File::copy($file->getPathname(), $target . '/' . $file->getRelativePathname());
+            }
+        }
     }
 
     /**

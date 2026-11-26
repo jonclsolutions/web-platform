@@ -270,14 +270,19 @@ cmd_up() {
 }
 
 # -----------------------------------------------------------------------------
-# @description Brings the database up to date with the code on every start - the same two
-# commands as a production release (README → Deployment checklist, step 6): `migrate` runs only
+# @description Brings the texts and the database up to date with the code on every start - like a
+# production release: `translations:sync` adds the new base texts of the repository
+# (resources/translations) to the runtime texts (storage, not in git) and keeps the texts edited
+# in the local admin; then (README → Deployment checklist, step 6) `migrate` runs only
 # the migrations not run yet, the base data seeder adds only missing base data (e.g. new
 # permission keys) and changes nothing else. The test account of DevelopmentSeeder is NOT
 # re-created here (a deleted one stays deleted) - only by init-workspace.sh / ./dev.sh artisan db:seed. Runs in the started api container (the database is healthy by then). A
 # failure is reported, the environment keeps running (fix it, then ./dev.sh artisan migrate).
 # -----------------------------------------------------------------------------
 update_database() {
+    info "texts: adding new base texts of the repository"
+    dc exec -T api php artisan translations:sync --no-interaction \
+        || warn "the base texts were not synchronised – run ./dev.sh artisan translations:sync to see why"
     info "database: running new migrations and adding missing base data"
     if ! dc exec -T api php artisan migrate --force --no-interaction; then
         warn "migrations failed – see the output above, then ./dev.sh artisan migrate"

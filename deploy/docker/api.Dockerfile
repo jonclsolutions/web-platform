@@ -57,13 +57,11 @@ WORKDIR /var/www/html
 COPY api/composer.json api/composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --no-progress --prefer-dist
 COPY api/ ./
-# Base translations of the public web / shop (storage/app/public/translations, edited in the
-# admin afterwards) are kept as the seed of the release - api-entrypoint.sh brings them into the
-# volume (translations:sync: new keys and texts added, texts edited in the admin kept). Then the storage skeleton, bootstrap/cache, the authoritative
-# class map and package discovery (no .env needed).
-RUN mkdir -p /opt/seed \
- && mv storage/app/public/translations /opt/seed/translations \
- && mkdir -p storage/logs storage/app/private storage/app/public \
+# The base translations of the public web / shop are code (resources/translations, the seed of the
+# release) - api-entrypoint.sh brings them into the volume (translations:sync: new keys and texts
+# added, texts edited in the admin kept). Here the storage skeleton, bootstrap/cache, the
+# authoritative class map and package discovery (no .env needed).
+RUN mkdir -p storage/logs storage/app/private storage/app/public \
         storage/framework/cache/data storage/framework/sessions storage/framework/views \
         bootstrap/cache \
  && composer dump-autoload --no-dev --optimize --classmap-authoritative --no-interaction \
@@ -86,7 +84,6 @@ ENV APP_VERSION=${APP_VERSION}
 
 WORKDIR /var/www/html
 COPY --from=vendor /var/www/html /var/www/html
-COPY --from=vendor /opt/seed /opt/seed
 RUN chown -R www-data:www-data storage bootstrap/cache
 COPY --chmod=755 deploy/docker/api-entrypoint.sh /usr/local/bin/api-entrypoint
 # Deployment bundle of this release: deploy/vps/deploy.sh installs compose.yaml and itself from
