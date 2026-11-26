@@ -89,6 +89,18 @@
 .ew-langs-btn:hover { background: var(--color-zinc-200); }
 .ew-langs-btn:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
 
+/* Readable path of a text above its exact key (Hlavní stránka › Úvod › Nadpis). */
+.ew-key-path {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text);
+  font-family: var(--ff);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 /* ↺ of a changed row: back to the saved version of the text. */
 .ew-revert-btn {
   display: inline-flex;
@@ -347,10 +359,21 @@
 
   .ew-root--compact .ew-row .ew-td-key {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    gap: 0 6px;
     min-width: 0;
     margin: 0 2px 3px;
+  }
+
+  /* Phone: the readable path on its own line (cut at its end), the key under it as before. */
+  .ew-root--compact .ew-row .ew-key-path {
+    flex-basis: 100%;
+    margin: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.75rem;
   }
 
   /* One line cut at its start: the right-to-left box puts the ellipsis on the left, the

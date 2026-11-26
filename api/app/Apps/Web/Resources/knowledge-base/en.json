@@ -669,7 +669,7 @@
                 },
                 {
                   "label": "Click a text",
-                  "text": "Pointing at a text shows its key. For the texts of the menu, the footer, the cookie bar and the language offer the panel notes that they are shared by every page. A click selects the text - links do not open in the editor, other buttons (for example opening a question) work as on the website, so a hidden answer can be edited too. The panel on the right shows the key, the Czech reference, the saved version and the field for the edit.",
+                  "text": "Pointing at a text shows its key. For the texts of the menu, the footer, the cookie bar and the language offer the panel notes that they are shared by every page. A click selects the text - links do not open in the editor, other buttons (for example opening a question) work as on the website, so a hidden answer can be edited too. The panel on the right shows the readable path of the text (for example Home page › Intro › Heading), the exact key, the Czech reference, the saved version and the field for the edit.",
                   "active": false
                 },
                 {

@@ -536,6 +536,14 @@ describe('WebTextEditorComponent', () => {
     flush();
     fixture.detectChanges();
     expect(el.querySelector('.te-shared')!.textContent).toContain('editor_shared_note');
+    // the readable path above the exact key (kept for debugging) - only when the module names its groups
+    expect(el.querySelector('.te-path')).toBeNull();
+    (ctx.i18n.getMergedSection as jasmine.Spy).and.callFake((section: string) => section === 'edit-website' ? { editor_key_labels: { navigation: 'Menu' } } : {});
+    fromPage({ type: 'select', key: 'navigation.home' });
+    flush();
+    fixture.detectChanges();
+    expect(el.querySelector('.te-path')!.textContent).toContain('Menu');
+    expect(el.querySelector('.te-key')!.textContent).toBe('navigation.home');
     fromPage({ type: 'select', key: 'faq.title' });
     flush();
     fixture.detectChanges();

@@ -153,6 +153,32 @@ describe('BaseTranslationEditorComponent', () => {
   }));
 
   /**
+   * @description Readable path of a key: parts named by the module and by the common words, other
+   *   parts put together from their words (numbers kept), list indexes as #n; unknown words stay.
+   * @input labels {home: 'Hlavní stránka', story_heading_2: 'Nadpis příběhu 2'}, words {hero: 'Úvod',
+   *   heading: 'Nadpis', cta: 'Výzva k akci', primary: 'hlavní', q: 'Otázka', btn: 'Tlačítko'};
+   *   keys home.hero.heading, home.about.story_heading_2, home.cta_primary, faq.q1, list.0.btn, x.foo_bar
+   * @output 'Hlavní stránka › Úvod › Nadpis', 'Hlavní stránka › About › Nadpis příběhu 2',
+   *   'Hlavní stránka › Výzva k akci hlavní', 'Faq › Otázka 1', 'List › #1 › Tlačítko', 'X › Foo bar'
+   */
+  it('names the keys for people', () => {
+    (ctx.i18n.getMergedSection as jasmine.Spy).and.callFake((section: string) => section === 'translation-editor'
+      ? { editor_key_words: { hero: 'Úvod', heading: 'Nadpis', cta: 'Výzva k akci', primary: 'hlavní', q: 'Otázka', btn: 'Tlačítko', desktop: 'počítač', tags: 'Štítky', seo: 'SEO' } }
+      : { editor_key_labels: { home: 'Hlavní stránka', story_heading_2: 'Nadpis příběhu 2' } });
+    expect(component.keyLabel('home.hero.heading')).toBe('Hlavní stránka › Úvod › Nadpis');
+    expect(component.keyLabel('home.about.story_heading_2')).toBe('Hlavní stránka › About › Nadpis příběhu 2');
+    expect(component.keyLabel('home.cta_primary')).toBe('Hlavní stránka › Výzva k akci hlavní');
+    expect(component.keyLabel('faq.q1')).toBe('Faq › Otázka 1');
+    expect(component.keyLabel('list.0.btn')).toBe('List › #1 › Tlačítko');
+    expect(component.keyLabel('x.foo_bar')).toBe('X › Foo bar');
+    expect(component.keyLabel('values.desktop')).toBe('Values › Počítač');
+    expect(component.keyLabel('cards.seo_tags')).toBe('Cards › SEO štítky');
+    expect(component.hasKeyLabels).toBeTrue();
+    (ctx.i18n.getMergedSection as jasmine.Spy).and.returnValue({});
+    expect(component.hasKeyLabels).toBeFalse();
+  });
+
+  /**
    * @description Without the Czech reference the editor still loads the language (no keys to
    *   compare); refresh forces a new request only when asked.
    * @input translations/test/cz fails.

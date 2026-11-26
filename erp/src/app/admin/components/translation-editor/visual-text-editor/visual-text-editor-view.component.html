@@ -110,7 +110,11 @@
 
       <aside class="te-panel" [attr.aria-label]="e.t('editor_panel_label')">
         @if (selectedKey; as key) {
-          <div class="te-key">{{ key }}</div>
+          <!-- Readable path for people, the exact key under it (debugging, the list of the texts). -->
+          @if (e.hasKeyLabels) {
+            <div class="te-path">{{ e.keyLabel(key) }}</div>
+          }
+          <div class="te-key" [title]="e.t('editor_key_exact')">{{ key }}</div>
           <!-- A text of a shared part (menu, footer…): an edit changes every page. -->
           @if (isShared(key)) {
             <p class="te-shared" role="note">

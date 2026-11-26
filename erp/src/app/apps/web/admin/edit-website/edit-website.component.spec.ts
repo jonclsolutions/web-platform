@@ -600,6 +600,30 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
+   * @description Every row shows the readable path of its text above the exact key, and the search
+   *   finds texts by it too.
+   * @input labels {home: 'Hlavní stránka'}, words {title: 'Titulek'}; render; search 'hlavní'
+   * @output the home.title row with 'Hlavní stránka › Titulek' and the key 'home.title'; the search
+   *   keeps home.title and home.cta (not footer)
+   */
+  it('shows and finds the readable path of the keys', fakeAsync(() => {
+    const merged = ctx.i18n.getMergedSection as jasmine.Spy;
+    merged.and.callFake((section: string) => section === 'translation-editor'
+      ? { editor_key_words: { title: 'Titulek' } }
+      : section === 'edit-website' ? { editor_key_labels: { home: 'Hlavní stránka' } } : {});
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const row = Array.from(el.querySelectorAll('.ew-row')).find(r => r.querySelector('.ew-key-text')!.textContent!.includes('home.title'))!;
+    expect(row.querySelector('.ew-key-path')!.textContent).toBe('Hlavní stránka › Titulek');
+    component.searchQuery = 'hlavní';
+    component.applyFilter();
+    expect(component.filteredKeys.map(k => k.path)).toEqual(['home.title', 'home.cta']);
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description The list of texts (`compactActions`): every row is a .ew-row (on a phone a
    *   compact row - key above the text); a key gets a break chance (<wbr>) only after its dots,
    *   its text stays the same (copying a key copies it whole) and the whole key is its title.

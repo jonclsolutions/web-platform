@@ -282,6 +282,10 @@
         @for (item of e.filteredKeys; track e.trackByPath($index, item)) {
           <tr class="ew-row" [class.ew-row--missing]="item.missing">
             <td class="ew-td-key">
+              <!-- Readable path of the text for people; the exact key under it (debugging). -->
+              @if (e.hasKeyLabels) {
+                <span class="ew-key-path">{{ e.keyLabel(item.path) }}</span>
+              }
               <!-- `compactActions`: the key breaks only after its dots (<wbr> - not copied with the
                    key); on a phone it is one line cut at its start, whole while its text is edited. -->
               @if (compactActions) {

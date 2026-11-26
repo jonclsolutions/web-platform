@@ -137,6 +137,70 @@ export abstract class BaseTranslationEditorComponent
     return typeof own === 'string' ? own : this.i18n.getValue(`${TRANSLATION_EDITOR_SECTION}.${key}`);
   }
 
+  /**
+   * @description Readable path of a translation key for people who do not read keys: every part
+   *   named by the module (`editor_key_labels` of its section - groups such as "home" → "Hlavní
+   *   stránka") or by the common words of the editor (`editor_key_words`: heading → Nadpis…);
+   *   another part is put together from its words (`story_heading_2` → "Nadpis příběhu 2" when
+   *   named, else word by word), an index of a list becomes "#1". The exact key stays shown
+   *   beside it (debugging).
+   * @param path Dot path of the key (`home.hero.heading`).
+   * @returns E.g. "Hlavní stránka › Úvod › Nadpis".
+   */
+  keyLabel(path: string): string {
+    // the list of the texts asks for every row on every check - the names are kept per admin language
+    const lang = this.i18n.getCurrentLanguage?.() ?? '';
+    if (lang !== this.keyLabelLang) {
+      this.keyLabelCache.clear();
+      this.keyLabelLang = lang;
+    }
+    const cached = this.keyLabelCache.get(path);
+    if (cached !== undefined) return cached;
+    const result = this.buildKeyLabel(path);
+    this.keyLabelCache.set(path, result);
+    return result;
+  }
+
+  /**
+   * @returns Whether the module names its groups of keys (`editor_key_labels` of its section) -
+   *   only then the readable paths are shown (a module without them would get word-by-word
+   *   names of its groups).
+   */
+  get hasKeyLabels(): boolean {
+    const groups = this.i18n.getMergedSection(this.translationSection)?.editor_key_labels;
+    return !!groups && typeof groups === 'object' && Object.keys(groups).length > 0;
+  }
+
+  /** Readable paths already put together (keyLabel), for `keyLabelLang`. */
+  private readonly keyLabelCache = new Map<string, string>();
+  private keyLabelLang = '';
+
+  /**
+   * @param path Dot path of the key.
+   * @returns Its readable path (see keyLabel).
+   */
+  private buildKeyLabel(path: string): string {
+    const groups: Record<string, unknown> = this.i18n.getMergedSection(this.translationSection)?.editor_key_labels ?? {};
+    const words: Record<string, unknown> = this.i18n.getMergedSection(TRANSLATION_EDITOR_SECTION)?.editor_key_words ?? {};
+    const named = (dictionary: Record<string, unknown>, part: string): string | null => {
+      const value = dictionary[part];
+      return typeof value === 'string' && value ? value : null;
+    };
+    const label = (part: string): string => {
+      const whole = named(groups, part) ?? named(words, part);
+      if (whole) return whole.charAt(0).toUpperCase() + whole.slice(1);
+      const tokens = part.split(/[_\-]+/)
+        .flatMap(token => { const split = /^([a-z]+)(\d+)$/i.exec(token); return split ? [split[1], split[2]] : [token]; })
+        .filter(Boolean)
+        .map(token => (/^\d+$/.test(token) ? token : named(words, token.toLowerCase()) ?? token))
+        // one phrase: the words after the first in small letters (abbreviations - SEO, DIČ - kept)
+        .map((word, index) => (index > 0 && /^\p{Lu}\p{Ll}/u.test(word) ? word.charAt(0).toLowerCase() + word.slice(1) : word));
+      const text = tokens.join(' ');
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    };
+    return path.split('.').map(part => (/^\d+$/.test(part) ? `#${Number(part) + 1}` : label(part))).join(' › ');
+  }
+
   /** @description Module of the editor (application id) - area of its page titles. */
   get module(): string {
     return this.MODULE;
@@ -526,9 +590,11 @@ export abstract class BaseTranslationEditorComponent
    */
   applyFilter(): void {
     const q = this.searchQuery.toLowerCase().trim();
+    // the readable path counts too ("nadpis" finds the headings)
+    const withLabels = !!q && this.hasKeyLabels;
     this.filteredKeys = this.flattenedKeys.filter(k =>
       (!this.onlyMissing || k.missing) &&
-      (!q || k.path.toLowerCase().includes(q) || String(k.value || '').toLowerCase().includes(q))
+      (!q || k.path.toLowerCase().includes(q) || String(k.value || '').toLowerCase().includes(q) || (withLabels && this.keyLabel(k.path).toLowerCase().includes(q)))
     );
     this.cd.markForCheck();
   }
