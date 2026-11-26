@@ -14,15 +14,17 @@
  * - TranslationEditorViewComponent: the page; the panels of the extra tabs are its content.
  * - FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, KnowledgeBaseEditorComponent:
  *   the extra tabs.
+ * @note Unsaved edits of any tab: leaving the page asks first (unsavedTextsGuard).
  * @note `?tab=faq` (…) opens a tab - the visual text editor points to the part of a content.
  */
 
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   BaseTranslationEditorComponent, TranslationEditorTab
 } from '../../../../admin/components/translation-editor/base-translation-editor.component';
 import { TranslationEditorViewComponent } from '../../../../admin/components/translation-editor/translation-editor-view.component';
+import { LeaveConfirmable } from '../../../../admin/components/translation-editor/unsaved-texts.guard';
 import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
 import { JobsEditorComponent } from './content-editors/jobs-editor/jobs-editor.component';
 import { ReferencesEditorComponent } from './content-editors/references-editor/references-editor.component';
@@ -40,7 +42,7 @@ import { KnowledgeBaseEditorComponent } from './content-editors/knowledge-base-e
   styleUrls: ['../../../../admin/shared-styles/settings-page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EditWebsiteComponent extends BaseTranslationEditorComponent {
+export class EditWebsiteComponent extends BaseTranslationEditorComponent implements LeaveConfirmable {
   protected override translationSection: string = 'edit-website';
 
   protected override readonly MODULE = 'web';
@@ -58,6 +60,16 @@ export class EditWebsiteComponent extends BaseTranslationEditorComponent {
   ];
 
   private readonly route = inject(ActivatedRoute);
+  @ViewChild(TranslationEditorViewComponent) private view?: TranslationEditorViewComponent;
+
+  /**
+   * @description Leaving the page with unsaved edits of any tab asks first (unsavedTextsGuard -
+   *   "Otevřít editor", the menu, Back).
+   * @returns true = leave, false = stay.
+   */
+  confirmLeave(): boolean | Promise<boolean> {
+    return this.view ? this.view.confirmLeave() : true;
+  }
 
   /** @description Loads the page and opens the tab named in the address (`?tab=`). */
   override ngOnInit(): void {

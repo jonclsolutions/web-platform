@@ -679,7 +679,7 @@
                 },
                 {
                   "label": "Uložit",
-                  "text": "Uložit v horní liště uloží upravené texty jazyka (v závorce jejich počet); Zahodit změny je po potvrzení vrátí. Při přepnutí jazyka nebo zavření editoru s neuloženými změnami se editor nejdřív zeptá.",
+                  "text": "Uložit v horní liště uloží upravené texty jazyka (v závorce jejich počet); Zahodit změny je po potvrzení vrátí. Při přepnutí jazyka a při odchodu z editoru s neuloženými změnami (zavřením, tlačítkem Zpět v prohlížeči nebo odkazem do jiné části) se editor nejdřív zeptá; stejně tak stránka Texty webu, například před otevřením editoru.",
                   "active": false
                 }
               ]

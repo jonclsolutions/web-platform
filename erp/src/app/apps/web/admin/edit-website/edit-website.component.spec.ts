@@ -622,6 +622,49 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
+   * @description Leaving the page (unsavedTextsGuard - "Otevřít editor", the menu, Back): at once
+   *   without unsaved edits; with edits of any tab the window asks - stay or leave without saving.
+   * @input confirmLeave() clean; edit a text → confirmLeave(), Zůstat; again, Odejít bez uložení;
+   *   FAQ tab dirty only
+   * @output true; a promise: window open, false; then true; the FAQ tab alone also asks
+   */
+  it('asks before leaving the page with unsaved edits', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    expect(component.confirmLeave()).toBeTrue();
+
+    component.updateValue('footer', 'Nová');
+    fixture.detectChanges();
+    let answer: boolean | undefined;
+    (component.confirmLeave() as Promise<boolean>).then(a => (answer = a));
+    fixture.detectChanges();
+    const buttons = () => Array.from(document.querySelectorAll('.am-overlay[data-level="prompt"] .am-btn')) as HTMLButtonElement[];
+    expect(buttons().length).toBe(2);
+    buttons()[0].click();
+    flush();
+    fixture.detectChanges();
+    expect(answer).toBeFalse();
+    expect(buttons().length).toBe(0);
+
+    (component.confirmLeave() as Promise<boolean>).then(a => (answer = a));
+    fixture.detectChanges();
+    buttons()[1].click();
+    flush();
+    expect(answer).toBeTrue();
+
+    component.refreshTranslations();
+    flush();
+    component.setTabDirty('faq', true);
+    expect(component.hasUnsavedChanges).toBeTrue();
+    expect(component.confirmLeave()).not.toBeTrue();
+    fixture.detectChanges();
+    buttons()[0].click();
+    flush();
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description `?tab=faq` in the address opens that tab (the editor points to a part of the
    *   content); an unknown tab is ignored.
    * @input navigate to '/?tab=faq', render; a new page with '/?tab=nope'

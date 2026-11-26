@@ -207,6 +207,11 @@ export abstract class BaseTranslationEditorComponent
     return tab === 'translations' ? this.isDirty : this.dirtyTabs.has(tab);
   }
 
+  /** @returns Whether any tab of the page has unsaved edits (asked before leaving the page). */
+  get hasUnsavedChanges(): boolean {
+    return this.tabs.some(tab => this.isTabDirty(tab.key));
+  }
+
   /**
    * @description Marks the unsaved edits of a tab (event `dirtyChange` of its editor).
    * @param tab Key of the tab.

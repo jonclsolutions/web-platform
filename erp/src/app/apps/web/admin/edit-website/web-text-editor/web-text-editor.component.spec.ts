@@ -157,7 +157,8 @@ describe('WebTextEditorComponent', () => {
 
   /**
    * @description Another language with unsaved edits asks first; keeping them changes nothing;
-   *   confirming loads the language and the same page in it. Closing without edits goes back.
+   *   confirming loads the language and the same page in it. Close goes back (the route asks
+   *   about unsaved edits - see the next test).
    * @input edit; EN → keep; EN → confirm; close
    * @output pending → nothing; then currentLang en, frame /en/faq; navigateByUrl to the list
    */
@@ -183,6 +184,34 @@ describe('WebTextEditorComponent', () => {
     spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
     view.close();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/web/edit-website');
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Leaving the editor by any way (unsavedTextsGuard - Back, close, a link to a part):
+   *   at once without edits; with edits the confirmation decides - keep = stay, discard = leave.
+   * @input confirmLeave() clean; edit → confirmLeave(), keep; again, discard
+   * @output true; false after keep (window closed); true after discard
+   */
+  it('asks before leaving the editor with unsaved edits', fakeAsync(() => {
+    setup();
+    expect(component.confirmLeave()).toBeTrue();
+    view.edit('faq.title', 'Jiné');
+    let answer: boolean | undefined;
+    (component.confirmLeave() as Promise<boolean>).then(a => (answer = a));
+    fixture.detectChanges();
+    expect(view.pendingAction).not.toBeNull();
+    expect(view.pendingLeave).toBeTrue();
+    expect(document.querySelector('.am-overlay[data-level="prompt"] .am-btn--danger')!.textContent).toContain('leave_confirm_button');
+    view.cancelPending();
+    flush();
+    expect(answer).toBeFalse();
+    expect(view.pendingAction).toBeNull();
+
+    (component.confirmLeave() as Promise<boolean>).then(a => (answer = a));
+    view.confirmPending();
+    flush();
+    expect(answer).toBeTrue();
     discardPeriodicTasks();
   }));
 

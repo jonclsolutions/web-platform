@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "web",
+            "part": "public",
+            "text": "Home page: the second story of the About section has its own heading and text (home.about.story_heading_2 / story_text_2) instead of repeating the first one; the look stays the same."
+        },
+        {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts and visual editor: leaving with unsaved changes asks first - Back of the browser, the menu, Open editor, closing the editor or a link to a part; a Back cancelled this way keeps the history in place."
+        },
+        {
             "type": "fixed",
             "area": "web",
             "part": "admin",

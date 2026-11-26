@@ -436,6 +436,8 @@
         "about": {
             "story_heading": "Stavíme software, který vaší firmě opravdu pomáhá růst",
             "story_text": "Nejsme agentura, která vám jen postaví web a pak zmizí. Věnujeme se vývoji na míru napříč weby, desktopovými i mobilními aplikacemi a řešeními postavenými na umělé inteligenci - vždy s důrazem na to, aby výsledek reálně řešil váš konkrétní problém, ne aby jen dobře vypadal v prezentaci. Od prvního rozhovoru přes návrh architektury až po nasazení a dlouhodobou podporu jsme s vámi po celou dobu jako jeden tým.",
+            "story_heading_2": "Řešení, která s vámi porostou i za pár let",
+            "story_text_2": "Stavíme na ověřených technologiích a čistém kódu, takže se aplikace dá snadno rozšiřovat a udržovat. Každý projekt dostane dokumentaci, automatické testy a bezpečnostní kontroly. Po spuštění sledujeme výkon, chystáme aktualizace a pomáháme s dalším rozvojem - vaše řešení tak zůstane rychlé, bezpečné a připravené na nové potřeby firmy.",
             "heading": "Vývoj na míru,<br>od nápadu po nasazení",
             "lead": "Nejsme agentura šablon. Každý projekt stavíme od základu — přesně tak, jak to váš byznys potřebuje."
         },

@@ -567,3 +567,16 @@
     </ng-container>
   </app-admin-modal>
 }
+
+<!-- Leaving the page with unsaved edits (unsavedTextsGuard): stay, or leave without saving. -->
+@if (leaveOpen) {
+  <app-admin-modal size="sm" level="prompt" [heading]="e.t('leave_confirm_heading')" (dismissed)="answerLeave(false)">
+    <div class="ew-modal-content">
+      <p class="ew-modal-desc">{{ e.t('leave_confirm_message') }}</p>
+    </div>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="answerLeave(false)">{{ e.t('leave_stay_button') }}</button>
+      <button type="button" class="am-btn am-btn--danger" (click)="answerLeave(true)">{{ e.t('leave_confirm_button') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

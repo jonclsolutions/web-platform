@@ -679,7 +679,7 @@
                 },
                 {
                   "label": "Save",
-                  "text": "Save in the top bar stores the edited texts of the language (their count in brackets); Discard changes reverts them after a confirmation. Switching the language or closing the editor with unsaved changes asks first.",
+                  "text": "Save in the top bar stores the edited texts of the language (their count in brackets); Discard changes reverts them after a confirmation. Switching the language and leaving the editor with unsaved changes (closing it, the Back button of the browser or a link to another part) asks first; so does the Website texts page, for example before opening the editor.",
                   "active": false
                 }
               ]

@@ -13,7 +13,7 @@
  *   (frame of the add language / upload JSON / delete language popups).
  */
 
-import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AsyncPipe, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -55,11 +55,13 @@ export class TranslationEditorViewComponent {
 
   /**
    * Route of the visual text editor of the module - the "Otevřít editor" button of the page
-   * header (null = no button). On a phone the button explains that the editor needs a bigger screen.
+   * header (null = no button). On a phone the button explains that the editor needs a bigger screen;
+   * unsaved edits of the page are asked about by the route (unsavedTextsGuard, `confirmLeave`).
    */
   @Input() editorRoute: string | null = null;
 
   private readonly router = inject(Router);
+  private readonly cd = inject(ChangeDetectorRef);
 
   /** The notice "the editor is not supported on a phone" is open. */
   editorPhoneOpen = false;
@@ -77,6 +79,43 @@ export class TranslationEditorViewComponent {
   /** @description Closes the phone notice. */
   closeEditorPhone(): void {
     this.editorPhoneOpen = false;
+  }
+
+  /** Answer of the open "leave without saving?" window (null = not open). */
+  private leaveAnswer: ((leave: boolean) => void) | null = null;
+
+  /** @returns Whether the "leave without saving?" window is open. */
+  get leaveOpen(): boolean {
+    return !!this.leaveAnswer;
+  }
+
+  /**
+   * @description Leaving the page (unsavedTextsGuard): at once without unsaved edits, otherwise
+   *   after the answer of the window (the edits of every tab would be lost).
+   * @returns true = leave, false = stay.
+   */
+  confirmLeave(): boolean | Promise<boolean> {
+    if (!this.e.hasUnsavedChanges) {
+      return true;
+    }
+    this.leaveAnswer?.(false);
+    return new Promise<boolean>(resolve => {
+      this.leaveAnswer = leave => {
+        this.leaveAnswer = null;
+        this.cd.markForCheck();
+        resolve(leave);
+      };
+      // asked by the router, not by an event of the page (OnPush host)
+      this.cd.markForCheck();
+    });
+  }
+
+  /**
+   * @description Answer of the window.
+   * @param leave true = leave without saving, false = stay.
+   */
+  answerLeave(leave: boolean): void {
+    this.leaveAnswer?.(leave);
   }
 
   /** The window "Spravovat jazyky" is open. */

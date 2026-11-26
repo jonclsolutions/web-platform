@@ -123,13 +123,13 @@
   </div>
 }
 
-<!-- Unsaved edits would be lost (discard, another language, leaving). -->
+<!-- Unsaved edits would be lost (discard, another language; leaving the editor - `pendingLeave`). -->
 @if (pendingAction) {
-  <app-admin-modal size="sm" level="prompt" [heading]="e.t('discard_confirm_heading')" (dismissed)="cancelPending()">
+  <app-admin-modal size="sm" level="prompt" [heading]="e.t(pendingLeave ? 'leave_confirm_heading' : 'discard_confirm_heading')" (dismissed)="cancelPending()">
     <p class="te-modal-text">{{ pendingMessage }}</p>
     <ng-container modal-footer>
-      <button type="button" class="am-btn am-btn--secondary" (click)="cancelPending()">{{ e.t('discard_keep_button') }}</button>
-      <button type="button" class="am-btn am-btn--danger" (click)="confirmPending()">{{ e.t('discard_changes_button') }}</button>
+      <button type="button" class="am-btn am-btn--secondary" (click)="cancelPending()">{{ e.t(pendingLeave ? 'leave_stay_button' : 'discard_keep_button') }}</button>
+      <button type="button" class="am-btn am-btn--danger" (click)="confirmPending()">{{ e.t(pendingLeave ? 'leave_confirm_button' : 'discard_changes_button') }}</button>
     </ng-container>
   </app-admin-modal>
 }

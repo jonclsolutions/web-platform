@@ -17,7 +17,7 @@
  */
 
 import { ApplicationConfig, APP_INITIALIZER, inject, provideAppInitializer } from '@angular/core';
-import { provideRouter, withInMemoryScrolling, TitleStrategy, UrlSerializer } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, withRouterConfig, TitleStrategy, UrlSerializer } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { routes } from './app.routes';
@@ -58,13 +58,17 @@ export const appConfig: ApplicationConfig = {
      *   instead of the fragment being misinterpreted as a new root-level route.
      *   scrollPositionRestoration restores the scroll position correctly on
      *   browser back/forward navigation.
+     * @note canceledNavigationResolution 'computed': a Back / Forward cancelled by a guard (unsaved
+     *   texts) returns the browser history to where it was - with the default ('replace') the
+     *   next Back skipped the guard and left the page.
      */
     provideRouter(
       routes,
       withInMemoryScrolling({
         anchorScrolling: 'enabled',
         scrollPositionRestoration: 'enabled'
-      })
+      }),
+      withRouterConfig({ canceledNavigationResolution: 'computed' })
     ),
 
     /**

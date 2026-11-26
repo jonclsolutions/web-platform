@@ -12,14 +12,16 @@
 
 import { Routes } from '@angular/router';
 import { WEB_AUDIT_LOG } from './web-logs/web-logs.config';
+import { unsavedTextsGuard } from '../../../admin/components/translation-editor/unsaved-texts.guard';
 
 export const WEB_ADMIN_ROUTES: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent), data: { help: 'web-dashboard', permission: 'web-view-dashboard' } },
   { path: 'user-request', loadComponent: () => import('./user-request/user-request.component').then(m => m.UserRequestComponent), data: { help: 'user-request', permission: 'web-user-requests-view' } },
   { path: 'logs', loadComponent: () => import('../../../admin/components/audit-log-page/audit-log-page.component').then(m => m.AuditLogPageComponent), data: { help: 'web-logs', permission: 'web-view-web-logs', auditLog: WEB_AUDIT_LOG } },
-  { path: 'edit-website', loadComponent: () => import('./edit-website/edit-website.component').then(m => m.EditWebsiteComponent), data: { help: 'edit-website', permission: 'web-edit-website-view' } },
-  { path: 'edit-website/editor', loadComponent: () => import('./edit-website/web-text-editor/web-text-editor.component').then(m => m.WebTextEditorComponent), data: { help: 'edit-website', permission: 'web-edit-website-view' } },
+  // unsavedTextsGuard: leaving the texts / the editor with unsaved edits asks first
+  { path: 'edit-website', loadComponent: () => import('./edit-website/edit-website.component').then(m => m.EditWebsiteComponent), canDeactivate: [unsavedTextsGuard], data: { help: 'edit-website', permission: 'web-edit-website-view' } },
+  { path: 'edit-website/editor', loadComponent: () => import('./edit-website/web-text-editor/web-text-editor.component').then(m => m.WebTextEditorComponent), canDeactivate: [unsavedTextsGuard], data: { help: 'edit-website', permission: 'web-edit-website-view' } },
   { path: 'job-applications', loadComponent: () => import('./job-applications/job-applications.component').then(m => m.JobApplicationsComponent), data: { help: 'job-applications', permission: 'web-job-applications-view' } },
   { path: 'welcome-page', loadComponent: () => import('./web-welcome-page/web-welcome-page.component').then(m => m.WebWelcomePageComponent), data: { help: 'web-welcome-page', permission: 'web-welcome-page-view' } },
 ];

@@ -16,6 +16,8 @@
  * @dependencies BaseTranslationEditorComponent, AdminModalComponent, text-editor-protocol,
  *   language-url, table-cards (phone limit)
  * @note Not on a phone (≤ 640 px): a notice with the way back instead of the editor.
+ * @note Leaving with unsaved edits asks first: in the editor (language, discard) and on any way
+ *   out of the page (`confirmLeave` - unsavedTextsGuard of the route: Back, close, links).
  * @note Security: the frame shows the own website (same origin, path checked) in a sandbox
  *   without forms, pop-ups and navigation of the admin; messages are accepted only from the
  *   window of the frame and the own origin.
@@ -100,6 +102,10 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
   contentSection: TextEditorContentSection | null = null;
   /** Action waiting for the confirmation to throw away the unsaved edits. */
   pendingAction: (() => void) | null = null;
+  /** Called when the confirmation is answered "keep" (leaving the page: stay). */
+  private pendingCancel: (() => void) | null = null;
+  /** The confirmation is about leaving the editor (its own texts: stay / leave without saving). */
+  pendingLeave = false;
 
   /** Saved values of the edited texts (before their first edit since the last save / load). */
   private readonly originals = new Map<string, string>();
@@ -195,18 +201,36 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
     });
   }
 
-  /** @description Back to the list of the texts (after a confirmation with unsaved edits). */
+  /** @description Back to the list of the texts (unsaved edits: the route asks, `confirmLeave`). */
   close(): void {
-    this.guard(() => this.router.navigateByUrl(this.backRoute));
+    this.router.navigateByUrl(this.backRoute);
   }
 
   /**
-   * @description Opens a part of the admin (content tab, page titles) - after a confirmation with
-   *   unsaved edits.
+   * @description Opens a part of the admin (content tab, page titles); unsaved edits: the route
+   *   asks (`confirmLeave`).
    * @param tab Key of the tab of the text editor page.
    */
   openTab(tab: string): void {
-    this.guard(() => this.router.navigate([this.backRoute], { queryParams: { tab } }));
+    this.router.navigate([this.backRoute], { queryParams: { tab } });
+  }
+
+  /**
+   * @description Leaving the editor by any way (the Back button, close, a link to a part) -
+   *   unsavedTextsGuard: at once without unsaved edits, otherwise after the confirmation.
+   * @returns true = leave, false = stay.
+   */
+  confirmLeave(): boolean | Promise<boolean> {
+    if (!this.e.isDirty) {
+      return true;
+    }
+    this.cancelPending();
+    return new Promise<boolean>(resolve => {
+      this.pendingLeave = true;
+      this.pendingAction = () => resolve(true);
+      this.pendingCancel = () => resolve(false);
+      this.cd.markForCheck();
+    });
   }
 
   /** @description Saves the texts of the language (the page keeps them, see `saved$`). */
@@ -227,17 +251,23 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
   confirmPending(): void {
     const action = this.pendingAction;
     this.pendingAction = null;
+    this.pendingCancel = null;
+    this.pendingLeave = false;
     action?.();
   }
 
-  /** @description Keeps the edits, nothing happens. */
+  /** @description Keeps the edits, nothing happens (leaving the page: stays). */
   cancelPending(): void {
+    const cancel = this.pendingCancel;
     this.pendingAction = null;
+    this.pendingCancel = null;
+    this.pendingLeave = false;
+    cancel?.();
   }
 
   /** @returns Text of the confirmation: how many edits of which language are lost. */
   get pendingMessage(): string {
-    return this.e.t('discard_confirm_message')
+    return this.e.t(this.pendingLeave ? 'editor_leave_message' : 'discard_confirm_message')
       .replace('{count}', String(this.e.changedPaths.size))
       .replace('{lang}', this.langName);
   }

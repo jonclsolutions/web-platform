@@ -7,14 +7,16 @@
  * @description Visual text editor of the website: the texts of the `web` module edited right on
  *   the pages of the website (VisualTextEditorViewComponent). The same translation state, cache
  *   and permission as the list of the texts (EditWebsiteComponent).
+ * @note Leaving with unsaved edits asks first (unsavedTextsGuard of the route).
  * @dependencies BaseTranslationEditorComponent, VisualTextEditorViewComponent
  */
 
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { BaseTranslationEditorComponent } from '../../../../../admin/components/translation-editor/base-translation-editor.component';
 import {
   VisualEditorPage, VisualTextEditorViewComponent,
 } from '../../../../../admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component';
+import { LeaveConfirmable } from '../../../../../admin/components/translation-editor/unsaved-texts.guard';
 
 /** Pages of the website in the page list of the editor (names = the page titles editor). */
 export const WEB_EDITOR_PAGES: VisualEditorPage[] = [
@@ -44,7 +46,7 @@ export const WEB_EDITOR_PAGES: VisualEditorPage[] = [
   template: `<app-visual-text-editor-view [e]="this" [pages]="pages" backRoute="/admin/web/edit-website" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WebTextEditorComponent extends BaseTranslationEditorComponent {
+export class WebTextEditorComponent extends BaseTranslationEditorComponent implements LeaveConfirmable {
   protected override translationSection: string = 'edit-website';
 
   protected override readonly MODULE = 'web';
@@ -54,4 +56,15 @@ export class WebTextEditorComponent extends BaseTranslationEditorComponent {
 
   /** Pages offered in the editor. */
   readonly pages = WEB_EDITOR_PAGES;
+
+  @ViewChild(VisualTextEditorViewComponent) private view?: VisualTextEditorViewComponent;
+
+  /**
+   * @description Leaving the editor with unsaved edits asks first (unsavedTextsGuard - Back,
+   *   close, links to the parts).
+   * @returns true = leave, false = stay.
+   */
+  confirmLeave(): boolean | Promise<boolean> {
+    return this.view ? this.view.confirmLeave() : true;
+  }
 }
