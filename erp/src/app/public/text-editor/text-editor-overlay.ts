@@ -21,6 +21,7 @@
 import { FoundMark, hasMarks, scanMarks, stripMarks } from './text-editor-markers';
 import { TextEditorContentSection, TextEditorHiddenText } from './text-editor-protocol';
 import { stripLanguagePrefix } from '../../shared/utils/language-url';
+import { TEXT_EDITOR_BANNERS_PATH, isBannersQuery } from './text-editor-protocol';
 
 /** Entry of a mark: a translation key or a section of the content. */
 export type TextEditorEntry =
@@ -62,6 +63,8 @@ const WATCHED_ATTRIBUTES = [...TEXT_ATTRIBUTES, 'hidden', 'open', 'aria-expanded
 /** Space between a text and its outline (px). */
 const OUTLINE_GAP = 3;
 /** Redraw interval for texts moved by animations (ms). */
+/** Smallest distance of a key label from the edge of the screen (px). */
+const LABEL_MARGIN = 2;
 const REDRAW_INTERVAL_MS = 200;
 /** Delay of a rescan after a change of the page (ms). */
 const RESCAN_DELAY_MS = 80;
@@ -314,8 +317,11 @@ export class TextEditorOverlay {
     for (const key of visible) {
       hidden.delete(`${key}|hidden`);
     }
+    const location = this.doc.defaultView!.location;
+    const path = stripLanguagePrefix(location.pathname);
     const scan = {
-      path: stripLanguagePrefix(this.doc.defaultView!.location.pathname),
+      // the page "Lišta cookies a nabídka jazyka" of the editor is the home page with its query
+      path: path === '/' && isBannersQuery(location.search) ? TEXT_EDITOR_BANNERS_PATH : path,
       title: stripMarks(this.doc.title),
       visible: [...visible],
       missing: [...missing],
@@ -402,6 +408,14 @@ export class TextEditorOverlay {
       }
     }
     layer.replaceChildren(...parts);
+    // a label of a text at the right edge would leave the screen - shift it left to fit
+    const right = this.doc.documentElement.clientWidth - LABEL_MARGIN;
+    for (const label of layer.querySelectorAll<HTMLElement>('.l')) {
+      const box = label.getBoundingClientRect();
+      if (box.right > right) {
+        label.style.left = `${Math.max(LABEL_MARGIN, right - box.width)}px`;
+      }
+    }
   }
 
   // ── Pointer ──────────────────────────────────────────────────

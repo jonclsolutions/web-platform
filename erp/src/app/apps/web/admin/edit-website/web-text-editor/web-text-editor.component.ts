@@ -17,6 +17,8 @@ import {
   VisualEditorPage, VisualTextEditorViewComponent,
 } from '../../../../../admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component';
 import { LeaveConfirmable } from '../../../../../admin/components/translation-editor/unsaved-texts.guard';
+import { TEXT_EDITOR_BANNERS_PATH } from '../../../../../public/text-editor/text-editor-protocol';
+
 
 /** Pages of the website in the page list of the editor (names = the page titles editor). */
 export const WEB_EDITOR_PAGES: VisualEditorPage[] = [
@@ -33,6 +35,8 @@ export const WEB_EDITOR_PAGES: VisualEditorPage[] = [
   { path: '/cookies-policy', labelKey: 'pt_page_web_cookies_policy' },
   { path: '/404', labelKey: 'pt_page_web_not_found' },
   { path: '/maintenance', labelKey: 'pt_page_web_web_maintenance' },
+  // not a page of its own: the home page with the cookie bar and the language offer shown
+  { path: TEXT_EDITOR_BANNERS_PATH, labelKey: 'editor_page_banners' },
 ];
 
 /**

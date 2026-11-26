@@ -25,6 +25,25 @@ export const TEXT_EDITOR_FRAME_NAME = 'jsw-text-editor-frame';
 /** Path prefix of the pages allowed to host the editor (the admin). */
 export const TEXT_EDITOR_HOST_PREFIX = '/admin/';
 
+/**
+ * Query of the page "Lišta cookies a nabídka jazyka" of the editor (`/?jsw-editor=banners`): the
+ * website shows the cookie bar and the language offer (otherwise never in the editor) so their
+ * texts can be clicked; their buttons store nothing.
+ */
+export const TEXT_EDITOR_BANNERS_PARAM = 'jsw-editor';
+export const TEXT_EDITOR_BANNERS_VALUE = 'banners';
+/** Path of that page (without the language). */
+export const TEXT_EDITOR_BANNERS_PATH = `/?${TEXT_EDITOR_BANNERS_PARAM}=${TEXT_EDITOR_BANNERS_VALUE}`;
+
+/**
+ * @description Whether an address asks for the cookie bar and the language offer of the editor.
+ * @param search `location.search`.
+ * @returns true for `?jsw-editor=banners`.
+ */
+export function isBannersQuery(search: string): boolean {
+  return new URLSearchParams(search).get(TEXT_EDITOR_BANNERS_PARAM) === TEXT_EDITOR_BANNERS_VALUE;
+}
+
 /** Sections of the content of the website managed in the admin (blue outlines). */
 export type TextEditorContentSection = 'faq' | 'jobs' | 'references' | 'knowledge_base';
 

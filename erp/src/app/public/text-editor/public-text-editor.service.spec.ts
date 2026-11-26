@@ -14,7 +14,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PublicTextEditorService, isTextEditorFrame, setAtPath } from './public-text-editor.service';
 import { hasMarks, scanMarks, stripMarks } from './text-editor-markers';
-import { TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME } from './text-editor-protocol';
+import { TEXT_EDITOR_BANNERS_PATH, TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME, isBannersQuery } from './text-editor-protocol';
 
 describe('PublicTextEditorService', () => {
   let service: PublicTextEditorService;
@@ -59,6 +59,22 @@ describe('PublicTextEditorService', () => {
     top.parent = top;
     expect(isTextEditorFrame(top)).toBeFalse();
     expect(service.active).toBeFalse();
+  });
+
+  /**
+   * @description The page "Lišta cookies a nabídka jazyka": only `?jsw-editor=banners` asks for it
+   *   (its path is the home page with that query), and never outside the editor.
+   * @input isBannersQuery of several queries; the service in the test window
+   * @output true only for jsw-editor=banners; path '/?jsw-editor=banners'; banners false
+   */
+  it('recognises the banners page of the editor', () => {
+    expect(isBannersQuery('?jsw-editor=banners')).toBeTrue();
+    expect(isBannersQuery('?a=1&jsw-editor=banners')).toBeTrue();
+    for (const search of ['', '?jsw-editor=other', '?banners=1']) {
+      expect(isBannersQuery(search)).toBeFalse();
+    }
+    expect(TEXT_EDITOR_BANNERS_PATH).toBe('/?jsw-editor=banners');
+    expect(service.banners).toBeFalse();
   });
 
   /**

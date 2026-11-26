@@ -704,6 +704,10 @@
                   "text": "Texts that cannot be clicked: the text in an empty form field, an image description, the description for search engines or a text hidden at this screen size. Pick them from the list in the panel."
                 },
                 {
+                  "title": "Cookie bar and language offer",
+                  "text": "The website shows them only to new visitors, so the page list of the editor has their own item (the last one). It shows the home page with the cookie bar and the language offer; click their texts to edit them, Settings switches to the panel of the categories. The other buttons store nothing here."
+                },
+                {
                   "title": "Title in the browser",
                   "text": "The panel shows the name of the page in the browser tab; edit it in Page titles."
                 },
@@ -716,7 +720,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "The editor shows no cookie bar, runs no analytics and sends no forms - working in the editor is not counted as a visit of the website."
+              "content": "The editor shows no cookie bar (except its own item of the page list, where it stores nothing), runs no analytics and sends no forms - working in the editor is not counted as a visit of the website."
             }
           ]
         },

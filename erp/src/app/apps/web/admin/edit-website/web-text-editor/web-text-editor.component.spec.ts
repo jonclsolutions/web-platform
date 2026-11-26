@@ -286,6 +286,28 @@ describe('WebTextEditorComponent', () => {
   }));
 
   /**
+   * @description The page "Lišta cookies a nabídka jazyka" is the last of the list: it opens the
+   *   home page with the query of the banners (in the language) and stays chosen after its scan.
+   * @input choose the last page; scan with its path
+   * @output frame /cs?jsw-editor=banners; the select keeps it (no "other page")
+   */
+  it('offers the cookie bar and the language offer as a page', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    const last = WEB_EDITOR_PAGES[WEB_EDITOR_PAGES.length - 1];
+    expect(last.labelKey).toBe('editor_page_banners');
+    view.goToPage(last.path);
+    const url = new URL(frame().src);
+    expect(url.pathname + url.search).toBe('/cs?jsw-editor=banners');
+    fromPage({ type: 'scan', path: last.path, title: '', visible: ['cookie_consent.title'], missing: [], hidden: [] });
+    flush();
+    fixture.detectChanges();
+    expect(view.knownPage).toBeTrue();
+    expect(el.querySelectorAll('.te-page-select option').length).toBe(WEB_EDITOR_PAGES.length);
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description On a phone there is no editor - a notice with the way back.
    * @input phone
    * @output no frame; the notice

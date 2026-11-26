@@ -16,7 +16,9 @@
  *   preference, no consent needed), the browser prefers another language the area offers and
  *   that language has the texts `language_suggestion.text` / `.action` / `.dismiss` (a language
  *   whose texts are not translated yet simply offers nothing).
- * @note Never in the visual text editor of the admin (PublicTextEditorService).
+ * @note Not in the visual text editor of the admin (PublicTextEditorService) - except its page
+ *   "Lišta cookies a nabídka jazyka" (`textEditor.banners`): the offer of the edited language
+ *   with its (marked) texts, as visitors preferring that language see it; its buttons do nothing.
  */
 
 import {
@@ -75,7 +77,13 @@ export class LanguageSuggestionComponent implements OnInit {
    *   browser language the area offers that differs from it - with its texts.
    */
   ngOnInit(): void {
-    if (this.textEditor.active || this.wasDismissed() || this.localization.isChosenByVisitor()) {
+    if (this.textEditor.active) {
+      if (this.textEditor.banners) {
+        this.showForEditor();
+      }
+      return;
+    }
+    if (this.wasDismissed() || this.localization.isChosenByVisitor()) {
       return;
     }
     combineLatest([this.localization.fetchLanguages(), this.localization.currentLanguage$]).pipe(
@@ -96,6 +104,7 @@ export class LanguageSuggestionComponent implements OnInit {
 
   /** @description Switches to the offered language (with its URL) and never offers again. */
   accept(): void {
+    if (this.textEditor.active) return;
     const code = this.suggestion?.code;
     this.dismiss();
     if (code) {
@@ -105,6 +114,7 @@ export class LanguageSuggestionComponent implements OnInit {
 
   /** @description Closes the offer for good. */
   dismiss(): void {
+    if (this.textEditor.active) return;
     this.suggestion = null;
     try {
       localStorage.setItem(LANGUAGE_SUGGESTION_DISMISSED_KEY, '1');
@@ -121,6 +131,21 @@ export class LanguageSuggestionComponent implements OnInit {
    */
   htmlLang(code: string): string {
     return urlCodeOfLanguage(code);
+  }
+
+  /**
+   * @description The page "Lišta cookies a nabídka jazyka" of the editor: the offer of the edited
+   *   language with its texts as shown on the website (marked, with the drafts) - always shown,
+   *   a missing text appears as missing (its Czech reference).
+   */
+  private showForEditor(): void {
+    combineLatest([this.localization.currentLanguage$, this.localization.currentTranslations$]).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(([code, texts]) => {
+      const offer = texts?.language_suggestion ?? {};
+      this.suggestion = code ? { code, texts: { text: offer.text ?? '', action: offer.action ?? '', dismiss: offer.dismiss ?? '' } } : null;
+      this.cd.markForCheck();
+    });
   }
 
   /** @description Whether the visitor closed / used the offer before. */

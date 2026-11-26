@@ -91,6 +91,7 @@ describe('TextEditorOverlay', () => {
     expect(scan.hidden).toContain({ key: 'menu.hidden', where: 'hidden' });
     expect(scan.hidden).toContain({ key: 'contact.options.new', where: 'option' });
     expect(typeof scan.path).toBe('string');
+    expect(scan.path).not.toContain('jsw-editor');
     const middle = center(document.querySelectorAll('#heading span')[1]);
     expect(overlay.hit(middle.clientX, middle.clientY)).not.toBeNull();
   });
@@ -139,6 +140,25 @@ describe('TextEditorOverlay', () => {
     pill.dispatchEvent(event);
     expect(host.onSelect).toHaveBeenCalledWith('navigation.contact');
     expect(event.defaultPrevented).toBeTrue();
+  });
+
+  /**
+   * @description A key label of a text at the right edge of the screen is shifted left so the
+   *   whole key stays on the screen.
+   * @input a text with key navigation.contact fixed at the right edge; hover over it
+   * @output the label ends inside the width of the page
+   */
+  it('keeps the key label of a text at the right edge on the screen', async () => {
+    const edge = document.createElement('span');
+    edge.style.cssText = 'position:fixed;right:0;top:300px;z-index:2;font:16px sans-serif;background:#fff;';
+    edge.innerHTML = markText('FAQ', 0, 'text');
+    document.body.appendChild(edge);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    window.dispatchEvent(new MouseEvent('mousemove', center(edge)));
+    const label = layer().querySelector('.l') as HTMLElement;
+    expect(label.textContent).toBe('navigation.contact');
+    expect(label.getBoundingClientRect().right).toBeLessThanOrEqual(document.documentElement.clientWidth);
+    edge.remove();
   });
 
   /**

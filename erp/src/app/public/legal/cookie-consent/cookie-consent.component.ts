@@ -11,8 +11,10 @@
  * - BasePublicComponent: Provides `t` (translations), `cdr`, `destroy$`.
  * - CookieConsentService: Storing / reading the consent state (localStorage) and the signal for
  *   reopening the bar.
- * @note Never shown in the visual text editor of the admin (PublicTextEditorService) - no consent
- *   asked or stored for the administrator looking at the page.
+ * @note Not shown in the visual text editor of the admin (PublicTextEditorService) - no consent
+ *   asked or stored for the administrator looking at the page; only its page "Lišta cookies a
+ *   nabídka jazyka" (`textEditor.banners`) shows it for editing its texts - "Nastavení" / "Zpět"
+ *   switch the panel, the other buttons store nothing there.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -52,6 +54,7 @@ export class CookieConsentComponent extends BasePublicComponent {
 
   protected override onInit(): void {
     if (this.textEditor.active) {
+      this.visible = !!this.textEditor.banners;
       return;
     }
     if (!this.consentService.hasValidConsent()) {
@@ -73,6 +76,7 @@ export class CookieConsentComponent extends BasePublicComponent {
    * @description Accepts all categories and closes the bar.
    */
   acceptAll(): void {
+    if (this.textEditor.active) return;
     this.consentService.acceptAll();
     this.close();
   }
@@ -81,6 +85,7 @@ export class CookieConsentComponent extends BasePublicComponent {
    * @description Refuses everything except the necessary cookies and closes the bar.
    */
   rejectNonEssential(): void {
+    if (this.textEditor.active) return;
     this.consentService.rejectNonEssential();
     this.close();
   }
@@ -97,6 +102,7 @@ export class CookieConsentComponent extends BasePublicComponent {
    * @description Saves the current selection of categories of the settings panel.
    */
   saveSettings(): void {
+    if (this.textEditor.active) return;
     this.consentService.save(this.draft);
     this.close();
   }

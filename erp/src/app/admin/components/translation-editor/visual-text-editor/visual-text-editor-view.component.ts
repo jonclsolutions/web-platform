@@ -44,7 +44,7 @@ import {
 
 /** A page of the website offered in the editor. */
 export interface VisualEditorPage {
-  /** Path without the language (`/`, `/faq`). */
+  /** Path without the language (`/`, `/faq`; `/?jsw-editor=banners` = the cookie bar and the language offer). */
   path: string;
   /** Key of its name (`e.t()`). */
   labelKey: string;

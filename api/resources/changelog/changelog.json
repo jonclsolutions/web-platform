@@ -2,6 +2,18 @@
     "unreleased": [
         {
             "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů přímo na stránkách: klíč textu u pravého okraje stránky (např. tlačítko FAQ) se už neschová za okraj – jeho štítek se posune doleva, aby byl vidět celý."
+        },
+        {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů přímo na stránkách: nová položka seznamu stránek „Lišta cookies a nabídka jazyka“ ukáže lištu cookies (i panel nastavení) a nabídku jazyka, takže jejich texty jde upravit kliknutím; tlačítka v editoru nic neukládají."
+        },
+        {
+            "type": "fixed",
             "area": "core",
             "part": "admin",
             "text": "Přidání jazyka: kód jazyka má nově přesně 2 malá písmena (např. sk, de, fr) jako na serveru – jiné znaky do pole nejdou napsat. Dřív formulář povolil 2–5 písmen a server kód odmítl; chyba se navíc ukazovala dvakrát a s technickým textem."

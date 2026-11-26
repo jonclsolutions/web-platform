@@ -704,6 +704,10 @@
                   "text": "Texty, na které nejde kliknout: text v prázdném poli formuláře, popisek obrázku, popis pro vyhledávače nebo text skrytý na této velikosti obrazovky. V panelu je vyberete ze seznamu."
                 },
                 {
+                  "title": "Lišta cookies a nabídka jazyka",
+                  "text": "Na webu se ukazují jen novým návštěvníkům, proto mají v seznamu stránek editoru vlastní položku (poslední). Ukáže hlavní stránku s lištou cookies i nabídkou jazyka; texty upravíte kliknutím, Nastavení přepne na panel kategorií. Ostatní tlačítka tu nic neuloží."
+                },
+                {
                   "title": "Titulek v prohlížeči",
                   "text": "Panel ukazuje název stránky v záložce prohlížeče; upravíte ho v části Názvy stránek."
                 },
@@ -716,7 +720,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "V editoru se nezobrazuje lišta cookies, nespouští se analytika a formuláře se neodesílají - práce v editoru se nepočítá jako návštěva webu."
+              "content": "V editoru se nezobrazuje lišta cookies (kromě její položky v seznamu stránek, kde nic neukládá), nespouští se analytika a formuláře se neodesílají - práce v editoru se nepočítá jako návštěva webu."
             }
           ]
         },

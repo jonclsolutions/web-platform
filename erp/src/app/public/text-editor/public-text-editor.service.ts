@@ -26,7 +26,7 @@ import { Observable, Subject } from 'rxjs';
 import { markText } from './text-editor-markers';
 import { TextEditorEntry, TextEditorOverlay } from './text-editor-overlay';
 import {
-  TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME, TEXT_EDITOR_HOST_PREFIX, TextEditorContentSection,
+  TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME, TEXT_EDITOR_HOST_PREFIX, TextEditorContentSection, isBannersQuery,
   TextEditorFromFrame, TextEditorToFrame, isTextEditorMessage,
 } from './text-editor-protocol';
 
@@ -93,6 +93,13 @@ export class PublicTextEditorService {
 
   /** The website runs in the frame of the visual text editor. */
   readonly active: boolean = typeof window !== 'undefined' && isTextEditorFrame(window);
+
+  /**
+   * The editor shows its page "Lišta cookies a nabídka jazyka" (`?jsw-editor=banners` when the
+   * frame was opened): the cookie bar and the language offer are shown with their texts,
+   * their buttons store nothing. Never outside the editor.
+   */
+  readonly banners: boolean = this.active && isBannersQuery(window.location.search);
 
   /** Entries of the marks: their number is the index. */
   private readonly entries: TextEditorEntry[] = [];

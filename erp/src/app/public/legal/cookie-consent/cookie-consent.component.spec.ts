@@ -107,4 +107,29 @@ describe('CookieConsentComponent', () => {
     expect(fixture.componentInstance.visible).toBeFalse();
     expect(visible()).toBeFalse();
   });
+
+  /**
+   * @description The page "Lišta cookies a nabídka jazyka" of the editor shows the bar for its
+   *   texts: Settings / Back switch the panel, the other buttons store nothing and keep it open.
+   * @input PublicTextEditorService active + banners; empty storage; acceptAll, rejectNonEssential,
+   *   toggleSettings, saveSettings
+   * @output visible with the texts; no consent stored; showSettings toggled; still visible
+   */
+  it('shows the bar for its texts on the banners page of the editor', () => {
+    const ctx = createPublicPageContext({ translations: { cookie_consent: t } });
+    TestBed.configureTestingModule({ imports: [CookieConsentComponent], providers: [...ctx.providers, { provide: PublicTextEditorService, useValue: { active: true, banners: true } }] });
+    consent = TestBed.inject(CookieConsentService);
+    fixture = TestBed.createComponent(CookieConsentComponent);
+    fixture.detectChanges();
+    const banner = fixture.componentInstance;
+    expect(visible()).toBeTrue();
+    banner.acceptAll();
+    banner.rejectNonEssential();
+    banner.toggleSettings();
+    expect(banner.showSettings).toBeTrue();
+    banner.saveSettings();
+    expect(consent.current).toBeNull();
+    expect(localStorage.getItem('jsw_cookie_consent')).toBeNull();
+    expect(banner.visible).toBeTrue();
+  });
 });

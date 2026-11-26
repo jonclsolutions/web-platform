@@ -18,6 +18,7 @@ import { of } from 'rxjs';
 
 import { LANGUAGE_SUGGESTION_DISMISSED_KEY, LanguageSuggestionComponent } from './language-suggestion.component';
 import { LanguageRoutingService } from '../../services/language-routing.service';
+import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
 import { createPublicPageContext } from '../../../../testing/public-test-helpers';
 
 const CZECH_TEXTS = { language_suggestion: { text: 'Tato stránka je dostupná i v češtině.', action: 'Přepnout do češtiny', dismiss: 'Zavřít' } };
@@ -123,5 +124,41 @@ describe('LanguageSuggestionComponent', () => {
     ctx.localization.currentLanguage$.next('cz');
     fixture.detectChanges();
     expect(root.querySelector('.lsb')).toBeNull();
+  });
+
+  /**
+   * @description The visual text editor: no offer on its pages; its page "Lišta cookies a nabídka
+   *   jazyka" shows the offer of the edited language with its texts (whatever the browser or an
+   *   earlier close), and its buttons do nothing.
+   * @input editor without / with banners; current cz with its texts; dismissed before; clicks
+   * @output no bar; then the bar in cz with the Czech text; no switch, nothing stored, still shown
+   */
+  it('shows the offer of the edited language only on the banners page of the editor', () => {
+    for (const banners of [false, true]) {
+      TestBed.resetTestingModule();
+      localStorage.setItem(LANGUAGE_SUGGESTION_DISMISSED_KEY, '1');
+      const ctx = createPublicPageContext({ lang: 'cz', translations: CZECH_TEXTS });
+      routing = { switchTo: jasmine.createSpy('switchTo') };
+      TestBed.configureTestingModule({
+        imports: [LanguageSuggestionComponent],
+        providers: [...ctx.providers, { provide: LanguageRoutingService, useValue: routing },
+          { provide: PublicTextEditorService, useValue: { active: true, banners } }],
+      });
+      const fixture = TestBed.createComponent(LanguageSuggestionComponent);
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+      if (!banners) {
+        expect(root.querySelector('.lsb')).toBeNull();
+        continue;
+      }
+      localStorage.removeItem(LANGUAGE_SUGGESTION_DISMISSED_KEY);
+      expect(root.querySelector('.lsb-text')!.textContent).toContain('dostupná i v češtině');
+      (root.querySelector('.lsb-action') as HTMLButtonElement).click();
+      (root.querySelector('.lsb-close') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(routing.switchTo).not.toHaveBeenCalled();
+      expect(localStorage.getItem(LANGUAGE_SUGGESTION_DISMISSED_KEY)).toBeNull();
+      expect(root.querySelector('.lsb')).not.toBeNull();
+    }
   });
 });
