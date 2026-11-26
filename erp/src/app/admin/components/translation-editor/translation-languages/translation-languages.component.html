@@ -13,6 +13,10 @@
   <!-- Opened from "Spravovat jazyky" it lies above that window (prompt level), which stays open. -->
   <app-admin-modal size="md" [heading]="e.t('add_language_button')" [level]="open ? 'prompt' : 'content'" (dismissed)="e.closeAddForm()">
     <div class="ew-modal-content">
+      <!-- Unsaved edits of the open language stay: the new language is not opened over them. -->
+      @if (e.isDirty) {
+        <p class="ew-modal-desc" role="note">{{ e.t('add_language_unsaved_note').replace('{lang}', (e.currentLang | uppercase)) }}</p>
+      }
 
       <div class="ew-field">
         <label class="ew-label">{{ e.t('icon_field_label') }} <span class="ew-hint">{{ e.t('icon_field_hint') }}</span></label>
@@ -96,6 +100,10 @@
       <p class="ew-modal-desc">
         {{ e.t('upload_modal_description') }}
       </p>
+      <!-- The open language with unsaved edits: they stay unsaved edits over the uploaded texts. -->
+      @if (e.isDirty && e.uploadLangCode === e.currentLang) {
+        <p class="ew-modal-desc" role="note">{{ e.t('upload_keeps_edits_note') }}</p>
+      }
 
       <div class="ew-json-drop-zone" (click)="jsonInput.click()">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>

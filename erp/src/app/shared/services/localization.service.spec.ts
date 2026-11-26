@@ -351,4 +351,35 @@ describe('LocalizationService', () => {
     changes$.next();
     expect(published.faq.title).toBe('Nové');
   });
+
+  /**
+   * @description In the frame of the visual text editor a chosen language is never stored (the
+   *   storage of the administrator's own visits), changed languages announced by the admin
+   *   reload the switcher, announced texts are left to the editor (its drafts and saves).
+   * @input editor mode, stored 'cz'; setLanguage('en'); broadcast texts web/cz, then languages web
+   * @output stored language still 'cz'; no request for the texts; GET languages/web
+   */
+  it('stores no language and follows changed languages in the editor frame', async () => {
+    const editor = { active: true, changes$: new Subject<void>(), commits$: new Subject<any>(), decorate: (d: any) => d };
+    localStorage.setItem('selectedLanguage', 'cz');
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: PublicTextEditorService, useValue: editor }] });
+    http = TestBed.inject(HttpTestingController);
+    const service = TestBed.inject(LocalizationService);
+    const done = service.initTranslations('web');
+    http.expectOne(`${API}/translations/web/cz`).flush({ data: {} });
+    await done;
+    http.match(() => true).forEach(request => request.flush({ data: [] }));
+
+    service.setLanguage('en');
+    expect(localStorage.getItem('selectedLanguage')).toBe('cz');
+    http.match(() => true).forEach(request => request.flush({ data: {} }));
+
+    const channel = new BroadcastChannel('jsw-texts');
+    channel.postMessage({ kind: 'texts', module: 'web', lang: 'en' });
+    channel.postMessage({ kind: 'languages', module: 'web' });
+    await new Promise(resolve => setTimeout(resolve, 50));
+    channel.close();
+    expect(http.match(`${API}/translations/web/en`).length).toBe(0);
+    http.expectOne(`${API}/languages/web`).flush({ data: [] });
+  });
 });

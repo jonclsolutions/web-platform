@@ -13,14 +13,14 @@
  *   sent, external links / new tabs are not opened). The page itself is never changed: the
  *   outlines are drawn in their own layer (a shadow root above the page).
  * @usage `new TextEditorOverlay(document, host).start()` - PublicTextEditorService, outside Angular.
- * @dependencies text-editor-markers, language-url (path without the language)
+ * @dependencies text-editor-markers, language-url (path and language of the URL)
  * @note Rescans on changes of the page (MutationObserver, debounced), redraws on scroll / resize
  *   and in a short interval (animations move texts without changing the DOM).
  */
 
 import { FoundMark, hasMarks, scanMarks, stripMarks } from './text-editor-markers';
 import { TextEditorContentSection, TextEditorHiddenText, TextEditorShortcut } from './text-editor-protocol';
-import { stripLanguagePrefix } from '../../shared/utils/language-url';
+import { splitLanguagePrefix } from '../../shared/utils/language-url';
 import { TEXT_EDITOR_BANNERS_PATH, isBannersQuery } from './text-editor-protocol';
 
 /** Entry of a mark: a translation key or a section of the content. */
@@ -41,7 +41,7 @@ export interface TextEditorOverlayHost {
   /** Content was clicked. */
   onContent(section: TextEditorContentSection): void;
   /** The page shows other texts than before. */
-  onScan(scan: { path: string; title: string; visible: string[]; missing: string[]; hidden: TextEditorHiddenText[] }): void;
+  onScan(scan: { path: string; lang: string | null; title: string; visible: string[]; missing: string[]; hidden: TextEditorHiddenText[] }): void;
   /** A shortcut of the editor was pressed in the page (Ctrl/Cmd+S, Esc). */
   onKey(key: TextEditorShortcut): void;
 }
@@ -351,10 +351,12 @@ export class TextEditorOverlay {
       hidden.delete(`${key}|placeholder`);
     }
     const location = this.doc.defaultView!.location;
-    const path = stripLanguagePrefix(location.pathname);
+    const { language, path } = splitLanguagePrefix(location.pathname);
     const scan = {
       // the page "Lišta cookies a nabídka jazyka" of the editor is the home page with its query
       path: path === '/' && isBannersQuery(location.search) ? TEXT_EDITOR_BANNERS_PATH : path,
+      // the admin checks the page shows the language of the editor
+      lang: language,
       title: stripMarks(this.doc.title),
       visible: [...visible],
       missing: [...missing],

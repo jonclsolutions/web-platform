@@ -14,6 +14,8 @@
  *   browser tab titles from `legal_page_titles`.
  * - LanguageUrlSerializer + LanguageRoutingService: The language in the public URLs (`/cs/…`,
  *   `/en/…`) - read from and written into the URLs, `<html lang>`.
+ * - TextEditorLocationStrategy: path URLs; in the frame of the visual text editor no entries of
+ *   the history of the tab (the Back button belongs to the admin).
  */
 
 import { ApplicationConfig, APP_INITIALIZER, inject, provideAppInitializer } from '@angular/core';
@@ -24,13 +26,14 @@ import { routes } from './app.routes';
 import { AuthTokenInterceptor } from './core/interceptors/auth-token.interceptor';
 import { LoadingInterceptor } from './core/interceptors/loading.interceptor';
 import { PasswordConfirmationInterceptor } from './core/interceptors/password-confirmation.interceptor';
-import { registerLocaleData } from '@angular/common';
+import { LocationStrategy, registerLocaleData } from '@angular/common';
 import localeCs from '@angular/common/locales/cs';
 import localeEn from '@angular/common/locales/en';
 import { AppBootstrapService } from './shared/services/app-bootstrap.service';
 import { PageTitleStrategy } from './shared/services/page-title.strategy.service';
 import { LanguageUrlSerializer } from './shared/services/language-url-serializer';
 import { LanguageRoutingService } from './shared/services/language-routing.service';
+import { TextEditorLocationStrategy } from './public/text-editor/text-editor-location-strategy';
 
 registerLocaleData(localeCs, 'cs-CZ');
 registerLocaleData(localeEn, 'en-US');
@@ -78,6 +81,12 @@ export const appConfig: ApplicationConfig = {
      *   the default strategy shows the raw key.
      */
     { provide: TitleStrategy, useClass: PageTitleStrategy },
+
+    /**
+     * @description Path URLs; the website in the frame of the visual text editor replaces its
+     *   history entry instead of adding one (Back leaves the editor, never steps back in the frame).
+     */
+    { provide: LocationStrategy, useClass: TextEditorLocationStrategy },
 
     /**
      * @description Language prefix of the public URLs (2026-11): routes and links stay without a

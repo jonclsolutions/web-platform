@@ -13,7 +13,7 @@
 import { Location } from '@angular/common';
 import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
-import { LeaveConfirmable, resetUnsavedTextsGuard, unsavedTextsGuard } from './unsaved-texts.guard';
+import { AGREED_LEAVE_MS, LeaveConfirmable, resetUnsavedTextsGuard, unsavedTextsGuard } from './unsaved-texts.guard';
 
 describe('unsavedTextsGuard', () => {
   let router: jasmine.SpyObj<Router>;
@@ -78,5 +78,22 @@ describe('unsavedTextsGuard', () => {
     answer(true);
     flushMicrotasks();
     expect(location.back).toHaveBeenCalledTimes(1);
+  }));
+
+  /**
+   * @description An agreed leave whose navigation never came (nowhere to go back to) does not let
+   *   a later way out pass without asking.
+   * @input a link answered leave; no check of the guard within AGREED_LEAVE_MS; a new way out
+   * @output the later navigation is stopped (the page asks again)
+   */
+  it('forgets an agreed leave whose navigation never came', fakeAsync(() => {
+    let answer!: (leave: boolean) => void;
+    const page = { confirmLeave: () => new Promise<boolean>(resolve => { answer = resolve; }) };
+    const now = spyOn(Date, 'now').and.returnValue(1_000_000);
+    expect(run(page)).toBeFalse();
+    answer(true);
+    flushMicrotasks();
+    now.and.returnValue(1_000_000 + AGREED_LEAVE_MS + 1);
+    expect(run(page)).toBeFalse();
   }));
 });

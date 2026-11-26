@@ -21,6 +21,11 @@
  * @note Not on a phone (≤ 640 px): a notice with the way back instead of the editor.
  * @note Leaving with unsaved edits asks first: in the editor (language, discard) and on any way
  *   out of the page (`confirmLeave` - unsavedTextsGuard of the route: Back, close, links).
+ * @note History: the frame is loaded by replacing its entry (`location.replace`) and the website
+ *   in it never adds entries (TextEditorLocationStrategy) - the frame shares the history of the
+ *   tab, so the Back button always means leaving the editor, never another page / language in
+ *   the frame. The language switcher of the page switches the editor (`language` message); a page
+ *   still showing another language than the editor is loaded again once.
  * @note Security: the frame shows the own website (same origin, path checked) in a sandbox
  *   without forms, pop-ups and navigation of the admin; messages are accepted only from the
  *   window of the frame and the own origin.
@@ -136,6 +141,10 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   frameLoading = true;
   /** Path of the page shown (without the language). */
   framePath = '/';
+  /** URL last loaded into the frame (with the language). */
+  frameUrl = '';
+  /** URL of the frame loaded again because its page showed another language (once per URL). */
+  private mismatchUrl = '';
   /** Browser title of the page shown. */
   pageTitle = '';
   /** Keys of the texts the page shows. */
@@ -171,8 +180,6 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
 
   /** Language of the page shown in the frame (a deleted language switches the page to Czech). */
   private frameLang = '';
-  /** Languages (code / state) when last seen - an added / deleted / switched language reloads the page. */
-  private languagesSeen = '';
   /** Texts of the language when last sent (a reload of the texts sends the missing ones again). */
   private keysSeen: FlatKey[] | null = null;
   /** Message of the JSON upload when last seen (an upload of the open language reloads the page). */
@@ -209,18 +216,17 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   }
 
   /**
-   * @description Follows the languages and texts of the editor changed in the window "Jazyky":
-   *   a deleted open language (Czech is opened), an added / deleted / switched language or an
-   *   uploaded JSON of the open language reload the page; reloaded texts send the missing ones.
+   * @description Follows the languages and texts of the editor changed in the window "Jazyky": a
+   *   new open language (another one opened, the open one deleted - Czech) or an uploaded JSON of
+   *   the open language reload the page; reloaded texts send the missing ones. Languages added /
+   *   switched on or off reach the language switcher of the page by texts-broadcast (no reload -
+   *   the page keeps its place).
    */
   ngDoCheck(): void {
     if (this.isPhone || !this.frameRef) return;
-    const languages = this.e.languages.map(lang => `${lang.code}:${lang.active ? 1 : 0}`).join(',');
     const uploaded = this.e.showUploadModal && this.e.uploadSuccess && this.e.uploadLangCode === this.e.currentLang ? this.e.uploadSuccess : '';
     const reload = this.e.currentLang !== this.frameLang
-      || (this.languagesSeen !== '' && languages !== this.languagesSeen)
       || (uploaded !== '' && uploaded !== this.uploadSeen);
-    this.languagesSeen = languages;
     this.uploadSeen = uploaded;
     if (reload && this.frameLang !== '') {
       this.navigateFrame(this.framePath);
@@ -636,6 +642,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     this.hiddenExpanded = false;
     this.watchTitle();
     const url = withLanguagePrefix(this.framePath, this.e.currentLang);
+    this.frameUrl = url;
     if (inside) {
       // the selection of the old page ends there too (a menu text could stay outlined)
       this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key: null, reveal: false });
@@ -643,7 +650,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     } else {
       this.frameReady = false;
       this.frameLoading = true;
-      frame.src = url;
+      loadFrame(frame, url);
     }
     this.cd.markForCheck();
   }
@@ -717,6 +724,12 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
           this.visibleKeys = message.visible;
           this.missingKeys = message.missing ?? [];
           this.hiddenTexts = message.hidden;
+          // the page shows another language than the editor (it moved there itself): load it in
+          // the language of the editor - once, a website refusing the language is left as it is
+          if (message.lang && message.lang !== this.e.currentLang && this.mismatchUrl !== this.frameUrl) {
+            this.mismatchUrl = this.frameUrl;
+            this.navigateFrame(this.framePath);
+          }
           break;
         case 'select':
           this.selectedKey = message.key;
@@ -729,6 +742,12 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
           break;
         case 'key':
           this.shortcut(message.key);
+          break;
+        case 'language':
+          // the language switcher of the page: the editor and the page switch together
+          if (this.e.languages.some(lang => lang.code === message.code)) {
+            this.switchLang(message.code);
+          }
           break;
       }
       this.cd.markForCheck();
@@ -778,6 +797,26 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
       action();
     }
   }
+}
+
+/**
+ * @description Loads a page into the frame by replacing its entry of the history - the frame shares
+ *   the history of the tab, a normal load (`src`) would add an entry and the Back button would
+ *   show the previous page / language in the frame instead of leaving the editor.
+ * @param frame The frame.
+ * @param url Own URL (path with the language).
+ */
+function loadFrame(frame: HTMLIFrameElement, url: string): void {
+  try {
+    const view = frame.contentWindow;
+    if (view) {
+      view.location.replace(url);
+      return;
+    }
+  } catch {
+    // not reachable (should not happen - same origin): a normal load
+  }
+  frame.src = url;
 }
 
 /**

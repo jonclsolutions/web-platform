@@ -16,7 +16,11 @@
  *   `--fls-option-color-active`, `--fls-option-bg-hover`, `--fls-option-bg-active`,
  *   `--fls-check`, `--fls-focus` (fallbacks = dark web footer).
  * @dependencies LocalizationService (languages and active language of the current module),
- *   LanguageRoutingService (switching with the URL).
+ *   LanguageRoutingService (switching with the URL), PublicTextEditorService (the frame of the
+ *   visual text editor: a chosen language is handed to the admin, which switches the editor).
+ * @note In the frame of the visual text editor the page does not switch its language itself
+ *   (it would show another language than the edited one and store the choice of the
+ *   administrator): the admin switches the editor and the page together.
  * @note Accessible listbox: the button names the current language (aria-expanded); in the menu
  *   ArrowUp / ArrowDown / Home / End move, Enter / Space choose, Escape closes and returns focus
  *   to the button; a click outside or Tab closes it. Each name carries its `lang` (screen readers
@@ -31,6 +35,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LangMeta, LocalizationService } from '../../services/localization.service';
 import { LanguageRoutingService } from '../../services/language-routing.service';
 import { languageCodeOfBrowserTag } from '../../utils/language-preference';
+import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
 
 /** Placeholder flag path LocalizationService uses for a language without an icon (no such file). */
 const GENERIC_FLAG = 'assets/images/icons/default.png';
@@ -64,6 +69,7 @@ export class FooterLanguageSwitcherComponent implements OnInit {
 
   private readonly localization = inject(LocalizationService);
   private readonly languageRouting = inject(LanguageRoutingService);
+  private readonly textEditor = inject(PublicTextEditorService);
   private readonly cd = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
@@ -123,7 +129,12 @@ export class FooterLanguageSwitcherComponent implements OnInit {
    */
   select(code: string): void {
     if (code !== this.current) {
-      this.languageRouting.switchTo(code);
+      if (this.textEditor.active) {
+        // in the editor frame the admin switches the editor and the page together
+        this.textEditor.requestLanguage(code);
+      } else {
+        this.languageRouting.switchTo(code);
+      }
     }
     this.close(true);
   }

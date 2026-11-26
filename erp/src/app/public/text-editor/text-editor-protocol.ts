@@ -80,14 +80,22 @@ export type TextEditorToFrame =
 export type TextEditorFromFrame =
   /** The page of the frame is running in editor mode and waits for `init`. */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'ready' }
-  /** What the page shows: its path (without language), title, clickable, missing (shown) and hidden keys. */
-  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'scan'; path: string; title: string; visible: string[]; missing: string[]; hidden: TextEditorHiddenText[] }
+  /**
+   * What the page shows: its path (without language), the language of its URL (translation code,
+   * null without one), title, clickable, missing (shown) and hidden keys.
+   */
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'scan'; path: string; lang?: string | null; title: string; visible: string[]; missing: string[]; hidden: TextEditorHiddenText[] }
   /** A text was clicked. */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'select'; key: string }
   /** Content of the admin was clicked (FAQ question, reference…). */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'content'; section: TextEditorContentSection }
   /** A shortcut pressed in the page: Ctrl/Cmd+S (save) or Esc (cancel the selection). */
-  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'key'; key: TextEditorShortcut };
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'key'; key: TextEditorShortcut }
+  /**
+   * The language switcher of the page was used: the admin switches the language of the editor
+   * (asking first about unsaved edits) - the page itself does not change its language.
+   */
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'language'; code: string };
 
 /** Shortcuts of the editor the page passes on (its keys never reach the window of the admin). */
 export type TextEditorShortcut = 'save' | 'escape';

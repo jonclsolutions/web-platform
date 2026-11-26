@@ -81,7 +81,8 @@ describe('WebTextEditorComponent', () => {
    * @description The editor shows the own website in a sandboxed frame named for the editor mode,
    *   the pages of the website and every language (a switched off one marked).
    * @input render
-   * @output frame name, sandbox without forms / pop-ups, src '/cs'; 13 pages; languages CZ, EN,
+   * @output frame name, sandbox without forms / pop-ups, '/cs' loaded without `src` (replacing the
+   *   entry of the history); 13 pages; languages CZ, EN,
    *   DE (off, dashed); no notice of a switched off language for Czech
    */
   it('shows the website in the frame of the editor', fakeAsync(() => {
@@ -89,7 +90,8 @@ describe('WebTextEditorComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(frame().getAttribute('name')).toBe(TEXT_EDITOR_FRAME_NAME);
     expect(frame().getAttribute('sandbox')).toBe('allow-scripts allow-same-origin');
-    expect(new URL(frame().src).pathname).toBe('/cs');
+    expect(view.frameUrl).toBe('/cs');
+    expect(frame().hasAttribute('src')).toBeFalse();
     expect(el.querySelectorAll('.te-page-select option').length).toBe(WEB_EDITOR_PAGES.length);
     expect(Array.from(el.querySelectorAll('.te-lang')).map(b => b.textContent!.trim().slice(0, 2))).toEqual(['CZ', 'EN', 'DE']);
     expect(el.querySelectorAll('.te-lang--off').length).toBe(1);
@@ -229,7 +231,7 @@ describe('WebTextEditorComponent', () => {
     flush();
     fixture.detectChanges();
     expect(component.currentLang).toBe('en');
-    expect(new URL(frame().src).pathname).toBe('/en/faq');
+    expect(view.frameUrl).toBe('/en/faq');
     expect(component.isDirty).toBeFalse();
 
     const router = TestBed.inject(Router);
@@ -274,7 +276,7 @@ describe('WebTextEditorComponent', () => {
    * @input DE (off, no texts); ready; scan with missing faq.sub; click the list; Zapnout jazyk
    * @output notice; init missing {faq.title: 'Časté dotazy', faq.sub: 'Podtitulek'} and the label;
    *   list of 1 → selected faq.sub; the language turned on (upload languages/web), notice gone,
-   *   the page reloaded
+   *   the page not loaded again (its language switcher follows by texts-broadcast)
    */
   it('shows the missing texts and switches a switched off language on', fakeAsync(() => {
     setup();
@@ -296,14 +298,15 @@ describe('WebTextEditorComponent', () => {
     expect(view.selectedKey).toBe('faq.sub');
     expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key: 'faq.sub', reveal: true });
 
-    frame().src = 'about:blank';
+    const loaded = view.frameUrl;
     (el.querySelector('.te-inactive-btn') as HTMLButtonElement).click();
     flush();
     fixture.detectChanges();
     expect((ctx.dataHandler as any).upload).toHaveBeenCalledWith('languages/web', jasmine.any(FormData));
     expect(component.languages.find(l => l.code === 'de')!.active).toBeTrue();
     expect(el.querySelector('.te-inactive')).toBeNull();
-    expect(new URL(frame().src).pathname).toBe('/de/faq');
+    expect(view.frameUrl).toBe(loaded);
+    expect(view.frameLoading).toBeFalse();
     discardPeriodicTasks();
   }));
 
@@ -323,14 +326,14 @@ describe('WebTextEditorComponent', () => {
     view.switchLang('de');
     flush();
     fixture.detectChanges();
-    expect(new URL(frame().src).pathname).toBe('/de');
+    expect(view.frameUrl).toBe('/de');
     (ctx.dataHandler as any).delete.and.returnValue(of({}));
     component.askDeleteLang(component.languages.find(l => l.code === 'de')!);
     component.confirmDeleteLang();
     flush();
     fixture.detectChanges();
     expect(component.currentLang).toBe('cz');
-    expect(new URL(frame().src).pathname).toBe('/cs');
+    expect(view.frameUrl).toBe('/cs');
     discardPeriodicTasks();
   }));
 
@@ -346,8 +349,7 @@ describe('WebTextEditorComponent', () => {
     const last = WEB_EDITOR_PAGES[WEB_EDITOR_PAGES.length - 1];
     expect(last.labelKey).toBe('editor_page_banners');
     view.goToPage(last.path);
-    const url = new URL(frame().src);
-    expect(url.pathname + url.search).toBe('/cs?jsw-editor=banners');
+    expect(view.frameUrl).toBe('/cs?jsw-editor=banners');
     fromPage({ type: 'scan', path: last.path, title: '', visible: ['cookie_consent.title'], missing: [], hidden: [] });
     flush();
     fixture.detectChanges();
@@ -368,12 +370,12 @@ describe('WebTextEditorComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     const buttons = () => el.querySelectorAll<HTMLButtonElement>('.te-device-btn');
     expect(buttons()[0].getAttribute('aria-pressed')).toBe('true');
-    const src = frame().src;
+    const url = view.frameUrl;
     buttons()[1].click();
     fixture.detectChanges();
     expect(el.querySelector('.te-stage')!.classList).toContain('te-stage--mobile');
     expect(frame().clientWidth).toBe(390); // the page inside the bezel
-    expect(frame().src).toBe(src);
+    expect(view.frameUrl).toBe(url);
     expect(localStorage.getItem(DEVICE_STORAGE_KEY)).toBe('mobile');
     view.edit('faq.title', 'Dotazy');
     buttons()[0].click();
@@ -564,18 +566,17 @@ describe('WebTextEditorComponent', () => {
    *   is loaded again.
    * @input goToPage('/faq') before ready; ready; goToPage('/contact'); the banners page;
    *   goToPage('/jobs'); switchLang('en')
-   * @output src /cs/faq; then select null + navigate '/cs/contact' with the src kept and no
-   *   loading; src of the banners; src /cs/jobs (leaving the banners); src /en/jobs
+   * @output loaded /cs/faq; then select null + navigate '/cs/contact' without a load; the
+   *   banners loaded; /cs/jobs loaded (leaving the banners); /en/jobs loaded
    */
   it('changes pages inside the website without a new load', fakeAsync(() => {
     setup();
     view.goToPage('/faq');
-    expect(new URL(frame().src).pathname).toBe('/cs/faq');
+    expect(view.frameUrl).toBe('/cs/faq');
     fromPage({ type: 'ready' });
-    const src = frame().src;
     sent.length = 0;
     view.goToPage('/contact');
-    expect(frame().src).toBe(src);
+    expect(view.frameUrl).toBe('/cs/contact');
     expect(view.frameLoading).toBeFalse();
     expect(sent).toEqual([
       { channel: TEXT_EDITOR_CHANNEL, type: 'select', key: null, reveal: false },
@@ -583,14 +584,52 @@ describe('WebTextEditorComponent', () => {
     ]);
     const banners = WEB_EDITOR_PAGES[WEB_EDITOR_PAGES.length - 1].path;
     view.goToPage(banners);
-    expect(new URL(frame().src).search).toBe('?jsw-editor=banners');
+    expect(view.frameUrl).toBe('/cs?jsw-editor=banners');
+    expect(view.frameLoading).toBeTrue();
     fromPage({ type: 'ready' });
     view.goToPage('/jobs');
-    expect(new URL(frame().src).pathname).toBe('/cs/jobs');
+    expect(view.frameUrl).toBe('/cs/jobs');
+    expect(view.frameLoading).toBeTrue();
     fromPage({ type: 'ready' });
     view.switchLang('en');
     flush();
-    expect(new URL(frame().src).pathname).toBe('/en/jobs');
+    expect(view.frameUrl).toBe('/en/jobs');
+    expect(view.frameLoading).toBeTrue();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description The language switcher of the page switches the editor (with the question about
+   *   unsaved edits); a language the editor does not have is ignored. A page showing another
+   *   language than the editor (it moved there itself) is loaded in the editor's language once.
+   * @input ready; language 'xx'; language 'en'; edit + language 'cz'; scan with lang 'cz' (editor
+   *   en) twice
+   * @output nothing for 'xx'; en opened and loaded (/en); with the edit the question first; the
+   *   mismatching page loaded again once (/en), the second scan leaves it
+   */
+  it('follows the language switcher of the page and keeps the page in the edited language', fakeAsync(() => {
+    setup();
+    fromPage({ type: 'ready' });
+    fromPage({ type: 'language', code: 'xx' });
+    expect(component.currentLang).toBe('cz');
+    fromPage({ type: 'language', code: 'en' });
+    flush();
+    expect(component.currentLang).toBe('en');
+    expect(view.frameUrl).toBe('/en');
+
+    fromPage({ type: 'ready' });
+    view.edit('faq.title', 'Q');
+    fromPage({ type: 'language', code: 'cz' });
+    expect(view.pendingAction).not.toBeNull();
+    view.cancelPending();
+    expect(component.currentLang).toBe('en');
+
+    fromPage({ type: 'scan', path: '/', lang: 'cz', title: '', visible: [], missing: [], hidden: [] });
+    expect(view.frameLoading).toBeTrue();
+    expect(view.frameUrl).toBe('/en');
+    fromPage({ type: 'ready' });
+    fromPage({ type: 'scan', path: '/', lang: 'cz', title: 'x', visible: [], missing: [], hidden: [] });
+    expect(view.frameLoading).toBeFalse();
     discardPeriodicTasks();
   }));
 

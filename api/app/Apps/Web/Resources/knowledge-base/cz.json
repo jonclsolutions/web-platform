@@ -543,7 +543,8 @@
               "items": [
                 "V okně Jazyky jazyk tlačítkem Deaktivovat nebo Aktivovat vypnete či zapnete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
                 "Tlačítkem Smazat jazyk smažete (po potvrzení; když dáte Zrušit, zůstanete v okně Jazyky). Smažou se i všechny jeho texty - překlady, obsah stránek, názvy stránek a texty e-mailů. Pokud jazyk chcete jen dočasně skrýt, deaktivujte ho.",
-                "Stáhnout JSON a Nahrát JSON jsou u každého jazyka v okně Jazyky (viz kapitola 06)."
+                "Stáhnout JSON a Nahrát JSON jsou u každého jazyka v okně Jazyky (viz kapitola 06).",
+                "Když má otevřený jazyk neuložené úpravy, přidání nového jazyka je nezahodí - otevřený jazyk zůstane otevřený a nový jazyk najdete v řadě jazyků."
               ]
             }
           ]
@@ -725,6 +726,10 @@
               "type": "alert",
               "variant": "info",
               "content": "V editoru se nezobrazuje lišta cookies (kromě její položky v seznamu stránek, kde nic neukládá), nespouští se analytika a formuláře se neodesílají - práce v editoru se nepočítá jako návštěva webu."
+            },
+            {
+              "type": "text",
+              "content": "Tlačítko Zpět prohlížeče editor vždy zavře (s dotazem na neuložené úpravy) - stránky a jazyky otevřené v náhledu do historie prohlížeče nepřibývají. Přepínač jazyka v patičce náhledu přepne jazyk celého editoru (při neuložených úpravách se nejdřív zeptá); vaše vlastní volba jazyka pro návštěvy webu se tím nemění."
             }
           ]
         },
@@ -738,7 +743,8 @@
                 "Stáhnout JSON (v okně Jazyky u daného jazyka) stáhne uložené texty jazyka do souboru - se všemi klíči hlavního jazyka (CZ), chybějící texty jako prázdné. Hodí se jako záloha nebo pro překladatele. Neuložené úpravy v souboru nejsou - okno na ně u otevřeného jazyka upozorní.",
                 "Nahrát JSON (v okně Jazyky u daného jazyka) nahraje soubor, který musí mít přesně stejné klíče jako hlavní jazyk (CZ). Když nějaké klíče chybějí nebo přebývají, soubor se nenahraje, nic se nezmění a okno vypíše, které klíče nesedí. Prázdný text v souboru je v pořádku - označí se jako chybějící.",
                 "Postup s překladatelem: stáhněte český JSON, nechte přeložit jen hodnoty (ne klíče), nahrajte soubor k novému jazyku, zkontrolujte chybějící texty a uložte.",
-                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou. Že v zapnutých jazycích chybí texty, ukazuje oranžová tečka u položky Texty webu v menu a pruh nad jazyky na záložce Překlady (kolik textů chybí v kterém jazyce a tlačítko, které jazyk otevře jen s chybějícími texty); počty ukazují záložky stránky - Překlady, FAQ, Kariéra, Reference a Znalostní báze (u nich počet položek, kterým v některém zapnutém jazyce chybí text; počítají se jen položky zobrazené na webu). Tečka, pruh i čísla zmizí po doplnění textů."
+                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou. Že v zapnutých jazycích chybí texty, ukazuje oranžová tečka u položky Texty webu v menu a pruh nad jazyky na záložce Překlady (kolik textů chybí v kterém jazyce a tlačítko, které jazyk otevře jen s chybějícími texty); počty ukazují záložky stránky - Překlady, FAQ, Kariéra, Reference a Znalostní báze (u nich počet položek, kterým v některém zapnutém jazyce chybí text; počítají se jen položky zobrazené na webu). Tečka, pruh i čísla zmizí po doplnění textů.",
+                "Nahrání JSON pro otevřený jazyk s neuloženými úpravami je nezahodí - zůstanou jako neuložené změny nad nahranými texty (uložíte je, nebo zahodíte)."
               ]
             },
             {

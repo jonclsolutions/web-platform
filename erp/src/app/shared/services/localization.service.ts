@@ -20,8 +20,9 @@
  *   consent needed).
  * @note Visual text editor (2026-11): inside the frame of the editor the published texts are the
  *   loaded ones with the unsaved texts of the admin applied and every text marked with its key
- *   (PublicTextEditorService.decorate); saved texts are written into the cached ones. Outside
- *   the editor the loaded texts are published unchanged.
+ *   (PublicTextEditorService.decorate); saved texts are written into the cached ones; changed
+ *   languages (texts-broadcast) reload the language list; a language chosen there is never
+ *   stored. Outside the editor the loaded texts are published unchanged.
  */
 
 import { Injectable, NgZone, inject } from '@angular/core';
@@ -112,6 +113,11 @@ export class LocalizationService {
         if (this.publishedRaw) {
           this.currentTranslationsSource.next(this.textEditor.decorate(this.publishedRaw, this.publishedLang));
         }
+      });
+      // languages added / switched on or off / deleted in the editor: the switcher follows (the
+      // texts come from the editor itself - its drafts and saves)
+      listenTexts(change => {
+        if (change.kind === 'languages') this.zone.run(() => this.applyTextsChange(change));
       });
     } else {
       // the admin in another tab of this browser saved texts / changed languages: show them now
@@ -271,7 +277,11 @@ export class LocalizationService {
    * @param code Language code.
    */
   public setLanguage(code: string): void {
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+    // the website in the frame of the visual text editor never stores a choice (the same browser
+    // storage as the administrator's own visits of the website)
+    if (!this.textEditor.active) {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+    }
     this.chosenByVisitor = true;
     this.currentLanguageSource.next(code);
     this.loadTranslations(code);

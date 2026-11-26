@@ -8,7 +8,8 @@
  *   the menu (names in their own `lang`, the active one selected and checked), switching on a
  *   click (not on the same language), the keyboard (arrows, Enter, Escape back to the button),
  *   closing on an outside click, a globe for a missing / broken flag, following a language change from elsewhere and hiding the
- *   switcher with a single language.
+ *   switcher with a single language; in the frame of the visual text editor a chosen language
+ *   goes to the admin (the page does not switch itself).
  * @dependencies createPublicPageContext (LocalizationService stub with cz / en).
  */
 
@@ -17,11 +18,12 @@ import { of } from 'rxjs';
 
 import { FooterLanguageSwitcherComponent } from './footer-language-switcher.component';
 import { createPublicPageContext } from '../../../../testing/public-test-helpers';
+import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
 
 describe('FooterLanguageSwitcherComponent', () => {
   /** Creates the switcher (attached to the document - focus checks need it). */
-  function create(ctx = createPublicPageContext({ lang: 'en' }), label = 'Language') {
-    TestBed.configureTestingModule({ imports: [FooterLanguageSwitcherComponent], providers: ctx.providers });
+  function create(ctx = createPublicPageContext({ lang: 'en' }), label = 'Language', extra: any[] = []) {
+    TestBed.configureTestingModule({ imports: [FooterLanguageSwitcherComponent], providers: [...ctx.providers, ...extra] });
     const fixture = TestBed.createComponent(FooterLanguageSwitcherComponent);
     fixture.componentInstance.label = label;
     fixture.detectChanges();
@@ -78,6 +80,24 @@ describe('FooterLanguageSwitcherComponent', () => {
     ctx.localization.currentLanguage$.next('en');
     fixture.detectChanges();
     expect(button().textContent!.trim()).toBe('English');
+  });
+
+  /**
+   * @description In the frame of the visual text editor a chosen language is handed to the admin
+   *   (it switches the editor and the page together); the page itself does not switch or store it.
+   * @input editor mode; open, click 'Čeština'
+   * @output requestLanguage('cz'); setLanguage not called; menu closed
+   */
+  it('hands the chosen language to the admin in the editor frame', () => {
+    const editor = { active: true, requestLanguage: jasmine.createSpy('requestLanguage') };
+    const { fixture, ctx, button, options } = create(undefined, 'Language', [{ provide: PublicTextEditorService, useValue: editor }]);
+    button().click();
+    fixture.detectChanges();
+    options()[0].click();
+    fixture.detectChanges();
+    expect(editor.requestLanguage).toHaveBeenCalledOnceWith('cz');
+    expect(ctx.localization.setLanguage).not.toHaveBeenCalled();
+    expect(options().length).toBe(0);
   });
 
   /**

@@ -370,6 +370,18 @@ export class PublicTextEditorService {
   }
 
   /**
+   * @description The language switcher of the page was used in the editor: the admin switches the
+   *   language of the editor (and of the page) - the page does not switch it itself, so it never
+   *   shows another language than the one edited.
+   * @param code Translation code of the language.
+   */
+  requestLanguage(code: string): void {
+    if (this.active && typeof code === 'string') {
+      this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'language', code });
+    }
+  }
+
+  /**
    * @description Sends a message to the admin (only to the own origin).
    * @param message Message.
    */

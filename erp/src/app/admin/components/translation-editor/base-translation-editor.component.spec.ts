@@ -363,6 +363,42 @@ describe('BaseTranslationEditorComponent', () => {
   });
 
   /**
+   * @description Unsaved edits are never lost by the language windows: adding a language keeps
+   *   the open one (the new one waits in the list, the message says so); an upload of the open
+   *   language loads the uploaded texts and keeps the edits as unsaved changes over them (in the
+   *   order made).
+   * @input cz edited (home.title 'A', then home.sub 'S'); add 'de' (POST ok); upload of cz (POST
+   *   ok, the server then has {home: {title: 'Nahráno', sub: 'S'}})
+   * @output current cz, still dirty, 'language_created_kept_message'; after the upload title 'A'
+   *   changed over the saved 'Nahráno', sub equal to the uploaded one - no change; changed [title]
+   */
+  it('keeps unsaved edits when a language is added or uploaded', async () => {
+    shared.cz = { home: { title: 'Domů', sub: 'Pod' } } as any;
+    component.ngOnInit();
+    component.updateValue('home.title', 'A');
+    component.updateValue('home.sub', 'S');
+    const quiet = (ctx.dataHandler as any).postQuietly as jasmine.Spy;
+    quiet.and.returnValue(of({}));
+
+    component.openAddForm();
+    component.newLangCode = 'de';
+    component.newLangName = 'Deutsch';
+    component.confirmAddLang();
+    expect(component.currentLang).toBe('cz');
+    expect(component.isDirty).toBeTrue();
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'test-editor.language_created_kept_message', 'success');
+
+    shared.cz = { home: { title: 'Nahráno', sub: 'S' } } as any;
+    component.openUploadModal('cz');
+    component.onJsonFileSelected({ target: { files: [new File(['{"home": {"title": "Nahráno", "sub": "S"}}'], 'cz.json')] } } as any);
+    await readerDone(() => component.uploadSuccess !== '');
+    expect(component.savedValueOf('home.title')).toBe('Nahráno');
+    expect(component.translations.home.title).toBe('A');
+    expect([...component.changedPaths]).toEqual(['home.title']);
+    expect(component.isDirty).toBeTrue();
+  });
+
+  /**
    * @description The code field keeps only lowercase letters, at most 2 (typed or pasted) and
    *   clears an old error of the form.
    * @input inputs 'TUR', 'ď1 e', 'Sk'; addFormError set before

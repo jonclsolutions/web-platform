@@ -533,6 +533,10 @@ export abstract class BaseTranslationEditorComponent
           // a private copy - the cached response must stay untouched
           this.translations = structuredClone(data ?? {});
           this.buildFlatList();
+          const edits = this.editsAfterLoad;
+          this.editsAfterLoad = null;
+          // in the order they were made - the last edited stays the first of the list
+          edits?.forEach(edit => this.updateValue(edit.path, edit.value));
           this.applyFilter();
           if (this.missingAfterLoad) {
             this.missingAfterLoad = false;
@@ -541,6 +545,7 @@ export abstract class BaseTranslationEditorComponent
         },
         error: (err) => {
           if (lang !== this.currentLang) return;
+          this.editsAfterLoad = null;
           if (err?.status !== 404) {
             // the stored texts are unknown - empty fields would look like missing texts and a
             // save would write them
@@ -702,6 +707,8 @@ export abstract class BaseTranslationEditorComponent
 
   /** A language opened from the "texts missing" banner shows only its missing texts once loaded. */
   private missingAfterLoad = false;
+  /** Unsaved edits written again once the texts are loaded (an upload of the open language). */
+  private editsAfterLoad: { path: string; value: string }[] | null = null;
 
   /**
    * @description Active languages missing texts - the split of the attention kind
@@ -996,6 +1003,16 @@ export abstract class BaseTranslationEditorComponent
           this.loadLanguages(true);
           announceTexts({ kind: 'languages', module: this.MODULE });
 
+          if (this.isDirty) {
+            // unsaved edits of the open language are never thrown away: it stays open, the new
+            // language waits in the list
+            this.alertDialogService.open(
+              this.i18n.getValue('shared.success'),
+              this.t('language_created_kept_message').replace('{code}', code).replace('{lang}', this.currentLang),
+              'success'
+            );
+            return;
+          }
           this.currentLang = code;
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.isDirty = false;
@@ -1164,6 +1181,8 @@ export abstract class BaseTranslationEditorComponent
         this.uploadMismatch = null;
 
         if (this.uploadLangCode === this.currentLang) {
+          // the uploaded texts are loaded; unsaved edits of the language stay unsaved edits on top
+          this.editsAfterLoad = this.isDirty ? this.changedTexts.reverse() : null;
           this.translations = {};
           this.refreshTranslations();
         }

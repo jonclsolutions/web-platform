@@ -2,6 +2,24 @@
     "unreleased": [
         {
             "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů na stránkách: tlačítko Zpět prohlížeče vždy zavře editor (s dotazem na neuložené úpravy) – náhled už nepřidává stránky ani jazyky do historie prohlížeče, takže Zpět neukáže v náhledu jiný jazyk, než se upravuje."
+        },
+        {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů na stránkách: přepínač jazyka v patičce náhledu přepne jazyk celého editoru (při neuložených úpravách se zeptá) a neukládá volbu jazyka do prohlížeče. Zapnutí či vypnutí jazyka už náhled znovu nenačítá – přepínač se aktualizuje sám."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Texty a jazyky: přidání jazyka ani nahrání JSON otevřeného jazyka už nezahodí neuložené úpravy – otevřený jazyk zůstane otevřený, resp. úpravy zůstanou jako neuložené nad nahranými texty. Souhlas „Odejít“ platí jen pro jednu navigaci."
+        },
+        {
+            "type": "fixed",
             "area": "core",
             "part": "admin",
             "text": "Texty a jazyky: uložení posílá jen změněné texty a server je sloučí s uloženými – texty uložené mezitím v jiné záložce nebo jiným adminem se nepřepíšou. Soubor se zapisuje najednou a pod zámkem. Co napíšete během ukládání, zůstane neuloženou změnou."

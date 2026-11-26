@@ -543,7 +543,8 @@
               "items": [
                 "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see an inactive language, its texts stay.",
                 "Delete deletes the language (after a confirmation; Cancel keeps you in the Languages window). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
-                "Download JSON and Upload JSON are at every language in the Languages window (see chapter 06)."
+                "Download JSON and Upload JSON are at every language in the Languages window (see chapter 06).",
+                "When the open language has unsaved edits, adding a language does not throw them away - the open language stays open and the new one is in the row of languages."
               ]
             }
           ]
@@ -725,6 +726,10 @@
               "type": "alert",
               "variant": "info",
               "content": "The editor shows no cookie bar (except its own item of the page list, where it stores nothing), runs no analytics and sends no forms - working in the editor is not counted as a visit of the website."
+            },
+            {
+              "type": "text",
+              "content": "The Back button of the browser always closes the editor (asking about unsaved edits) - pages and languages opened in the preview are not added to the history of the browser. The language switcher in the footer of the preview switches the language of the whole editor (asking first about unsaved edits); your own language choice for visits of the website does not change."
             }
           ]
         },
@@ -738,7 +743,8 @@
                 "Download JSON (in the Languages window at the language) downloads the saved texts of the language into a file - with every key of the primary language (CZ), missing texts as empty ones. Useful as a backup or for a translator. Unsaved edits are not in the file - the window warns about them at the open language.",
                 "Upload JSON (in the Languages window at the language) uploads a file that must have exactly the keys of the primary language (CZ). When keys are missing or extra, the file is not uploaded, nothing changes and the window lists the keys that do not match. An empty text in the file is fine - it is marked as missing.",
                 "Working with a translator: download the Czech JSON, have only the values (not the keys) translated, upload the file to the new language, check the missing texts and save.",
-                "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing (filter of missing ones) and texts the application no longer uses are removed. An orange dot at this page in the menu and a banner above the languages of the Translations tab (how many texts are missing in which language and a button that opens the language with only its missing texts) show that texts are missing; numbers at the tabs of the page - Translations, FAQ, Jobs, References and Knowledge base (there the number of items missing a text in an active language; only items shown on the website count) - shows what is missing. The dot, the banner and the numbers disappear once the texts are filled."
+                "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing (filter of missing ones) and texts the application no longer uses are removed. An orange dot at this page in the menu and a banner above the languages of the Translations tab (how many texts are missing in which language and a button that opens the language with only its missing texts) show that texts are missing; numbers at the tabs of the page - Translations, FAQ, Jobs, References and Knowledge base (there the number of items missing a text in an active language; only items shown on the website count) - shows what is missing. The dot, the banner and the numbers disappear once the texts are filled.",
+                "Uploading JSON for the open language with unsaved edits keeps them - they stay unsaved changes over the uploaded texts (save or discard them)."
               ]
             },
             {
