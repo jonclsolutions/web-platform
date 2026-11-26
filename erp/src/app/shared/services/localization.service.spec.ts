@@ -245,6 +245,33 @@ describe('LocalizationService', () => {
   });
 
   /**
+   * @description The admin in another tab saved texts: the current language of the module shown is
+   *   loaded again and shown in place; another language only leaves the cache; another module
+   *   and changed languages (the switcher reloads) are handled apart.
+   * @input web in cz (cached); texts web/cz; texts web/en; texts shop/cz; languages web
+   * @output new GET translations/web/cz → shown; no request for en / shop; GET languages/web
+   */
+  it('shows texts saved by the admin in another tab', async () => {
+    const service = create();
+    enterModule(service, 'web');
+    service.setLanguage('cz');
+    http.expectOne(`${API}/translations/web/cz`).flush({ data: { t: 'Staré' } });
+    expect(texts).toEqual({ t: 'Staré' });
+    const apply = (change: unknown) => (service as any).applyTextsChange(change);
+
+    apply({ kind: 'texts', module: 'web', lang: 'cz' });
+    http.expectOne(`${API}/translations/web/cz`).flush({ data: { t: 'Nové' } });
+    expect(texts).toEqual({ t: 'Nové' });
+
+    apply({ kind: 'texts', module: 'web', lang: 'en' });
+    apply({ kind: 'texts', module: 'shop', lang: 'cz' });
+    http.expectNone(() => true);
+
+    apply({ kind: 'languages', module: 'web' });
+    http.expectOne(`${API}/languages/web`).flush({ data: [] });
+  });
+
+  /**
    * @description setModule clears the texts and cache, loads the new module and its languages;
    *   the same module is a no-op; a response of the previous module is dropped.
    * @input setModule('shop') while a web request is pending; setModule('shop') again.

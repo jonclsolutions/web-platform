@@ -446,8 +446,11 @@ describe('BaseTranslationEditorComponent', () => {
 
     component.ngOnInit();
     (ctx.dataHandler as any).post.and.returnValue(of({}));
+    const announced = spyOn(BroadcastChannel.prototype, 'postMessage');
     component.onSubmit();
     expect(notifications.refresh).toHaveBeenCalled();
+    // open tabs of the website in this browser are told (texts-broadcast)
+    expect(announced).toHaveBeenCalledWith({ kind: 'texts', module: 'test', lang: 'cz' });
     flush();
   }));
 

@@ -24,7 +24,7 @@
  *   the editor the loaded texts are published unchanged.
  */
 
-import { Injectable, inject } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, firstValueFrom } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
@@ -32,6 +32,7 @@ import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../interfaces/api-envelope';
 import { DEFAULT_PUBLIC_LANGUAGE, browserLanguages, pickInitialLanguage } from '../utils/language-preference';
 import { PublicTextEditorService, setAtPath } from '../../public/text-editor/public-text-editor.service';
+import { TextsChange, listenTexts } from '../utils/texts-broadcast';
 
 /** localStorage key of the language the visitor chose in the switcher. */
 const LANGUAGE_STORAGE_KEY = 'selectedLanguage';
@@ -76,6 +77,7 @@ export class LocalizationService {
 
   /** Editor mode of the website (visual text editor of the admin). */
   private readonly textEditor = inject(PublicTextEditorService);
+  private readonly zone = inject(NgZone);
   /** Last published texts as loaded (without the marks of the editor) and their language. */
   private publishedRaw: any = null;
   private publishedLang = '';
@@ -111,6 +113,29 @@ export class LocalizationService {
           this.currentTranslationsSource.next(this.textEditor.decorate(this.publishedRaw, this.publishedLang));
         }
       });
+    } else {
+      // the admin in another tab of this browser saved texts / changed languages: show them now
+      listenTexts(change => this.zone.run(() => this.applyTextsChange(change)));
+    }
+  }
+
+  /**
+   * @description A change announced by the admin (texts-broadcast) for the module shown: the
+   *   texts of the language are loaded again (and shown when it is the current one - in place,
+   *   no reload, the page keeps its scroll and forms); changed languages reload the switcher.
+   * @param change What changed.
+   */
+  private applyTextsChange(change: TextsChange): void {
+    if (!this.currentModule || change.module !== this.currentModule) {
+      return;
+    }
+    if (change.kind === 'languages') {
+      this.fetchLanguages().subscribe();
+      return;
+    }
+    this.translationsCache.delete(change.lang);
+    if (change.lang === this.currentLanguageSource.getValue()) {
+      this.loadTranslations(change.lang);
     }
   }
 

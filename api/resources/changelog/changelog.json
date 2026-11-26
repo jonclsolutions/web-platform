@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Texty a jazyky: po uložení textů, nahrání JSON nebo změně jazyků se veřejný web otevřený v jiné záložce téhož prohlížeče hned aktualizuje – bez obnovení stránky. Zpráva zůstává v prohlížeči, nic se neposílá ven."
+        },
+        {
             "type": "fixed",
             "area": "web",
             "part": "admin",

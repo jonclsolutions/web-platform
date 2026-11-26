@@ -33,6 +33,7 @@ import { migrateLegacyKey } from '../../../shared/utils/legacy-storage';
 import { AdminIconName } from '../admin-icon/admin-icon.component';
 import { RowButton, RowButtonItems } from '../builders/row-button-builder/row-button';
 import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
+import { announceTexts } from '../../../shared/utils/texts-broadcast';
 
 /** @description Translation section of the texts shared by every translation editor. */
 export const TRANSLATION_EDITOR_SECTION = 'translation-editor';
@@ -757,6 +758,8 @@ export abstract class BaseTranslationEditorComponent
         this.isDirty = false;
         this.changedPaths.clear();
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.currentLang}`);
+        // open tabs of the website in this browser show the saved texts at once
+        announceTexts({ kind: 'texts', module: this.MODULE, lang: this.currentLang });
         this.notifications.refresh(); // the orange numbers follow the saved texts at once
         if (this.saveAlert) {
           this.alertDialogService.open(
@@ -880,6 +883,7 @@ export abstract class BaseTranslationEditorComponent
           this.showAddForm = false;
           this.cd.markForCheck();
           this.loadLanguages(true);
+          announceTexts({ kind: 'languages', module: this.MODULE });
 
           this.currentLang = code;
           this.translations = this.buildEmptyFromCz(this.czTranslations);
@@ -943,6 +947,7 @@ export abstract class BaseTranslationEditorComponent
         next: () => {
           this.langToDelete = null;
           this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${code}`);
+          announceTexts({ kind: 'languages', module: this.MODULE });
 
           if (this.currentLang === code) {
             this.currentLang  = 'cz';
@@ -982,6 +987,7 @@ export abstract class BaseTranslationEditorComponent
       .subscribe({
         next: () => {
           this.resourceCache.invalidate(this.LANGUAGES_CACHE_KEY);
+          announceTexts({ kind: 'languages', module: this.MODULE });
         },
         error: () => {
           lang.active = !lang.active;
@@ -1040,6 +1046,7 @@ export abstract class BaseTranslationEditorComponent
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.uploadLangCode}`);
+        announceTexts({ kind: 'texts', module: this.MODULE, lang: this.uploadLangCode });
         this.notifications.refresh();
         this.uploadSuccess  = this.t('json_uploaded_message').replace('{lang}', this.uploadLangCode);
         this.uploadError    = '';
