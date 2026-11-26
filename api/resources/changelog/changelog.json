@@ -2,6 +2,12 @@
     "unreleased": [
         {
             "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Název záložky prohlížeče v administraci se řídí jazykem administrace, ne jazykem zvoleným na veřejném webu – po prohlížení webu např. polsky už administrace neukazuje „Cannot load text“."
+        },
+        {
+            "type": "fixed",
             "area": "web",
             "part": "public",
             "text": "Stránka O nás: druhý nadpis a odstavec příběhu jsou doplněné i v angličtině, polštině, francouzštině a němčině – na čerstvé instalaci se tam už neukáže „Cannot load text“ a nástěnka nehlásí chybějící texty."

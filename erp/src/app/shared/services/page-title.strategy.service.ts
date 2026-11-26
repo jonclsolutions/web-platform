@@ -9,13 +9,18 @@
  *   (web: Edit website, e-shop: Edit e-shop, administration: Web settings).
  * @dependencies
  * - PublicDataService: loads the title map once from `public/legal/page-titles`.
- * - LocalizationService: current language + language changes (title switches
+ * - LocalizationService: current language of the public pages + its changes (title switches
  *   immediately when the visitor changes the language).
+ * - AdminLocalizationService: language of the administration UI for the admin titles
+ *   (`admin.*` keys) - resolved only when such a page is shown (it loads the admin texts).
  * @usage
  *   1) Every public route gets `title: 'area.page_key'` (e.g. 'web.services'),
  *      see app.routes.ts. The key must match a row in `legal_page_titles`.
  *   2) Register in app.config.ts:
  *        { provide: TitleStrategy, useClass: PageTitleStrategy }
+ * @note The administration (keys `admin.*`: admin, login) uses the language of the admin UI, not
+ *   the one the visitor chose on the public site (both live in the same browser storage - a
+ *   public site viewed in German must not turn the admin title into 'Cannot load text').
  * @note A page with titles: its title in the current language, else 'Cannot load text' - never
  *   the title of another language (a missing title shows that something is wrong; a language is
  *   switched on only with all its titles). Without a title map / a row of the page: the static
@@ -30,9 +35,13 @@ import { DOCUMENT } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, skip } from 'rxjs/operators';
 import { PublicDataService } from './public-data.service';
 import { LocalizationService } from './localization.service';
+import { AdminLocalizationService } from '../../core/services/admin-localization.service';
+
+/** Prefix of the title keys of the administration (area `admin` of the title map). */
+const ADMIN_KEY_PREFIX = 'admin.';
 
 /** Map "area.page_key" -> { languageCode: title }. */
 type PageTitleMap = Record<string, Record<string, string>>;
@@ -53,6 +62,8 @@ export class PageTitleStrategy extends TitleStrategy {
 
   /** Resolved lazily in ensureInit() – never in the constructor. */
   private localization: LocalizationService | null = null;
+  /** Resolved on the first admin page only (never on the public site - it loads the admin texts). */
+  private adminLocalization: AdminLocalizationService | null = null;
   private initialized = false;
 
   private titles: PageTitleMap = {};
@@ -107,9 +118,23 @@ export class PageTitleStrategy extends TitleStrategy {
     const byLang = this.titles[key];
     if (!byLang || typeof byLang !== 'object' || Array.isArray(byLang)) return this.fallbackTitle;
 
-    const lang = this.localization?.getCurrentLanguage() ?? 'cz';
+    const lang = key.startsWith(ADMIN_KEY_PREFIX) ? this.adminLanguage() : (this.localization?.getCurrentLanguage() ?? 'cz');
     const own = byLang[lang];
     // never the title of another language
     return typeof own === 'string' && own.trim() !== '' ? own : MISSING_TEXT;
+  }
+
+  /**
+   * @description Language of the administration UI; on the first call also follows its changes
+   *   (the title switches with the admin language).
+   * @returns Admin language code (`cz`, `en`).
+   */
+  private adminLanguage(): string {
+    if (!this.adminLocalization) {
+      this.adminLocalization = this.injector.get(AdminLocalizationService);
+      // skip(1): the current value is used right now; later switches re-apply the title
+      this.adminLocalization.currentLanguage$.pipe(skip(1)).subscribe(() => this.apply());
+    }
+    return this.adminLocalization.getCurrentLanguage();
   }
 }

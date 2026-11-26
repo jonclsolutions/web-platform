@@ -7,9 +7,10 @@
  * @description Unit tests of PageTitleStrategy: the route title key is resolved from the
  *   page-title map loaded once from the API in the current language - a title missing in it is
  *   'Cannot load text' (never another language); the title follows language changes; a failed or
- *   malformed map / an unknown page gives the document title.
+ *   malformed map / an unknown page gives the document title; admin pages use the admin UI language.
  * @dependencies
- * - PublicDataService spy, LocalizationService stub (language Subject), real Title service;
+ * - PublicDataService spy, LocalizationService and AdminLocalizationService stubs (language
+ *   Subjects), real Title service;
  *   buildTitle() spied to return the route's title key.
  */
 
@@ -21,11 +22,13 @@ import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { PageTitleStrategy } from './page-title.strategy.service';
 import { PublicDataService } from './public-data.service';
 import { LocalizationService } from './localization.service';
+import { AdminLocalizationService } from '../../core/services/admin-localization.service';
 
 describe('PageTitleStrategy', () => {
   let strategy: PageTitleStrategy;
   let publicData: jasmine.SpyObj<PublicDataService>;
   let language$: BehaviorSubject<string>;
+  let adminLanguage$: BehaviorSubject<string>;
   let title: Title;
   let originalTitle: string;
 
@@ -40,10 +43,12 @@ describe('PageTitleStrategy', () => {
     document.title = 'RPSW';
     publicData = jasmine.createSpyObj('PublicDataService', ['get']);
     language$ = new BehaviorSubject('en');
+    adminLanguage$ = new BehaviorSubject('cz');
     TestBed.configureTestingModule({
       providers: [
         { provide: PublicDataService, useValue: publicData },
-        { provide: LocalizationService, useValue: { currentLanguage$: language$, getCurrentLanguage: () => language$.value } }
+        { provide: LocalizationService, useValue: { currentLanguage$: language$, getCurrentLanguage: () => language$.value } },
+        { provide: AdminLocalizationService, useValue: { currentLanguage$: adminLanguage$, getCurrentLanguage: () => adminLanguage$.value } }
       ]
     });
     strategy = TestBed.inject(PageTitleStrategy);
@@ -80,6 +85,24 @@ describe('PageTitleStrategy', () => {
     language$.next('cz');
     expect(title.getTitle()).toBe('Domů');
     expect(publicData.get).toHaveBeenCalledOnceWith('public/legal/page-titles');
+  });
+
+  /**
+   * @description The administration (admin.* keys) follows the language of the admin UI, not the
+   *   one chosen on the public site; the public pages keep the public language.
+   * @input Map {admin.panel: {cz: 'Administrace', en: 'Administration'}, web.home: {de: 'Start'}};
+   *   public language de, admin cz; admin page; admin → en; public page.
+   * @output 'Administrace'; 'Administration' (re-applied on the switch); 'Start'.
+   */
+  it('uses the admin language for the administration', () => {
+    publicData.get.and.returnValue(of({ 'admin.panel': { cz: 'Administrace', en: 'Administration' }, 'web.home': { de: 'Start' } }) as any);
+    language$.next('de');
+    go('admin.panel');
+    expect(title.getTitle()).toBe('Administrace');
+    adminLanguage$.next('en');
+    expect(title.getTitle()).toBe('Administration');
+    go('web.home');
+    expect(title.getTitle()).toBe('Start');
   });
 
   /**
