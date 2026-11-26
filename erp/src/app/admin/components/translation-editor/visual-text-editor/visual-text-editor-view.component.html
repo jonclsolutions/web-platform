@@ -145,6 +145,9 @@
                     [readonly]="!e.canEditTexts"></textarea>
           @if (!currentValue(key).trim() && !e.loadFailed) {
             <p class="te-missing">{{ e.t('editor_missing') }}</p>
+          } @else if (e.isSameAsCzPath(key)) {
+            <!-- Another language with the Czech text: maybe not translated yet (information only). -->
+            <p class="te-same">{{ e.t('editor_same_as_cz_note') }}</p>
           }
           <!-- A changed text: back to its saved version (no confirmation - one text). -->
           @if (e.canEditTexts && e.changedPaths.has(key)) {
@@ -224,6 +227,28 @@
                 </li>
               }
             </ul>
+          </div>
+        }
+
+        <!-- Texts of this page the same as in Czech (another language): maybe not translated yet. -->
+        @let same = sameAsCzKeys;
+        @if (same.length) {
+          <div class="te-section">
+            <div class="te-label">{{ e.t('editor_same_list_label').replace('{count}', '' + same.length) }}</div>
+            <ul class="te-hidden">
+              @for (key of sameShown(same); track key) {
+                <li>
+                  <button type="button" class="te-hidden-item te-same-item" [class.te-hidden-item--on]="key === selectedKey" (click)="selectKey(key)">
+                    <span class="te-hidden-key">{{ key }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+            @if (same.length > 6) {
+              <button type="button" class="te-link" (click)="sameExpanded = !sameExpanded">
+                {{ sameExpanded ? e.t('editor_changed_less') : e.t('editor_changed_all').replace('{count}', '' + same.length) }}
+              </button>
+            }
           </div>
         }
 

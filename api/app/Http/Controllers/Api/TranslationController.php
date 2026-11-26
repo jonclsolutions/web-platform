@@ -112,6 +112,10 @@ class TranslationController extends Controller
      *   overwrite each other. A path must be a text of the primary language or of the file itself
      *   (422 with the unknown paths, nothing written). The answer has the texts as stored
      *   (`values` - plain text, PlainText::fromHtml()).
+     * @note `base` of a change = the stored text the edit started from: when the stored text is
+     *   another one now (saved meanwhile in another tab / by another admin), nothing is written
+     *   and 409 lists those texts with their stored version (`conflicts`) - `force: true` writes
+     *   the changes anyway (the admin chose to overwrite).
      * @note An upload must have exactly the keys of the primary language (Czech on the server;
      *   for Czech itself its current keys) - missing or extra keys are refused with 422 and the
      *   lists of keys, nothing is written (a wrong file must never wipe texts). In an uploaded
@@ -131,9 +135,11 @@ class TranslationController extends Controller
             // the whole language (upload of a JSON file) or only the changed texts (the editors)
             'data'            => 'required_without:changes|prohibits:changes|array',
             'changes'         => 'required_without:data|array|min:1|max:' . self::MAX_CHANGES,
-            'changes.*'       => 'array:path,value',
+            'changes.*'       => 'array:path,value,base',
             'changes.*.path'  => ['required', 'string', 'max:255', 'regex:/^' . self::KEY_PATH_PATTERN . '$/'],
             'changes.*.value' => ['present', 'nullable', 'string', 'max:' . self::MAX_TEXT_LENGTH],
+            'changes.*.base'  => ['sometimes', 'nullable', 'string', 'max:' . self::MAX_TEXT_LENGTH],
+            'force'           => 'sometimes|boolean|prohibits:data',
             'upload'          => 'sometimes|boolean|prohibits:changes',
         ]);
 
@@ -169,7 +175,15 @@ class TranslationController extends Controller
                             // an unreadable file is never replaced by the few changed texts
                             throw new \RuntimeException("The stored texts of {$filePath} are not valid JSON.");
                         }
-                        [$newData, $saved, $unknown] = self::mergeChanges($oldData, MissingTranslations::primary($module) ?? [], $request->input('changes'));
+                        $changes = $request->input('changes');
+                        if (!$request->boolean('force') && ($conflicts = self::conflictsOf($oldData, $changes)) !== []) {
+                            return response()->json([
+                                'message'        => 'The texts were changed meanwhile.',
+                                'conflicts'      => array_slice($conflicts, 0, self::UPLOAD_MISMATCH_LIST),
+                                'conflict_count' => count($conflicts),
+                            ], 409);
+                        }
+                        [$newData, $saved, $unknown] = self::mergeChanges($oldData, MissingTranslations::primary($module) ?? [], $changes);
                         if ($unknown !== []) {
                             return response()->json([
                                 'message'       => 'The texts are not in the translations of the module.',
@@ -229,6 +243,47 @@ class TranslationController extends Controller
         }
 
         return [$merged, $saved, $unknown];
+    }
+
+    /**
+     * @description Changes whose stored text is no longer the one their edit started from (`base`).
+     * @param array $stored Texts of the language as stored.
+     * @param array<int, array{path: string, value: ?string, base?: ?string}> $changes Changed texts.
+     * @return array<int, array{path: string, value: string}> The paths with their stored text.
+     */
+    private static function conflictsOf(array $stored, array $changes): array
+    {
+        $conflicts = [];
+        foreach ($changes as $change) {
+            if (!array_key_exists('base', $change)) {
+                continue;
+            }
+            $current = self::textAt($stored, (string) $change['path']);
+            if ($current !== (string) ($change['base'] ?? '')) {
+                $conflicts[] = ['path' => (string) $change['path'], 'value' => $current];
+            }
+        }
+
+        return $conflicts;
+    }
+
+    /**
+     * @description Text at a dot path.
+     * @param array $data Texts.
+     * @param string $path Dot path.
+     * @return string The text ('' when there is none or it is a group).
+     */
+    private static function textAt(array $data, string $path): string
+    {
+        $node = $data;
+        foreach (explode('.', $path) as $part) {
+            if (!is_array($node) || !array_key_exists($part, $node)) {
+                return '';
+            }
+            $node = $node[$part];
+        }
+
+        return is_scalar($node) ? (string) $node : '';
     }
 
     /**

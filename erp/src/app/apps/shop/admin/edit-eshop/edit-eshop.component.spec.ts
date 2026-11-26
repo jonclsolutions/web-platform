@@ -82,14 +82,14 @@ describe('EditEshopComponent', () => {
   /**
    * @description Saving posts the changed texts of the current language to save_translations/shop.
    * @input  updateValue('checkout', 'K pokladně'); onSubmit()
-   * @output post('save_translations/shop', { lang: 'cz', changes: [{ path: 'checkout', value: 'K pokladně' }] }); success alert
+   * @output postQuietly('save_translations/shop', { lang: 'cz', changes: [{ path: 'checkout', value: 'K pokladně', base: 'Pokladna' }] }); success alert
    */
   it('saves the translations of the shop module', fakeAsync(() => {
     component.ngOnInit();
     component.updateValue('checkout', 'K pokladně');
     component.onSubmit();
-    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/shop',
-      { lang: 'cz', changes: [{ path: 'checkout', value: 'K pokladně' }] });
+    expect((ctx.dataHandler as any).postQuietly).toHaveBeenCalledWith('save_translations/shop',
+      { lang: 'cz', changes: [{ path: 'checkout', value: 'K pokladně', base: 'Pokladna' }] });
     expect(ctx.alert.open).toHaveBeenCalledWith('edit-eshop.admin_title', 'edit-eshop.translations_saved_message', 'success');
     flush();
   }));
@@ -106,7 +106,7 @@ describe('EditEshopComponent', () => {
     component.ngOnInit();
     component.onSubmit();
     expect(component.canUpdate).toBeFalse();
-    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
+    expect((ctx.dataHandler as any).postQuietly).not.toHaveBeenCalled();
     flush();
   }));
 

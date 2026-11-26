@@ -22,7 +22,8 @@ import { TEXT_EDITOR_BANNERS_PATH } from '../../../../../public/text-editor/text
 
 /** Pages of the website in the page list of the editor (names = the page titles editor). */
 export const WEB_EDITOR_PAGES: VisualEditorPage[] = [
-  { path: '/', labelKey: 'pt_page_web_home' },
+  // the links of the website (the logo, the menu) lead to /home - the same page
+  { path: '/', labelKey: 'pt_page_web_home', aliases: ['/home'] },
   { path: '/services', labelKey: 'pt_page_web_services' },
   { path: '/references', labelKey: 'pt_page_web_references' },
   { path: '/about-us', labelKey: 'pt_page_web_about_us' },

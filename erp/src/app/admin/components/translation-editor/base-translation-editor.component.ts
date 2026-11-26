@@ -17,7 +17,8 @@
  * the "Save changes" button of the template.
  * @note Saving sends only the changed texts (`changes`) - the API merges them into the stored
  * language, so texts saved meanwhile in another tab or by another admin stay. One save at a
- * time (`saving`); a text edited again while it runs stays a change.
+ * time (`saving`); a text edited again while it runs stays a change. The same text saved
+ * meanwhile elsewhere is not overwritten unasked (409 → "Přepsat?", resolveConflicts()).
  * @note A language that cannot be loaded (any error but 404 - a language without a file yet)
  * cannot be edited or saved (`loadFailed`): its empty texts must never be taken for the stored
  * ones. A newer load of the texts wins over an older one still running (another language).
@@ -40,6 +41,7 @@ import { AdminIconName } from '../admin-icon/admin-icon.component';
 import { RowButton, RowButtonItems } from '../builders/row-button-builder/row-button';
 import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 import { announceTexts } from '../../../shared/utils/texts-broadcast';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 
 /** @description Translation section of the texts shared by every translation editor. */
 export const TRANSLATION_EDITOR_SECTION = 'translation-editor';
@@ -123,6 +125,8 @@ export abstract class BaseTranslationEditorComponent
   private resourceCache = inject(ResourceCacheService);
   /** Orange numbers of the tabs (texts missing in an active language) - AdminNotificationsService. */
   private readonly notifications = inject(AdminNotificationsService);
+  /** "Přepsat?" when texts were saved meanwhile elsewhere. */
+  private readonly confirmDialog = inject(ConfirmDialogService);
   override apiEndpoint = 'save_translations';
 
   /** Extra page tabs of the application (after the texts and the page titles). */
@@ -385,6 +389,15 @@ export abstract class BaseTranslationEditorComponent
   get langSameAsCz(): number { return this.currentLang === 'cz' ? 0 : this.flattenedKeys.filter(k => this.isSameAsCz(k)).length; }
 
   /**
+   * @param path Dot path of the key.
+   * @returns Whether its text is filled and the same as the Czech one (another language than Czech).
+   */
+  isSameAsCzPath(path: string): boolean {
+    const key = this.flattenedKeys.find(k => k.path === path);
+    return !!key && this.isSameAsCz(key);
+  }
+
+  /**
    * @param key Text of the list.
    * @returns Whether it is filled and the same as its Czech text (another language than Czech).
    */
@@ -393,6 +406,7 @@ export abstract class BaseTranslationEditorComponent
     const cz = this.czValues.get(key.path)?.trim();
     return !!cz && String(key.value ?? '').trim() === cz;
   }
+
   /** @returns Total number of keys currently filtered. */
   get totalCount(): number   { return this.filteredKeys.length; }
   /** @returns Count of translated keys currently filtered. */
@@ -888,16 +902,26 @@ export abstract class BaseTranslationEditorComponent
    * success.
    */
   onSubmit(): void {
+    this.submitChanges(false);
+  }
+
+  /**
+   * @description Sends the changed texts of the language (with the saved text each edit started
+   *   from - the API refuses texts saved meanwhile elsewhere, 409, unless `force`). Quietly: a
+   *   failure is told once, by the editor itself.
+   * @param force Overwrite texts saved meanwhile elsewhere (the admin chose so).
+   */
+  private submitChanges(force: boolean): void {
     if (!this.canEditTexts || this.saving || this.changedPaths.size === 0) return;
 
     const lang = this.currentLang;
     const loadCount = this.loadCount;
     // only the changed texts - the API merges them into the stored language
-    const changes = [...this.changedPaths].map(path => ({ path, value: this.currentValueOf(path) }));
+    const changes = [...this.changedPaths].map(path => ({ path, value: this.currentValueOf(path), base: this.savedValueOf(path) }));
     this.saving = true;
     this.cd.markForCheck();
 
-    this.dataHandler.post<{ values?: Record<string, string> } | null>(`save_translations/${this.MODULE}`, { lang, changes }).pipe(
+    this.dataHandler.postQuietly<{ values?: Record<string, string> } | null>(`save_translations/${this.MODULE}`, force ? { lang, changes, force } : { lang, changes }).pipe(
       Core.takeUntil(this.destroy$),
       Core.finalize(() => {
         this.saving = false;
@@ -927,10 +951,42 @@ export abstract class BaseTranslationEditorComponent
         this.saved$.next(saved);
         this.cd.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        const conflicts = err?.status === 409 && Array.isArray(err?.error?.conflicts) ? err.error.conflicts as { path: string; value: string }[] : null;
+        if (conflicts && lang === this.currentLang && loadCount === this.loadCount) {
+          void this.resolveConflicts(conflicts, Number(err.error.conflict_count) || conflicts.length);
+          return;
+        }
         this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('save_failed_message'), 'danger');
       }
     });
+  }
+
+  /**
+   * @description Texts saved meanwhile elsewhere (another tab, another admin): the admin chooses to
+   *   overwrite them with the own edits (saved again with `force`), or to keep them - they become
+   *   the saved texts (shown as the saved version, ↺ restores them) and the own edits stay
+   *   unsaved changes to look at.
+   * @param conflicts The texts with their stored version (the first ones).
+   * @param count Count of all of them.
+   */
+  private async resolveConflicts(conflicts: { path: string; value: string }[], count: number): Promise<void> {
+    const keys = conflicts.slice(0, 3).map(conflict => conflict.path).join(', ') + (count > 3 ? ' …' : '');
+    const overwrite = await this.confirmDialog.open(
+      this.t('save_conflict_title'),
+      this.t('save_conflict_message').replace('{count}', String(count)).replace('{keys}', keys),
+      { confirm: this.t('save_conflict_overwrite'), cancel: this.t('save_conflict_keep') }
+    );
+    if (overwrite) {
+      this.submitChanges(true);
+      return;
+    }
+    for (const { path, value } of conflicts) {
+      this.savedValues.set(path, typeof value === 'string' ? value : '');
+      if (this.currentValueOf(path) === this.savedValueOf(path)) this.changedPaths.delete(path);
+    }
+    this.isDirty = this.changedPaths.size > 0;
+    this.cd.markForCheck();
   }
 
   openAddForm(): void {

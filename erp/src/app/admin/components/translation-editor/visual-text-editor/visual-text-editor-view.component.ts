@@ -58,6 +58,8 @@ export interface VisualEditorPage {
   path: string;
   /** Key of its name (`e.t()`). */
   labelKey: string;
+  /** Other addresses of the same page (`/home` of the home page - its links lead there). */
+  aliases?: string[];
 }
 
 /** A page of the website not in the list, recognised by its path (a detail of a position…). */
@@ -598,6 +600,32 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
 
   /** The list "Upravené texty" shows all of them (else the first CHANGED_LIST_LIMIT). */
   changedExpanded = false;
+  /** The list "Jako čeština" shows all of them (else the first HIDDEN_LIST_LIMIT). */
+  sameExpanded = false;
+
+  /**
+   * @returns Keys of the texts the page shows that are the same as in Czech (another language) -
+   *   maybe not translated yet.
+   */
+  get sameAsCzKeys(): string[] {
+    return this.e.currentLang === 'cz' ? [] : this.visibleKeys.filter(key => this.e.isSameAsCzPath(key));
+  }
+
+  /**
+   * @param all Keys of the list "Jako čeština".
+   * @returns The ones shown (the first HIDDEN_LIST_LIMIT unless expanded).
+   */
+  sameShown(all: string[]): string[] {
+    return this.sameExpanded ? all : all.slice(0, HIDDEN_LIST_LIMIT);
+  }
+
+  /**
+   * @param path Path of the page shown (without the language).
+   * @returns The path of the page of the list it is another address of (`/home` → `/`), else itself.
+   */
+  private pagePath(path: string): string {
+    return this.pages.find(page => page.aliases?.includes(path))?.path ?? path;
+  }
 
   /** @returns The changed texts shown in the panel (the last edited first). */
   get changedShown(): { path: string; value: string }[] {
@@ -760,7 +788,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
           break;
         }
         case 'scan':
-          this.framePath = safeFramePath(message.path);
+          this.framePath = this.pagePath(safeFramePath(message.path));
           if (message.title !== this.pageTitle) {
             this.pageTitle = message.title;
             this.watchTitle();

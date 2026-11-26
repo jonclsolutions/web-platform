@@ -57,7 +57,7 @@ describe('WebTextEditorComponent', () => {
     };
     (ctx.dataHandler as any).get.and.callFake(route);
     (ctx.dataHandler as any).getQuietly.and.callFake(route);
-    (ctx.dataHandler as any).post.and.returnValue(of({}));
+    (ctx.dataHandler as any).postQuietly.and.returnValue(of({}));
     TestBed.configureTestingModule({ imports: [WebTextEditorComponent], providers: ctx.providers });
     fixture = TestBed.createComponent(WebTextEditorComponent);
     component = fixture.componentInstance;
@@ -165,7 +165,7 @@ describe('WebTextEditorComponent', () => {
 
     (el.querySelector('.te-btn--primary') as HTMLButtonElement).click();
     flush();
-    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/web', { lang: 'cz', changes: [{ path: 'faq.title', value: 'Dotazy' }] });
+    expect((ctx.dataHandler as any).postQuietly).toHaveBeenCalledWith('save_translations/web', { lang: 'cz', changes: [{ path: 'faq.title', value: 'Dotazy', base: 'Časté dotazy' }] });
     expect(sent[sent.length - 2]).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'commit', lang: 'cz', values: { 'faq.title': 'Dotazy' } });
     expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'drafts', lang: 'cz', values: {} }));
     expect(component.isDirty).toBeFalse();
@@ -459,7 +459,7 @@ describe('WebTextEditorComponent', () => {
     window.dispatchEvent(key);
     fixture.detectChanges();
     expect(key.defaultPrevented).toBeTrue();
-    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/web', jasmine.objectContaining({ lang: 'cz' }));
+    expect((ctx.dataHandler as any).postQuietly).toHaveBeenCalledWith('save_translations/web', jasmine.objectContaining({ lang: 'cz' }));
     expect(ctx.alert.open).not.toHaveBeenCalled();
     expect(el.querySelector('.te-saved')).not.toBeNull();
     tick(3000);
@@ -485,7 +485,7 @@ describe('WebTextEditorComponent', () => {
     expect(view.selectedKey).toBeNull();
     expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key: null, reveal: false });
     fromPage({ type: 'key', key: 'save' });
-    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
+    expect((ctx.dataHandler as any).postQuietly).not.toHaveBeenCalled();
 
     fromPage({ type: 'select', key: 'faq.title' });
     flush();
@@ -636,6 +636,49 @@ describe('WebTextEditorComponent', () => {
     fromPage({ type: 'ready' });
     fromPage({ type: 'scan', path: '/', lang: 'cz', title: 'x', visible: [], missing: [], hidden: [] });
     expect(view.frameLoading).toBeFalse();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description The home page under its other address (/home - the logo and the menu link there)
+   *   is the "Hlavní stránka" of the list, not "another page".
+   * @input scan with path '/home'
+   * @output framePath '/', a known page (no "Jiná stránka" option)
+   */
+  it('names the home page under its other address', fakeAsync(() => {
+    setup();
+    fromPage({ type: 'scan', path: '/home', title: '', visible: [], missing: [], hidden: [] });
+    expect(view.framePath).toBe('/');
+    expect(view.knownPage).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.te-page-select option').length).toBe(WEB_EDITOR_PAGES.length);
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Another language: the texts of the page the same as in Czech are listed in the
+   *   panel (a click selects them) and the selected one says so; Czech lists none.
+   * @input EN; edit faq.title to the Czech text; scan with faq.title, faq.sub; select faq.title; CZ
+   * @output list [faq.title]; the note under the field; in Czech no list
+   */
+  it('lists the texts of the page the same as in Czech', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    view.switchLang('en');
+    flush();
+    view.edit('faq.title', 'Časté dotazy');
+    fromPage({ type: 'scan', path: '/faq', title: '', visible: ['faq.title', 'faq.sub'], missing: [], hidden: [] });
+    const items = el.querySelectorAll('.te-same-item');
+    expect(Array.from(items).map(i => i.textContent!.trim())).toEqual(['faq.title']);
+    (items[0] as HTMLButtonElement).click();
+    flush();
+    fixture.detectChanges();
+    expect(view.selectedKey).toBe('faq.title');
+    expect(el.querySelector('.te-same')).not.toBeNull();
+    view.revert('faq.title');
+    view.switchLang('cz');
+    flush();
+    fixture.detectChanges();
+    expect(view.sameAsCzKeys).toEqual([]);
     discardPeriodicTasks();
   }));
 

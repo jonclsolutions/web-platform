@@ -4,6 +4,18 @@
             "type": "added",
             "area": "core",
             "part": "admin",
+            "text": "Texty a jazyky: když stejný text mezitím uložil někdo jiný (nebo jiná záložka), uložení se zeptá – Přepsat, nebo Neukládat (jeho verze se ukáže jako uložená, vaše úpravy zůstanou). Chyba uložení ukáže jen jedno hlášení."
+        },
+        {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů na stránkách: panel vypíše texty stránky stejné jako v češtině (u jiného jazyka) a u vybraného textu to připomene. Hlavní stránka pod adresou /home (logo, menu) se v seznamu stránek jmenuje Hlavní stránka, ne „Jiná stránka“."
+        },
+        {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
             "text": "Texty a jazyky: přepínač „Jako CZ“ u jiného jazyka než čeština ukáže počet textů stejných jako v češtině (nejspíš nepřeložených) a kliknutím je vypíše samotné. Je jen informativní – název nebo číslo může být stejné schválně."
         },
         {

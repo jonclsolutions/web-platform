@@ -213,6 +213,36 @@ class TranslationTest extends TestCase
     }
 
     /**
+     * @description A text saved meanwhile elsewhere is not overwritten unknowingly: a change whose
+     *   `base` is no longer the stored text answers 409 with the stored version and writes nothing
+     *   (also the other changes); the same base passes; `force` overwrites; without `base` no check.
+     * @input en {home: {title: Theirs, text: T}}; changes title (base Old) + text (base T); the
+     *   same with base Theirs; force; no base
+     * @output 409 conflicts [{home.title, Theirs}] count 1, file unchanged; 200 written; 200 with
+     *   force; 200 without base
+     */
+    public function test_save_changes_refuses_texts_changed_meanwhile(): void
+    {
+        $this->signIn($this->userWith(self::EDITOR));
+        File::ensureDirectoryExists($this->file('web'));
+        File::put($this->file('web/cz.json'), json_encode(['home' => ['title' => 'Domů', 'text' => 'Text']]));
+        File::put($this->file('web/en.json'), json_encode(['home' => ['title' => 'Theirs', 'text' => 'T']]));
+        $before = File::get($this->file('web/en.json'));
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [
+            ['path' => 'home.title', 'value' => 'Mine', 'base' => 'Old'],
+            ['path' => 'home.text', 'value' => 'T2', 'base' => 'T'],
+        ]])->assertStatus(409)->assertJsonPath('conflicts', [['path' => 'home.title', 'value' => 'Theirs']])->assertJsonPath('conflict_count', 1);
+        $this->assertSame($before, File::get($this->file('web/en.json')));
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.title', 'value' => 'Mine', 'base' => 'Theirs']]])->assertOk();
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'force' => true, 'changes' => [['path' => 'home.title', 'value' => 'Forced', 'base' => 'Old']]])->assertOk();
+        $this->assertSame('Forced', json_decode(File::get($this->file('web/en.json')), true)['home']['title']);
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.title', 'value' => 'Plain', 'base' => null], ['path' => 'home.text', 'value' => 'X']]])->assertStatus(409);
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.text', 'value' => 'X']]])->assertOk();
+    }
+
+    /**
      * @description The languages of all applications together (core pages such as the legal
      *   documents): one entry per code, the first one wins, with icon URLs; public.
      * @input languages.json: cz (web), EN (web), en (shop), de (shop, with icon).

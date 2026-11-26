@@ -18,7 +18,7 @@
  */
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, flushMicrotasks } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { BaseTranslationEditorComponent } from './base-translation-editor.component';
@@ -158,6 +158,40 @@ describe('BaseTranslationEditorComponent', () => {
   }));
 
   /**
+   * @description A text saved meanwhile elsewhere (409 of the API): the admin is asked; "Neukládat"
+   *   takes their text as the saved one (the own edit stays a change, nothing saved); "Přepsat"
+   *   saves again with `force`.
+   * @input cz edited home.title 'A'; POST → 409 conflicts [{home.title, 'Theirs'}]; answer keep;
+   *   save again → 409; answer overwrite; then POST ok
+   * @output confirm asked with the key; saved 'Theirs', still dirty, no error alert; then a POST
+   *   with force true and the base 'Theirs'; not dirty
+   */
+  it('asks before overwriting texts saved meanwhile elsewhere', fakeAsync(() => {
+    component.ngOnInit();
+    const post = (ctx.dataHandler as any).postQuietly as jasmine.Spy;
+    const conflict = () => throwError(() => ({ status: 409, error: { conflicts: [{ path: 'home.title', value: 'Theirs' }], conflict_count: 1 } }));
+    post.and.callFake(conflict);
+    ctx.confirm.open.and.resolveTo(false);
+    component.updateValue('home.title', 'A');
+    component.onSubmit();
+    flushMicrotasks();
+    expect(ctx.confirm.open).toHaveBeenCalledWith('test-editor.save_conflict_title', 'test-editor.save_conflict_message', jasmine.objectContaining({ confirm: 'test-editor.save_conflict_overwrite' }));
+    expect(component.savedValueOf('home.title')).toBe('Theirs');
+    expect(component.isDirty).toBeTrue();
+    expect(ctx.alert.open).not.toHaveBeenCalledWith('shared.error', jasmine.any(String), 'danger');
+
+    ctx.confirm.open.and.resolveTo(true);
+    let calls = 0;
+    post.and.callFake(() => (++calls === 1 ? conflict() : of({ values: { 'home.title': 'A' } })));
+    post.calls.reset();
+    component.onSubmit();
+    flushMicrotasks();
+    expect(post.calls.mostRecent().args[1]).toEqual({ lang: 'cz', changes: [{ path: 'home.title', value: 'A', base: 'Theirs' }], force: true });
+    expect(component.isDirty).toBeFalse();
+    flush();
+  }));
+
+  /**
    * @description "Jako CZ": in another language the texts identical with Czech (filled) are
    *   counted and can be listed alone; never together with the missing filter; nothing for
    *   Czech itself (the filter goes off there).
@@ -248,7 +282,7 @@ describe('BaseTranslationEditorComponent', () => {
     component.updateValue('home.title', 'X');
     expect(component.isDirty).toBeFalse();
     component.onSubmit();
-    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
+    expect((ctx.dataHandler as any).postQuietly).not.toHaveBeenCalled();
     const click = spyOn(HTMLAnchorElement.prototype, 'click');
     component.downloadSavedJson('en');
     expect(click).not.toHaveBeenCalled();
@@ -292,7 +326,7 @@ describe('BaseTranslationEditorComponent', () => {
   it('saves only the changed texts and keeps edits made meanwhile', fakeAsync(() => {
     shared.cz = { home: { title: 'Domů', sub: 'Pod' } } as any;
     component.ngOnInit();
-    const post = (ctx.dataHandler as any).post as jasmine.Spy;
+    const post = (ctx.dataHandler as any).postQuietly as jasmine.Spy;
     const answerOfSave = new Subject<any>();
     post.and.returnValue(answerOfSave);
     let saved: Record<string, string> | null = null;
@@ -303,7 +337,7 @@ describe('BaseTranslationEditorComponent', () => {
     component.onSubmit();
     component.onSubmit();
     expect(post).toHaveBeenCalledTimes(1);
-    expect(post).toHaveBeenCalledWith('save_translations/test', { lang: 'cz', changes: [{ path: 'home.title', value: 'A<b>' }, { path: 'home.sub', value: 'S' }] });
+    expect(post).toHaveBeenCalledWith('save_translations/test', { lang: 'cz', changes: [{ path: 'home.title', value: 'A<b>', base: 'Domů' }, { path: 'home.sub', value: 'S', base: 'Pod' }] });
     expect(component.saving).toBeTrue();
 
     component.updateValue('home.sub', 'S2');
@@ -609,7 +643,7 @@ describe('BaseTranslationEditorComponent', () => {
     expect(faq.count).toBeNull();
 
     component.ngOnInit();
-    (ctx.dataHandler as any).post.and.returnValue(of({}));
+    (ctx.dataHandler as any).postQuietly.and.returnValue(of({}));
     const announced = spyOn(BroadcastChannel.prototype, 'postMessage');
     component.updateValue('home.title', 'Úvod');
     component.onSubmit();

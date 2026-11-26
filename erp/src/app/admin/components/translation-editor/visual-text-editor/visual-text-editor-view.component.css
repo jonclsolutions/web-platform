@@ -321,6 +321,8 @@
 .te-value[readonly] { border-color: var(--border-mid); background: var(--bg); }
 
 .te-missing { margin: 6px 0 0; color: var(--warn); font-size: 0.8rem; font-weight: 600; }
+/* the text is the same as in Czech (another language) - information, quiet */
+.te-same { margin: 6px 0 0; color: var(--text-muted); font-size: 0.8rem; }
 .te-hint, .te-count { margin: 8px 0 0; color: var(--text-dim); font-size: 0.8rem; }
 .te-empty { margin: 0; color: var(--text); line-height: 1.5; }
 
@@ -504,6 +506,8 @@
 .te-label--missing { color: #c2410c; }
 .te-missing-item { border-left: 3px solid #f97316; border-radius: 0 8px 8px 0; }
 .te-missing-item.te-hidden-item--on { border-color: #f97316; background: #fff7ed; }
+/* texts the same as in Czech: a neutral mark (not a problem, maybe not translated) */
+.te-same-item { border-left: 3px solid #a1a1aa; border-radius: 0 8px 8px 0; }
 
 .te-modal-text { margin: 0; line-height: 1.5; }
 

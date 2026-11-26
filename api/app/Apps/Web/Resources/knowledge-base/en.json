@@ -658,6 +658,10 @@
             {
               "type": "text",
               "content": "Saving writes only the texts you changed - texts saved meanwhile by someone else (or by you in another browser tab) stay. While saving, the Save button is off; what you type meanwhile stays an unsaved change. When the texts of a language cannot be loaded (server or connection outage), they cannot be edited or saved - try again in a moment."
+            },
+            {
+              "type": "text",
+              "content": "When the same text was saved meanwhile by someone else (or by you in another tab), Save asks first: Overwrite saves your edits, Do not save saves nothing - their version is shown as the saved one and your edits stay unsaved."
             }
           ]
         },
@@ -734,6 +738,10 @@
             {
               "type": "text",
               "content": "The Back button of the browser always closes the editor (asking about unsaved edits) - pages and languages opened in the preview are not added to the history of the browser. The language switcher in the footer of the preview switches the language of the whole editor (asking first about unsaved edits); your own language choice for visits of the website does not change."
+            },
+            {
+              "type": "text",
+              "content": "For a language other than Czech the panel of the editor lists the texts of the page that are the same as in Czech (maybe not translated) and mentions it at the selected text - information only."
             }
           ]
         },

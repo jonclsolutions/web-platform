@@ -133,30 +133,31 @@ describe('EditWebsiteComponent', () => {
   /**
    * @description Saving posts the changed texts to the web module and clears the dirty flag.
    * @input  updateValue('footer', 'Nová'); onSubmit()
-   * @output post('save_translations/web', { lang: 'cz', changes: [{ path: 'footer', value: 'Nová' }] }); isDirty false; success alert
+   * @output postQuietly('save_translations/web', { lang: 'cz', changes: [{ path: 'footer', value: 'Nová', base: 'Patička' }] }); isDirty false; success alert
    */
   it('saves the translations of the current language', fakeAsync(() => {
     component.ngOnInit();
     component.updateValue('footer', 'Nová');
     component.onSubmit();
-    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/web',
-      { lang: 'cz', changes: [{ path: 'footer', value: 'Nová' }] });
+    expect((ctx.dataHandler as any).postQuietly).toHaveBeenCalledWith('save_translations/web',
+      { lang: 'cz', changes: [{ path: 'footer', value: 'Nová', base: 'Patička' }] });
     expect(component.isDirty).toBeFalse();
     expect(ctx.alert.open).toHaveBeenCalledWith('edit-website.admin_title', 'edit-website.translations_saved_message', 'success');
     flush();
   }));
 
   /**
-   * @description A failed save keeps the changes and reports the error.
-   * @input  post fails; onSubmit()
-   * @output alert ('shared.error', 'edit-website.save_failed_message', 'danger'); isDirty still true
+   * @description A failed save keeps the changes and reports the error once (the quiet POST - no
+   *   second, general window).
+   * @input  postQuietly fails; onSubmit()
+   * @output one alert ('shared.error', 'edit-website.save_failed_message', 'danger'); isDirty still true
    */
   it('reports a failed save', fakeAsync(() => {
     component.ngOnInit();
     component.updateValue('footer', 'Nová');
-    (ctx.dataHandler as any).post.and.returnValue(throwError(() => new Error('x')));
+    (ctx.dataHandler as any).postQuietly.and.returnValue(throwError(() => new Error('x')));
     component.onSubmit();
-    expect(ctx.alert.open).toHaveBeenCalledWith('shared.error', 'edit-website.save_failed_message', 'danger');
+    expect(ctx.alert.open).toHaveBeenCalledOnceWith('shared.error', 'edit-website.save_failed_message', 'danger');
     expect(component.isDirty).toBeTrue();
     flush();
   }));
@@ -173,7 +174,7 @@ describe('EditWebsiteComponent', () => {
     component.ngOnInit();
     component.onSubmit();
     expect(component.canUpdate).toBeFalse();
-    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
+    expect((ctx.dataHandler as any).postQuietly).not.toHaveBeenCalled();
     flush();
   }));
 

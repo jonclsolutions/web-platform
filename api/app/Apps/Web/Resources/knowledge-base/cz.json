@@ -658,6 +658,10 @@
             {
               "type": "text",
               "content": "Uložení zapíše jen texty, které jste změnili - texty, které mezitím uložil někdo jiný (nebo vy v jiné záložce prohlížeče), zůstanou. Během ukládání je tlačítko Uložit neaktivní; co mezitím napíšete, zůstane jako neuložená změna. Když se texty jazyka nepodaří načíst (výpadek serveru nebo připojení), nejde je upravovat ani ukládat - zkuste to znovu za chvíli."
+            },
+            {
+              "type": "text",
+              "content": "Když stejný text mezitím uložil někdo jiný (nebo vy v jiné záložce), Uložit se nejdřív zeptá: Přepsat uloží vaše úpravy, Neukládat nic neuloží - jeho verzi uvidíte jako uloženou a vaše úpravy zůstanou neuložené."
             }
           ]
         },
@@ -734,6 +738,10 @@
             {
               "type": "text",
               "content": "Tlačítko Zpět prohlížeče editor vždy zavře (s dotazem na neuložené úpravy) - stránky a jazyky otevřené v náhledu do historie prohlížeče nepřibývají. Přepínač jazyka v patičce náhledu přepne jazyk celého editoru (při neuložených úpravách se nejdřív zeptá); vaše vlastní volba jazyka pro návštěvy webu se tím nemění."
+            },
+            {
+              "type": "text",
+              "content": "U jiného jazyka než čeština panel editoru vypíše texty stránky stejné jako v češtině (možná nepřeložené) a u vybraného textu to připomene - jen pro informaci."
             }
           ]
         },
