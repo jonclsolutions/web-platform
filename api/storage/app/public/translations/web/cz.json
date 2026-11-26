@@ -113,7 +113,7 @@
         "show_contact_header": "Nebo nás kontaktujte",
         "projects_button_text": "Realizované projekty",
         "contact_button_text": "Kontakt",
-        "service_main_text": "<p>Vyvíjíme software na míru pro firmy, které potřebují víc než hotové řešení z police. Webové aplikace a systémy, desktopové nástroje pro Windows, macOS nebo Linux, mobilní aplikace pro iOS a Android — vždy postavené na vlastním kódu, přizpůsobené vašim procesům a navržené tak, aby rostly s vaším podnikáním.<\/p><p>Nezáleží na tom, zda jde o interní firemní systém, zákaznický portál, e-shop nebo komplexní CRM. Každý projekt začíná analýzou vašich skutečných potřeb, ne šablonou. Výsledek je řešení, které funguje přesně tam, kde ho potřebujete — ať už v prohlížeči, na desktopu nebo v kapse.<\/p>",
+        "service_main_text": "Vyvíjíme software na míru pro firmy, které potřebují víc než hotové řešení z police. Webové aplikace a systémy, desktopové nástroje pro Windows, macOS nebo Linux, mobilní aplikace pro iOS a Android — vždy postavené na vlastním kódu, přizpůsobené vašim procesům a navržené tak, aby rostly s vaším podnikáním.\n\nNezáleží na tom, zda jde o interní firemní systém, zákaznický portál, e-shop nebo komplexní CRM. Každý projekt začíná analýzou vašich skutečných potřeb, ne šablonou. Výsledek je řešení, které funguje přesně tam, kde ho potřebujete — ať už v prohlížeči, na desktopu nebo v kapse.",
         "cards": {
             "custom_title": "Vývoj na míru",
             "custom_text": "Nepracujeme se šablonami. Každé řešení stavíme od základů přesně podle vašich procesů — ať jde o webovou aplikaci, desktopový nástroj nebo mobilní app.",
@@ -406,7 +406,7 @@
             }
         },
         "hero": {
-            "heading": "Jsme IT společnost,<br>která staví digitální produkty",
+            "heading": "Jsme IT společnost,\nkterá staví digitální produkty",
             "lead": "Navrhujeme, vyvíjíme a nasazujeme webové, desktopové i mobilní aplikace – od prvního nápadu až po ostrý provoz.",
             "cta_primary": "Kontakt",
             "cta_secondary": "Naše služby",
@@ -438,7 +438,7 @@
             "story_text": "Nejsme agentura, která vám jen postaví web a pak zmizí. Věnujeme se vývoji na míru napříč weby, desktopovými i mobilními aplikacemi a řešeními postavenými na umělé inteligenci - vždy s důrazem na to, aby výsledek reálně řešil váš konkrétní problém, ne aby jen dobře vypadal v prezentaci. Od prvního rozhovoru přes návrh architektury až po nasazení a dlouhodobou podporu jsme s vámi po celou dobu jako jeden tým.",
             "story_heading_2": "Řešení, která s vámi porostou i za pár let",
             "story_text_2": "Stavíme na ověřených technologiích a čistém kódu, takže se aplikace dá snadno rozšiřovat a udržovat. Každý projekt dostane dokumentaci, automatické testy a bezpečnostní kontroly. Po spuštění sledujeme výkon, chystáme aktualizace a pomáháme s dalším rozvojem - vaše řešení tak zůstane rychlé, bezpečné a připravené na nové potřeby firmy.",
-            "heading": "Vývoj na míru,<br>od nápadu po nasazení",
+            "heading": "Vývoj na míru,\nod nápadu po nasazení",
             "lead": "Nejsme agentura šablon. Každý projekt stavíme od základu — přesně tak, jak to váš byznys potřebuje."
         },
         "tech_stack": {
@@ -563,7 +563,7 @@
             "allowed_types_hint": "Povolené typy: {types}"
         },
         "side_label": "KONTAKT",
-        "brand_headline": "Pojďme<br>spolupracovat.",
+        "brand_headline": "Pojďme\nspolupracovat.",
         "brand_sub": "Rádi si vyslechneme váš nápad — od prvního hovoru po spuštění produktu.",
         "form_title": "Poptávkový formulář",
         "labels": {

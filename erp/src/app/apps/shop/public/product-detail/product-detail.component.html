@@ -158,7 +158,8 @@
         <button class="active">{{ t?.specification_tab }}</button>
       </div>
       <div class="tab-content">
-        <div class="description-rich-text" [innerHTML]="product()?.description"></div>
+        <!-- plain text (never HTML): new lines of the description are kept -->
+        <div class="product-description">{{ product()?.description }}</div>
       </div>
     </div>
   </div>

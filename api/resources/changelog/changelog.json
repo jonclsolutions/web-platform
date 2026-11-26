@@ -2,6 +2,12 @@
     "unreleased": [
         {
             "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Texty webu, právní dokumenty a popisy produktů jsou čistý text: nový řádek místo <br>, odstavce prázdným řádkem. Web je vypisuje jako text, nikdy jako HTML; značky se při uložení odstraní a stávající texty převede migrace."
+        },
+        {
+            "type": "fixed",
             "area": "web",
             "part": "admin",
             "text": "Editor textů přímo na stránkách: klíč textu u pravého okraje stránky (např. tlačítko FAQ) se už neschová za okraj – jeho štítek se posune doleva, aby byl vidět celý."

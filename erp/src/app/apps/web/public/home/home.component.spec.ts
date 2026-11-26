@@ -57,13 +57,13 @@ describe('HomeComponent', () => {
   /**
    * @description The hero headline is written word by word (line break kept); with reduced motion
    *   the hero is not pinned.
-   * @input hero.heading 'We build<br>products'; reduced = true.
+   * @input hero.heading 'We build\nproducts'; reduced = true.
    * @output 3 words, one <br>; the hero without the pinned class.
    */
   it('renders the hero headline by words and a static hero for reduced motion', () => {
     const motion = new FakeWebMotion();
     motion.reduced = true;
-    const ctx = createPublicPageContext({ translations: { home: { hero: { heading: 'We build<br>products' } } } });
+    const ctx = createPublicPageContext({ translations: { home: { hero: { heading: 'We build\nproducts' } } } });
     TestBed.configureTestingModule({ imports: [HomeComponent], providers: [...ctx.providers, { provide: WebMotionService, useValue: motion }] });
     const fixture = TestBed.createComponent(HomeComponent);
     fixture.detectChanges();

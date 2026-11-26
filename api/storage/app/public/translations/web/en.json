@@ -113,7 +113,7 @@
         "show_contact_header": "Or contact us",
         "projects_button_text": "Completed projects",
         "contact_button_text": "Contact",
-        "service_main_text": "<p>We develop custom software for companies that need more than an off-the-shelf solution. Web applications and systems, desktop tools for Windows, macOS or Linux, mobile apps for iOS and Android — always built on our own code, adapted to your processes and designed to grow with your business.<\/p><p>It doesn't matter whether it's an internal company system, a customer portal, an e-shop or a complex CRM. Every project starts with an analysis of your real needs, not a template. The result is a solution that works exactly where you need it — whether in the browser, on the desktop or in your pocket.<\/p>",
+        "service_main_text": "We develop custom software for companies that need more than an off-the-shelf solution. Web applications and systems, desktop tools for Windows, macOS or Linux, mobile apps for iOS and Android — always built on our own code, adapted to your processes and designed to grow with your business.\n\nIt doesn't matter whether it's an internal company system, a customer portal, an e-shop or a complex CRM. Every project starts with an analysis of your real needs, not a template. The result is a solution that works exactly where you need it — whether in the browser, on the desktop or in your pocket.",
         "cards": {
             "custom_title": "Custom development",
             "custom_text": "We don't work with templates. We build every solution from the ground up exactly according to your processes — whether it's a web application, a desktop tool or a mobile app.",
@@ -406,7 +406,7 @@
             }
         },
         "hero": {
-            "heading": "We are an IT company<br>that builds digital products",
+            "heading": "We are an IT company\nthat builds digital products",
             "lead": "We design, develop and deploy web, desktop and mobile applications – from the first idea to live operation.",
             "cta_primary": "Contact",
             "cta_secondary": "Our services",
@@ -436,7 +436,7 @@
         "about": {
             "story_heading": "We build software that truly helps your company grow",
             "story_text": "We're not an agency that just builds you a website and then disappears. We focus on custom development across websites, desktop and mobile applications and solutions built on artificial intelligence - always with an emphasis on making the result actually solve your specific problem, not just look good in a presentation. From the first conversation through architecture design to deployment and long-term support, we are with you all the way as one team.",
-            "heading": "Custom development,<br>from idea to deployment",
+            "heading": "Custom development,\nfrom idea to deployment",
             "lead": "We're not a template agency. We build every project from the ground up — exactly the way your business needs it."
         },
         "tech_stack": {
@@ -561,7 +561,7 @@
             "allowed_types_hint": "Allowed types: {types}"
         },
         "side_label": "CONTACT",
-        "brand_headline": "Let's<br>work together.",
+        "brand_headline": "Let's\nwork together.",
         "brand_sub": "We'd love to hear your idea — from the first call to the product launch.",
         "form_title": "Enquiry form",
         "labels": {

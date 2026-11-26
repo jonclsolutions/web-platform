@@ -125,7 +125,7 @@ class TranslationTest extends TestCase
      *        POST en with 20 keys; GET translations/web/cz and /de; invalid lang values.
      * @output 200 detected 1 / 3 / 0; log "NEW:home(…" / "CHNG:home.title(…->…)" /
      *   "no value changes"; 20 new keys → summary cut to 200 chars + '...'; GET returns the data /
-     *   404; 422 for 'c', '../x', 'english'.
+     *   404; 422 for 'c', '../x', 'english'; a text with `<br>` / a script saved as plain text.
      */
     public function test_save_and_show_translations(): void
     {
@@ -158,6 +158,10 @@ class TranslationTest extends TestCase
             $this->postJson('/api/save_translations/web', ['lang' => $lang, 'data' => ['a' => 'b']])->assertStatus(422)->assertJsonValidationErrors(['lang']);
         }
         $this->postJson('/api/save_translations/web', ['lang' => 'cz'])->assertStatus(422)->assertJsonValidationErrors(['data']);
+
+        // plain text only: older HTML becomes new lines, any other tag (a script) is removed
+        $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['home' => ['heading' => 'Jsme IT,<br>která staví', 'text' => '<script>alert(1)</script>Text']]])->assertOk();
+        $this->assertSame(['home' => ['heading' => "Jsme IT,\nkterá staví", 'text' => 'alert(1)Text']], json_decode(File::get($this->file('web/cz.json')), true));
     }
 
     /**

@@ -439,6 +439,11 @@
   color: var(--text-main);
 }
 
+/* Description of the product: plain text, its new lines are kept. */
+.product-description {
+  white-space: pre-line;
+}
+
 /* --- LOADING --- */
 .loading-state {
   text-align: center;

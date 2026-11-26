@@ -674,7 +674,7 @@
                 },
                 {
                   "label": "Upravte",
-                  "text": "Co píšete do pole, se hned ukazuje na stránce jako náhled. Na webu se změna objeví až po uložení.",
+                  "text": "Co píšete do pole, se hned ukazuje na stránce jako náhled. Na webu se změna objeví až po uložení. Texty jsou čistý text: nový řádek vložíte klávesou Enter, prázdný řádek oddělí odstavce; HTML značky (například <br>) se neukládají.",
                   "active": false
                 },
                 {

@@ -4,8 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of RevealTextDirective: words rendered as text (never HTML), `<br>` as the
- *   only recognised markup, the masked reveal (hidden words, then in place), a new text after the
+ * @description Unit tests of RevealTextDirective: words rendered as text (never HTML - also `<br>`
+ *   stays text), a new line as the line break, the masked reveal (hidden words, then in place), a new text after the
  *   reveal shown at once, the scroll lighting of paragraph words and the whole paragraph at once
  *   on phones.
  * @dependencies Angular TestBed (host component), FakeWebMotion.
@@ -65,15 +65,22 @@ describe('RevealTextDirective', () => {
   });
 
   /**
-   * @description `<br>` becomes a line break when breaks are allowed.
-   * @input 'One two<br>three', breaks on.
-   * @output One <br> element; 3 words; textContent without the tag.
+   * @description A new line becomes a line break when breaks are allowed; a `<br>` written in the
+   *   text is no markup - it stays text.
+   * @input 'One two\nthree' breaks on; 'One<br>two' breaks on.
+   * @output One <br> element, 3 words, textContent without the new line; then no <br> element and
+   *   the text '<br>' kept.
    */
-  it('turns <br> into a line break', () => {
-    const { title } = create({ text: 'One two<br>three', breaks: true });
+  it('turns a new line into a line break and never a tag', () => {
+    const { title } = create({ text: 'One two\nthree', breaks: true });
     expect(title.querySelectorAll('br').length).toBe(1);
     expect(title.querySelectorAll('.rv-word').length).toBe(3);
     expect(title.textContent).toBe('One twothree');
+
+    TestBed.resetTestingModule();
+    const tag = create({ text: 'One<br>two', breaks: true }).title;
+    expect(tag.querySelectorAll('br').length).toBe(0);
+    expect(tag.textContent).toBe('One<br>two');
   });
 
   /**

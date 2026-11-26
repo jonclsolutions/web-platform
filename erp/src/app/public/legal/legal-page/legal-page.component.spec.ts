@@ -32,7 +32,7 @@ describe('LegalPageComponent', () => {
   const texts = { header_main: 'Header', last_update_text: 'Updated', change_settings_text: 'Settings:', change_settings_link_text: 'Change', more_info_text: 'More:', more_info_link_text: 'Privacy' };
   const doc = (lang: string) => ({
     last_update_date: '1. 1. 2026', footer_effective: 'Effective ' + lang,
-    sections: [{ id: 1, heading: 'Section ' + lang, content: '<p>Body</p>', subsections: [{ id: 2, heading: 'Sub', text: 'Text', list: ['Bullet A', 'Bullet B'] }] }],
+    sections: [{ id: 1, heading: 'Section ' + lang, content: 'Body', subsections: [{ id: 2, heading: 'Sub', text: 'Text', list: ['Bullet A', 'Bullet B'] }] }],
   });
   const text = () => (fixture.nativeElement as HTMLElement).textContent!;
 

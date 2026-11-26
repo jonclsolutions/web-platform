@@ -124,7 +124,8 @@ describe('ImportPopupBuilderComponent', () => {
   /**
    * @description A synchronous import commits with the token and reports imported/skipped counts.
    * @input  validation token 42; commit returns { queued: false, imported_count: 2, skipped_count: 1 }
-   * @output post('core/users/import/commit', { import_token: 42 }); step 'done'; success alert; imported emitted
+   * @output post('core/users/import/commit', { import_token: 42 }); step 'done'; success alert;
+   *   imported emitted; the done text split around the counts (bold, as text - never HTML)
    */
   it('commits the import and reports the result', () => {
     ctx.i18n.getValue.and.callFake((p: string) => (p === 'import-popup.import_done_message' ? '{imported}/{skipped}' : p));
@@ -139,6 +140,11 @@ describe('ImportPopupBuilderComponent', () => {
     expect(component.step).toBe('done');
     expect(ctx.alert.open).toHaveBeenCalledWith('import-popup.import_done_title', '2/1', 'success');
     expect(imported).toBe(1);
+    (ctx.i18n.getMergedSection as jasmine.Spy).and.returnValue({ done_text: 'Added {imported} <i>rows</i>, skipped {skipped}.' });
+    expect(component.doneParts).toEqual([
+      { text: 'Added ', count: false }, { text: '2', count: true }, { text: ' <i>rows</i>, skipped ', count: false },
+      { text: '1', count: true }, { text: '.', count: false },
+    ]);
   });
 
   /**

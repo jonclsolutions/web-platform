@@ -10,6 +10,7 @@
 
 namespace App\Apps\Shop\Models;
 
+use App\Support\I18n\PlainText;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -71,11 +72,20 @@ class ShopProduct extends Model
      * Boot the model and register model events.
      * Ensure products are inactive if no primary category is assigned.
      */
+    /** @description Text fields stored as plain text (PlainText). */
+    public const PLAIN_TEXT = ['description', 'description_en', 'short_description', 'short_description_en'];
+
     protected static function booted(): void
     {
         static::saving(function (ShopProduct $product) {
             if (empty($product->category_id)) {
                 $product->is_active = false;
+            }
+            // the descriptions are plain text on the e-shop (written as text) - no HTML stored
+            foreach (self::PLAIN_TEXT as $field) {
+                if (is_string($product->{$field})) {
+                    $product->{$field} = PlainText::fromHtml($product->{$field});
+                }
             }
         });
     }

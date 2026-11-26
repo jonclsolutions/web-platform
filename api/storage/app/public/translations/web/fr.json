@@ -113,7 +113,7 @@
         "show_contact_header": "Ou contactez-nous",
         "projects_button_text": "Projets réalisés",
         "contact_button_text": "Contact",
-        "service_main_text": "<p>Nous développons des logiciels sur mesure pour les entreprises qui ont besoin de plus qu'une solution toute faite. Applications et systèmes web, outils desktop pour Windows, macOS ou Linux, applications mobiles pour iOS et Android — toujours construits sur notre propre code, adaptés à vos processus et conçus pour évoluer avec votre activité.<\/p><p>Qu'il s'agisse d'un système interne d'entreprise, d'un portail client, d'une boutique en ligne ou d'un CRM complexe, peu importe. Chaque projet commence par une analyse de vos besoins réels, pas par un modèle. Le résultat est une solution qui fonctionne exactement là où vous en avez besoin — dans le navigateur, sur l'ordinateur ou dans votre poche.<\/p>",
+        "service_main_text": "Nous développons des logiciels sur mesure pour les entreprises qui ont besoin de plus qu'une solution toute faite. Applications et systèmes web, outils desktop pour Windows, macOS ou Linux, applications mobiles pour iOS et Android — toujours construits sur notre propre code, adaptés à vos processus et conçus pour évoluer avec votre activité.\n\nQu'il s'agisse d'un système interne d'entreprise, d'un portail client, d'une boutique en ligne ou d'un CRM complexe, peu importe. Chaque projet commence par une analyse de vos besoins réels, pas par un modèle. Le résultat est une solution qui fonctionne exactement là où vous en avez besoin — dans le navigateur, sur l'ordinateur ou dans votre poche.",
         "cards": {
             "custom_title": "Développement sur mesure",
             "custom_text": "Nous ne travaillons pas avec des modèles. Nous construisons chaque solution de A à Z, exactement selon vos processus — qu'il s'agisse d'une application web, d'un outil desktop ou d'une app mobile.",
@@ -406,7 +406,7 @@
             }
         },
         "hero": {
-            "heading": "Nous sommes une société informatique<br>qui construit des produits numériques",
+            "heading": "Nous sommes une société informatique\nqui construit des produits numériques",
             "lead": "Nous concevons, développons et déployons des applications web, desktop et mobiles – de la première idée à la mise en production.",
             "cta_primary": "Contact",
             "cta_secondary": "Nos services",
@@ -436,7 +436,7 @@
         "about": {
             "story_heading": "Nous créons des logiciels qui aident vraiment votre entreprise à se développer",
             "story_text": "Nous ne sommes pas une agence qui vous construit un site puis disparaît. Nous nous consacrons au développement sur mesure de sites web, d'applications desktop et mobiles et de solutions basées sur l'intelligence artificielle - toujours avec l'objectif que le résultat résolve réellement votre problème concret, et pas seulement qu'il soit beau dans une présentation. De la première discussion à la conception de l'architecture, jusqu'au déploiement et au support à long terme, nous vous accompagnons tout au long du chemin comme une seule équipe.",
-            "heading": "Développement sur mesure,<br>de l'idée au déploiement",
+            "heading": "Développement sur mesure,\nde l'idée au déploiement",
             "lead": "Nous ne sommes pas une agence de modèles. Nous construisons chaque projet de A à Z — exactement comme votre activité en a besoin."
         },
         "tech_stack": {
@@ -561,7 +561,7 @@
             "allowed_types_hint": "Types autorisés : {types}"
         },
         "side_label": "CONTACT",
-        "brand_headline": "Travaillons<br>ensemble.",
+        "brand_headline": "Travaillons\nensemble.",
         "brand_sub": "Nous serons ravis d'écouter votre idée — du premier appel au lancement du produit.",
         "form_title": "Formulaire de demande",
         "labels": {

@@ -119,7 +119,12 @@
         @if (commitResult.queued) {
           <p class="import-done-text">{{ strings.queued_text }}</p>
         } @else {
-          <p class="import-done-text" [innerHTML]="strings.done_text.replace('{imported}', '<strong>' + commitResult.imported_count + '</strong>').replace('{skipped}', '<strong>' + commitResult.skipped_count + '</strong>')"></p>
+          <!-- the counts in bold, the text around them as text (never HTML) -->
+          <p class="import-done-text">
+            @for (part of doneParts; track $index) {
+              @if (part.count) { <strong>{{ part.text }}</strong> } @else { {{ part.text }} }
+            }
+          </p>
         }
       </div>
     }

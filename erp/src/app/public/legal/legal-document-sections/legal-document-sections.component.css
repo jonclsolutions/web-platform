@@ -5,7 +5,7 @@
     @author: JS
     @created: 2026
     @description: Typography of the sections of a legal document. Global stylesheet scoped by
-        `.legal-sections` (the section content is inserted HTML); colours from the `--legal-*`
+        `.legal-sections` (the content is plain text); colours from the `--legal-*`
         custom properties of the host page with neutral fallbacks.
     @dependencies: --legal-heading, --legal-body, --legal-strong, --legal-em, --legal-link,
         --legal-link-hover, --legal-line of the host page
@@ -15,7 +15,7 @@
     @module: Legal sections
     @description: Section heading with a line, sub-heading, paragraphs, lists, emphasis and links;
         a subsection is indented with a line on the left.
-    @usage: .legal-sections > .legal-section (h2, inserted HTML, .legal-subsection > h3, p, ul > li)
+    @usage: .legal-sections > .legal-section (h2, .legal-section-text, .legal-subsection > h3, p, ul > li)
 */
 .legal-sections {
   font-family: "Source Sans Pro", sans-serif;
@@ -42,6 +42,13 @@
   color: var(--legal-body, #4a4a4a);
 }
 .legal-sections p { margin: 0 0 12px; }
+/* Content of a section: plain text, its new lines and empty lines are the paragraphs. */
+.legal-section-text {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  color: var(--legal-body, #4a4a4a);
+  white-space: pre-line;
+}
 .legal-sections ul,
 .legal-sections ol { margin: 0 0 12px 20px; padding-left: 4px; }
 .legal-sections ul { list-style: disc; }

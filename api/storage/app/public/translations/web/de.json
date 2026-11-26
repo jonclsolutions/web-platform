@@ -113,7 +113,7 @@
         "show_contact_header": "Oder kontaktieren Sie uns",
         "projects_button_text": "Realisierte Projekte",
         "contact_button_text": "Kontakt",
-        "service_main_text": "<p>Wir entwickeln individuelle Software für Unternehmen, die mehr brauchen als eine Lösung von der Stange. Webanwendungen und -systeme, Desktop-Tools für Windows, macOS oder Linux, mobile Apps für iOS und Android — immer auf eigenem Code aufgebaut, an Ihre Prozesse angepasst und so konzipiert, dass sie mit Ihrem Unternehmen wachsen.<\/p><p>Egal, ob es sich um ein internes Unternehmenssystem, ein Kundenportal, einen Onlineshop oder ein komplexes CRM handelt. Jedes Projekt beginnt mit einer Analyse Ihrer tatsächlichen Bedürfnisse, nicht mit einer Vorlage. Das Ergebnis ist eine Lösung, die genau dort funktioniert, wo Sie sie brauchen — im Browser, auf dem Desktop oder in der Hosentasche.<\/p>",
+        "service_main_text": "Wir entwickeln individuelle Software für Unternehmen, die mehr brauchen als eine Lösung von der Stange. Webanwendungen und -systeme, Desktop-Tools für Windows, macOS oder Linux, mobile Apps für iOS und Android — immer auf eigenem Code aufgebaut, an Ihre Prozesse angepasst und so konzipiert, dass sie mit Ihrem Unternehmen wachsen.\n\nEgal, ob es sich um ein internes Unternehmenssystem, ein Kundenportal, einen Onlineshop oder ein komplexes CRM handelt. Jedes Projekt beginnt mit einer Analyse Ihrer tatsächlichen Bedürfnisse, nicht mit einer Vorlage. Das Ergebnis ist eine Lösung, die genau dort funktioniert, wo Sie sie brauchen — im Browser, auf dem Desktop oder in der Hosentasche.",
         "cards": {
             "custom_title": "Individuelle Entwicklung",
             "custom_text": "Wir arbeiten nicht mit Vorlagen. Jede Lösung bauen wir von Grund auf genau nach Ihren Prozessen — ob Webanwendung, Desktop-Tool oder mobile App.",
@@ -406,7 +406,7 @@
             }
         },
         "hero": {
-            "heading": "Wir sind ein IT-Unternehmen,<br>das digitale Produkte baut",
+            "heading": "Wir sind ein IT-Unternehmen,\ndas digitale Produkte baut",
             "lead": "Wir konzipieren, entwickeln und betreiben Web-, Desktop- und Mobile-Anwendungen – von der ersten Idee bis zum Live-Betrieb.",
             "cta_primary": "Kontakt",
             "cta_secondary": "Unsere Leistungen",
@@ -436,7 +436,7 @@
         "about": {
             "story_heading": "Wir bauen Software, die Ihrem Unternehmen wirklich beim Wachsen hilft",
             "story_text": "Wir sind keine Agentur, die Ihnen nur eine Website baut und dann verschwindet. Wir widmen uns der individuellen Entwicklung von Websites, Desktop- und Mobile-Anwendungen sowie Lösungen auf Basis künstlicher Intelligenz - immer mit dem Ziel, dass das Ergebnis Ihr konkretes Problem tatsächlich löst und nicht nur in einer Präsentation gut aussieht. Vom ersten Gespräch über den Architekturentwurf bis zum Deployment und langfristigen Support sind wir die ganze Zeit als ein Team an Ihrer Seite.",
-            "heading": "Individuelle Entwicklung,<br>von der Idee bis zum Deployment",
+            "heading": "Individuelle Entwicklung,\nvon der Idee bis zum Deployment",
             "lead": "Wir sind keine Vorlagen-Agentur. Jedes Projekt bauen wir von Grund auf — genau so, wie Ihr Geschäft es braucht."
         },
         "tech_stack": {
@@ -561,7 +561,7 @@
             "allowed_types_hint": "Erlaubte Typen: {types}"
         },
         "side_label": "KONTAKT",
-        "brand_headline": "Lassen Sie uns<br>zusammenarbeiten.",
+        "brand_headline": "Lassen Sie uns\nzusammenarbeiten.",
         "brand_sub": "Wir hören uns gerne Ihre Idee an — vom ersten Gespräch bis zum Produktstart.",
         "form_title": "Anfrageformular",
         "labels": {

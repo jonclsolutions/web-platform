@@ -674,7 +674,7 @@
                 },
                 {
                   "label": "Edit",
-                  "text": "What you type shows on the page at once as a preview. The website changes only after saving.",
+                  "text": "What you type shows on the page at once as a preview. The website changes only after saving. Texts are plain text: Enter adds a new line, an empty line separates paragraphs; HTML tags (for example <br>) are not stored.",
                   "active": false
                 },
                 {

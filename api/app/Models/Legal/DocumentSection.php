@@ -6,10 +6,13 @@
  * @author JS
  * @created 2026
  * @description Model representing a section within a legal document.
+ * @note The content is plain text (the website writes it as text, paragraphs by new lines) - any
+ *   HTML is turned into text on save (PlainText).
  */
 
 namespace App\Models\Legal;
 
+use App\Support\I18n\PlainText;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -35,6 +38,16 @@ class DocumentSection extends Model
         'content', 
         'lang'
     ];
+
+    /**
+     * @description Saves the content as plain text (`<br>` → new line, other tags removed).
+     * @param string|null $value Content.
+     * @return void
+     */
+    public function setContentAttribute(?string $value): void
+    {
+        $this->attributes['content'] = $value === null ? null : PlainText::fromHtml($value);
+    }
 
     /**
      * Get the document type that owns this section.

@@ -113,7 +113,7 @@
         "show_contact_header": "Lub skontaktuj się z nami",
         "projects_button_text": "Zrealizowane projekty",
         "contact_button_text": "Kontakt",
-        "service_main_text": "<p>Tworzymy oprogramowanie na zamówienie dla firm, które potrzebują czegoś więcej niż gotowego rozwiązania z półki. Aplikacje i systemy webowe, narzędzia desktopowe na Windows, macOS lub Linux, aplikacje mobilne na iOS i Androida — zawsze oparte na własnym kodzie, dopasowane do Twoich procesów i zaprojektowane tak, aby rosły razem z Twoją firmą.<\/p><p>Nie ma znaczenia, czy chodzi o wewnętrzny system firmowy, portal klienta, sklep internetowy czy złożony CRM. Każdy projekt zaczyna się od analizy Twoich rzeczywistych potrzeb, a nie od szablonu. Efektem jest rozwiązanie, które działa dokładnie tam, gdzie go potrzebujesz — w przeglądarce, na komputerze czy w kieszeni.<\/p>",
+        "service_main_text": "Tworzymy oprogramowanie na zamówienie dla firm, które potrzebują czegoś więcej niż gotowego rozwiązania z półki. Aplikacje i systemy webowe, narzędzia desktopowe na Windows, macOS lub Linux, aplikacje mobilne na iOS i Androida — zawsze oparte na własnym kodzie, dopasowane do Twoich procesów i zaprojektowane tak, aby rosły razem z Twoją firmą.\n\nNie ma znaczenia, czy chodzi o wewnętrzny system firmowy, portal klienta, sklep internetowy czy złożony CRM. Każdy projekt zaczyna się od analizy Twoich rzeczywistych potrzeb, a nie od szablonu. Efektem jest rozwiązanie, które działa dokładnie tam, gdzie go potrzebujesz — w przeglądarce, na komputerze czy w kieszeni.",
         "cards": {
             "custom_title": "Rozwój na zamówienie",
             "custom_text": "Nie pracujemy na szablonach. Każde rozwiązanie budujemy od podstaw, dokładnie według Twoich procesów — niezależnie od tego, czy jest to aplikacja webowa, narzędzie desktopowe czy aplikacja mobilna.",
@@ -406,7 +406,7 @@
             }
         },
         "hero": {
-            "heading": "Jesteśmy firmą IT,<br>która tworzy produkty cyfrowe",
+            "heading": "Jesteśmy firmą IT,\nktóra tworzy produkty cyfrowe",
             "lead": "Projektujemy, tworzymy i wdrażamy aplikacje webowe, desktopowe i mobilne – od pierwszego pomysłu aż po działanie produkcyjne.",
             "cta_primary": "Kontakt",
             "cta_secondary": "Nasze usługi",
@@ -436,7 +436,7 @@
         "about": {
             "story_heading": "Tworzymy oprogramowanie, które naprawdę pomaga Twojej firmie rosnąć",
             "story_text": "Nie jesteśmy agencją, która tylko zbuduje Ci stronę, a potem zniknie. Zajmujemy się tworzeniem oprogramowania na zamówienie – stron internetowych, aplikacji desktopowych i mobilnych oraz rozwiązań opartych na sztucznej inteligencji - zawsze z naciskiem na to, aby rezultat realnie rozwiązywał Twój konkretny problem, a nie tylko dobrze wyglądał w prezentacji. Od pierwszej rozmowy, przez projekt architektury, aż po wdrożenie i długoterminowe wsparcie jesteśmy z Tobą przez cały czas jako jeden zespół.",
-            "heading": "Rozwój na zamówienie,<br>od pomysłu po wdrożenie",
+            "heading": "Rozwój na zamówienie,\nod pomysłu po wdrożenie",
             "lead": "Nie jesteśmy agencją szablonów. Każdy projekt budujemy od podstaw — dokładnie tak, jak potrzebuje tego Twój biznes."
         },
         "tech_stack": {
@@ -561,7 +561,7 @@
             "allowed_types_hint": "Dozwolone typy: {types}"
         },
         "side_label": "KONTAKT",
-        "brand_headline": "Współpracujmy<br>razem.",
+        "brand_headline": "Współpracujmy\nrazem.",
         "brand_sub": "Chętnie wysłuchamy Twojego pomysłu — od pierwszej rozmowy po uruchomienie produktu.",
         "form_title": "Formularz zapytania",
         "labels": {

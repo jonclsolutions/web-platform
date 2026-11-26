@@ -105,6 +105,22 @@ export class ImportPopupBuilderComponent {
   validation: ImportValidateResponse | null = null;
   commitResult: ImportCommitResponse | null = null;
 
+  /**
+   * @description The text of the finished import split around its counts (`{imported}`,
+   *   `{skipped}`) - the template writes the counts in bold and everything as text (no HTML).
+   * @returns Parts in their order; `count` = a number of the result.
+   */
+  get doneParts(): { text: string; count: boolean }[] {
+    const result = this.commitResult;
+    const text: string = this.strings.done_text ?? '';
+    if (!result) return [];
+    const counts: Record<string, number> = { imported: result.imported_count ?? 0, skipped: result.skipped_count ?? 0 };
+    return text.split(/(\{imported\}|\{skipped\})/).filter(part => part !== '').map(part => {
+      const key = /^\{(imported|skipped)\}$/.exec(part)?.[1];
+      return key ? { text: String(counts[key] ?? 0), count: true } : { text: part, count: false };
+    });
+  }
+
   get formatOptions(): ExportFormatOption[] {
     return createExportFormatOptions(this.i18n).filter(opt => opt.value !== 'xlsx');
   }

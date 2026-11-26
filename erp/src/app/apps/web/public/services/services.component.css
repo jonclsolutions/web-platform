@@ -90,13 +90,8 @@
   line-height: 1.8;
   color: #b0b0c8;
   margin-bottom: var(--head-gap);
-}
-
-.svc-body-text p {
-  margin-bottom: 16px;
-  font-size: 0.97rem;
-  line-height: 1.8;
-  color: #b0b0c8;
+  /* plain text of the translation: new lines and empty lines between paragraphs are kept */
+  white-space: pre-line;
 }
 
 .svc-section-header {

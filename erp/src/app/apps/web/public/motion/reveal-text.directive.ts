@@ -29,8 +29,8 @@ const WORDS_OFF_QUERY = '(max-width: 905px)';
  * @usage `<h2 [appRevealText]="t?.title"></h2>` (mask), `<h1 [appRevealText]="t?.hero?.heading"
  *   revealTextMode="load" [revealTextBreaks]="true"></h1>`, `<p [appRevealText]="t?.text"
  *   revealTextMode="words"></p>`. The host must have no other content in the template.
- * @note The text is written with `textContent` (never as HTML). With `revealTextBreaks` the only
- *   markup recognised is `<br>`, which becomes a line break – any other tag stays plain text. The
+ * @note The text is written with `textContent` (never as HTML) - a tag in a text stays plain
+ *   text. With `revealTextBreaks` a new line of the text ("\n") is a line break. The
  *   spans get the component's style-scope attribute of the host, so the page CSS can style
  *   `.rv-word` / `.rv-w`; they inherit the font of the host (the global `span` rule would
  *   otherwise switch headings to the body font). The full text stays in the DOM for screen
@@ -48,7 +48,7 @@ export class RevealTextDirective implements OnChanges, OnDestroy {
   @Input('appRevealText') text: string | null | undefined = '';
   /** Animation of the text. */
   @Input() revealTextMode: RevealTextMode = 'mask';
-  /** Whether `<br>` in the text is a line break (hero heading). */
+  /** Whether a new line ("\n") of the text is a line break (hero heading). */
   @Input() revealTextBreaks = false;
 
   private revealed = false;
@@ -97,7 +97,7 @@ export class RevealTextDirective implements OnChanges, OnDestroy {
     const scope = Array.from(host.attributes).find(attribute => attribute.name.startsWith('_ngcontent-'))?.name;
     const scoped = (element: HTMLElement) => { if (scope) { element.setAttribute(scope, ''); } return element; };
     host.textContent = '';
-    const lines = this.revealTextBreaks ? text.split(/<br\s*\/?>/i) : [text];
+    const lines = this.revealTextBreaks ? text.split(/\r?\n/) : [text];
     const words: HTMLElement[] = [];
     lines.forEach((line, lineIndex) => {
       if (lineIndex > 0) {

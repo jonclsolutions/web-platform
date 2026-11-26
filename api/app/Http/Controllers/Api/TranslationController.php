@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Support\Apps\AppRegistry;
 use Illuminate\Http\JsonResponse;
+use App\Support\I18n\PlainText;
 use App\Support\I18n\MissingTranslations;
 use App\Support\I18n\I18nText;
 use App\Models\Legal\PageTitle;
@@ -108,7 +109,8 @@ class TranslationController extends Controller
         ]);
 
         $lang = $request->input('lang');
-        $newData = $request->input('data');
+        // plain text only: older HTML (<br>, <p>) becomes new lines, any other tag is removed
+        $newData = PlainText::tree($request->input('data'));
 
         if ($request->boolean('upload')) {
             if ($mismatch = $this->uploadMismatch($module, $newData)) {

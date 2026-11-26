@@ -21,7 +21,8 @@
         <div class="svc-panel-header">
           <h2 class="svc-panel-title" [appRevealText]="t.info_header"></h2>
         </div>
-        <div class="svc-body-text" [innerHTML]="t.service_main_text" appReveal></div>
+        <!-- plain text: paragraphs are separated by an empty line (white-space: pre-line) -->
+        <div class="svc-body-text" appReveal>{{ t.service_main_text }}</div>
           <!-- Devices illustration with decorative smoke centered behind it -->
 <div class="svc-devices" appScrollEffect="zoom">
   <img [src]="smoke" class="smoke-bg_hero" alt="" aria-hidden="true"
