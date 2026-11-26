@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Bezpečnost: ikony přehledů (core, web, e-shop) a okna exportu se kreslí přes komponentu ikon, ne vložením HTML – v aplikaci už není žádné [innerHTML] ani vypnutá kontrola Angularu (bypassSecurityTrustHtml). Vzhled beze změny."
+        },
+        {
             "type": "added",
             "area": "core",
             "part": "admin",

@@ -39,7 +39,7 @@
 
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AdminIconComponent, AdminIconName } from '../../../../admin/components/admin-icon/admin-icon.component';
 import { forkJoin, interval, Subscription, catchError, of, Observable } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { AppStatusService } from '../../../../admin/components/app-status/app-status.service';
@@ -120,13 +120,12 @@ interface RecentOrder {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, PageHelpComponent, PageHeaderComponent, AppStatusControlComponent],
+  imports: [CommonModule, PageHelpComponent, PageHeaderComponent, AppStatusControlComponent, AdminIconComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['../../../../admin/shared-styles/dashboard.css', './dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
 
-  private sanitizer = inject(DomSanitizer);
   private appStatus = inject(AppStatusService);
   private resourceCache = inject(ResourceCacheService);
   private permissionService = inject(PermissionService);
@@ -257,21 +256,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Icon library of the dashboard. No `viewBox`, the on-screen size is set by CSS
    * (`.kpi-icon svg`).
    */
-  private readonly ICONS: Record<string, string> = {
-    money: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
-    box: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
-    users: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-    bag: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
-    coupon: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>`,
-    clock: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-    scale: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"/><path d="M5 8h14"/><path d="M5 8 2 15a3 3 0 0 0 6 0L5 8Z"/><path d="M19 8l-3 7a3 3 0 0 0 6 0l-3-7Z"/></svg>`,
+  private readonly ICONS: Record<string, AdminIconName> = {
+    money: 'dollar',
+    box: 'package',
+    users: 'users',
+    bag: 'shopping-bag',
+    coupon: 'ticket',
+    clock: 'clock',
+    scale: 'scale',
   };
 
   /**
-   * @description Returns the sanitized SVG markup for the given icon key (see `ICONS`).
+   * @description Icon of a KPI card (see `ICONS`) - drawn by AdminIconComponent, no HTML inserted.
+   * @param key Icon key.
+   * @returns Icon name, null for an unknown key (nothing drawn).
    */
-  getIcon(key: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(this.ICONS[key] ?? '');
+  iconOf(key: string): AdminIconName | null {
+    return this.ICONS[key] ?? null;
   }
 
   constructor(private dataHandler: DataHandler) {}

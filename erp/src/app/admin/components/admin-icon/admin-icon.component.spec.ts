@@ -35,4 +35,27 @@ describe('AdminIconComponent', () => {
     fixture.detectChanges();
     expect([svg.querySelectorAll('polygon').length, svg.querySelectorAll('polyline').length]).toEqual([1, 2]);
   });
+
+  /**
+   * @description The icons of the dashboards and of the export formats (formerly SVG inserted as
+   *   HTML) are drawn by the template - every one has its shapes.
+   * @input names braces, clipboard, inbox, legal, link, mail, package, scale, table, ticket
+   * @output each svg has at least one shape; table: rect + 4 lines; package: path + polyline + line
+   */
+  it('draws the icons of the dashboards and of the export formats', async () => {
+    await TestBed.configureTestingModule({ imports: [AdminIconComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AdminIconComponent);
+    const svg = () => fixture.nativeElement.querySelector('svg') as SVGElement;
+    for (const name of ['braces', 'clipboard', 'inbox', 'legal', 'link', 'mail', 'package', 'scale', 'table', 'ticket'] as const) {
+      fixture.componentRef.setInput('name', name);
+      fixture.detectChanges();
+      expect(svg().querySelectorAll('path, line, rect, circle, polyline, polygon').length).withContext(name).toBeGreaterThan(0);
+    }
+    fixture.componentRef.setInput('name', 'table');
+    fixture.detectChanges();
+    expect([svg().querySelectorAll('rect').length, svg().querySelectorAll('line').length]).toEqual([1, 4]);
+    fixture.componentRef.setInput('name', 'package');
+    fixture.detectChanges();
+    expect([svg().querySelectorAll('path').length, svg().querySelectorAll('polyline').length, svg().querySelectorAll('line').length]).toEqual([1, 1, 1]);
+  });
 });

@@ -163,6 +163,23 @@ describe('ExportPopupBuilderComponent', () => {
   });
 
   /**
+   * @description The icons of the formats are drawn by AdminIconComponent (no HTML inserted).
+   * @input  formats ['xlsx', 'csv', 'json']; render
+   * @output icon names table / file-lines / braces; an svg with shapes in each .export-format-icon
+   */
+  it('draws the icons of the formats', () => {
+    component.formats = ['xlsx', 'csv', 'json'];
+    setColumns();
+    fixture.detectChanges();
+    expect(component.visibleFormatOptions.map(o => o.icon)).toEqual(['table', 'file-lines', 'braces']);
+    const icons = Array.from(document.querySelectorAll('.export-format-icon'));
+    expect(icons.length).toBe(3);
+    for (const icon of icons) {
+      expect(icon.querySelector('app-admin-icon svg path, app-admin-icon svg line, app-admin-icon svg rect')).not.toBeNull();
+    }
+  });
+
+  /**
    * @description The subtitle shows the row count when known.
    * @input  strings subtitle_with_count 'Rows: {count}'; itemCount 12, then 0
    * @output 'Rows: 12', then subtitle_no_count text

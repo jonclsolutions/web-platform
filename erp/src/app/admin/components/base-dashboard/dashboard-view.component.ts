@@ -24,11 +24,12 @@ import { HasPermissionDirective } from '../../../core/directives/has-permission.
 import { PageHelpComponent } from '../page-help/page-help.component';
 import { PageHeaderComponent } from '../page-header/page-header.component';
 import { AppStatusControlComponent } from '../app-status/app-status-control.component';
+import { AdminIconComponent } from '../admin-icon/admin-icon.component';
 
 @Component({
   selector: 'app-dashboard-view',
   standalone: true,
-  imports: [DatePipe, RouterLink, HasPermissionDirective, PageHelpComponent, PageHeaderComponent, AppStatusControlComponent],
+  imports: [DatePipe, RouterLink, HasPermissionDirective, PageHelpComponent, PageHeaderComponent, AppStatusControlComponent, AdminIconComponent],
   templateUrl: './dashboard-view.component.html',
   styleUrls: ['../../shared-styles/dashboard.css', '../../shared-styles/dashboard-cards.css', './dashboard-view.component.css'],
   changeDetection: ChangeDetectionStrategy.Default,

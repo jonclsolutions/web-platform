@@ -238,13 +238,15 @@ describe('DashboardComponent (web)', () => {
   });
 
   /**
-   * @description Icons are trusted SVG markup; unknown keys give an empty icon.
-   * @input  getIcon('mail'), getIcon('unknown')
-   * @output SafeHtml containing '<svg'; empty SafeHtml
+   * @description Icons are names of AdminIconComponent (drawn by its template, no HTML
+   *   inserted); unknown keys give no icon.
+   * @input  iconOf('mail'), iconOf('logs'), iconOf('unknown')
+   * @output 'mail'; 'clipboard'; null
    */
   it('returns the icons', () => {
-    expect(String((component.getIcon('mail') as any).changingThisBreaksApplicationSecurity)).toContain('<svg');
-    expect((component.getIcon('unknown') as any).changingThisBreaksApplicationSecurity).toBe('');
+    expect(component.iconOf('mail')).toBe('mail');
+    expect(component.iconOf('logs')).toBe('clipboard');
+    expect(component.iconOf('unknown')).toBeNull();
   });
 
   /**

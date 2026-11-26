@@ -53,7 +53,7 @@
       <div class="kpi-grid">
         @for (card of kpiCards; track card.key) {
           <div class="kpi-card" [class.kpi-urgent]="card.urgent">
-            <div class="kpi-icon" [innerHTML]="getIcon(card.icon)"></div>
+            <div class="kpi-icon">@if (iconOf(card.icon); as icon) { <app-admin-icon [name]="icon" [size]="24" /> }</div>
             <div class="kpi-body">
               <div class="kpi-label">{{ t(card.labelKey) }}</div>
               <div class="kpi-value">{{ card.value }}</div>

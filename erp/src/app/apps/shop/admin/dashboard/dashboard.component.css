@@ -78,7 +78,6 @@
   align-items: center;
   justify-content: center;
 }
-.kpi-icon svg { width: 20px; height: 20px; }
 .kpi-urgent .kpi-icon { background: var(--warning-dim, var(--color-amber-50)); color: var(--warning, var(--color-amber-600)); }
 
 .kpi-body { display: flex; flex-direction: column; gap: 2px; }

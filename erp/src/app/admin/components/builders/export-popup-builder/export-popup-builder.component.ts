@@ -11,7 +11,7 @@
  * resolution), so this component can be dropped into any table-based admin screen.
  * @dependencies
  * - CommonModule: @if/@for control flow.
- * - DomSanitizer: Safely renders inline SVG icons via [innerHTML].
+ * - AdminIconComponent: the icons of the formats (drawn by its template, no HTML inserted).
  * - AdminModalComponent: the shared popup frame (page scroll lock, Escape / backdrop / close -
  *   not while the file is being prepared).
  * - AdminLocalizationService: Static i18n of the admin UI.
@@ -19,7 +19,7 @@
 
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AdminIconComponent } from '../../admin-icon/admin-icon.component';
 import { ExportFormat, createExportFormatOptions, ExportFormatOption } from '../../../../shared/interfaces/export-format';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
@@ -64,7 +64,7 @@ export interface ExportSelection {
 @Component({
   selector: 'app-export-popup-builder',
   standalone: true,
-  imports: [CommonModule, AdminModalComponent],
+  imports: [CommonModule, AdminModalComponent, AdminIconComponent],
   templateUrl: './export-popup-builder.component.html',
   styleUrls: ['../../../shared-styles/modal.css', './export-popup-builder.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -109,7 +109,6 @@ export class ExportPopupBuilderComponent implements OnChanges {
   /** @description State of the "Export in raw format" toggle. */
   rawFormat = false;
 
-  private sanitizer = inject(DomSanitizer);
 
   private get formatOptions(): ExportFormatOption[] {
     return createExportFormatOptions(this.i18n);
@@ -158,10 +157,6 @@ export class ExportPopupBuilderComponent implements OnChanges {
     // could not be imported back anyway.
     const allowed = this.rawFormat ? this.formats.filter(f => f !== 'xlsx') : this.formats;
     return this.formatOptions.filter(opt => allowed.includes(opt.value));
-  }
-
-  getIcon(svg: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(svg);
   }
 
   // ── Raw (import-compatible) format toggle ────────────────────

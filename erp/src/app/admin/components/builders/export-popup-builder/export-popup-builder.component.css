@@ -207,11 +207,6 @@ justify-content: center;
 flex-shrink: 0;
 }
 
-.export-format-icon svg {
-width: 18px;
-height: 18px;
-}
-
 .export-format-body {
 min-width: 0;
 flex: 1;

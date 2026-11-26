@@ -60,7 +60,7 @@
           class="export-format-card"
           [disabled]="formatGridDisabled"
           (click)="onSelect(option.value)">
-          <div class="export-format-icon" [innerHTML]="getIcon(option.icon)"></div>
+          <div class="export-format-icon"><app-admin-icon [name]="option.icon" [size]="24" /></div>
           <div class="export-format-body">
             <div class="export-format-label">{{ option.label }}</div>
             <div class="export-format-desc">{{ option.description }}</div>

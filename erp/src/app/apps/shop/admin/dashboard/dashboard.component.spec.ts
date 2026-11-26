@@ -274,7 +274,7 @@ describe('DashboardComponent (shop)', () => {
     /**
      * @description Money, dates, status labels and classes; stock bars.
      * @input  formatCurrency(1500), (NaN); formatDate(''), ('2026-03-04T05:06:00'); labels / classes for known and unknown states; stockPct
-     * @output cs-CZ EUR without decimals (finding #15, not CZK); '0 €' for NaN; '—'; cs-CZ date; translated or raw labels; classes; 8 % and capped 100 %
+     * @output cs-CZ EUR without decimals (finding #15, not CZK); '0 €' for NaN; '—'; cs-CZ date; translated or raw labels; classes; 8 % and capped 100 %; icon names (null for an unknown key)
      */
     it('formats values', () => {
       const eur = (v: number) => new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
@@ -292,7 +292,7 @@ describe('DashboardComponent (shop)', () => {
       expect(component.stockPct({ id: 1, name: '', sku: '', stock_quantity: 1, stock_warning_level: 4 })).toBe(8);
       expect(component.stockPct({ id: 1, name: '', sku: '', stock_quantity: 50, stock_warning_level: 4 })).toBe(100);
       expect(component.stockPct({ id: 1, name: '', sku: '', stock_quantity: 0, stock_warning_level: 0 })).toBe(0);
-      expect(String((component.getIcon('nope') as any).changingThisBreaksApplicationSecurity)).toBe('');
+      expect([component.iconOf('money'), component.iconOf('coupon'), component.iconOf('nope')]).toEqual(['dollar', 'ticket', null]);
     });
   });
 

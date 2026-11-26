@@ -58,7 +58,7 @@
       @if (!d.loadingStats && d.heroStat) {
         <div class="cd-hero-card" [class.cd-hero-urgent]="d.heroStat.urgent">
           <div class="cd-hero-top">
-            <div class="cd-hero-icon" [innerHTML]="d.getIcon(d.heroStat.icon)"></div>
+            <div class="cd-hero-icon">@if (d.iconOf(d.heroStat.icon); as icon) { <app-admin-icon [name]="icon" [size]="24" /> }</div>
 
             <div class="cd-hero-select-wrap">
               <button type="button" class="cd-hero-select-btn"
@@ -75,7 +75,7 @@
                 <div class="cd-hero-dropdown">
                   @for (stat of d.quickStats; track stat.key) {
                     <button type="button" class="cd-hero-dropdown-item" [class.active]="stat.key === d.heroStat.key" (click)="d.selectHeroStat(stat.key)">
-                      <span class="cd-hero-dropdown-icon" [innerHTML]="d.getIcon(stat.icon)"></span>
+                      <span class="cd-hero-dropdown-icon">@if (d.iconOf(stat.icon); as icon) { <app-admin-icon [name]="icon" [size]="24" /> }</span>
                       <span class="cd-hero-dropdown-label">{{ d.t(stat.labelKey) }}</span>
                       <span class="cd-hero-dropdown-value" [class.cd-hero-dropdown-value-urgent]="stat.urgent">{{ stat.value }}</span>
                     </button>
@@ -97,7 +97,7 @@
           <div class="cd-bar-list">
             @for (stat of d.secondaryStats; track stat.key) {
               <div class="cd-bar-row">
-                <div class="cd-bar-icon" [class.cd-bar-icon-urgent]="stat.urgent" [innerHTML]="d.getIcon(stat.icon)"></div>
+                <div class="cd-bar-icon" [class.cd-bar-icon-urgent]="stat.urgent">@if (d.iconOf(stat.icon); as icon) { <app-admin-icon [name]="icon" [size]="24" /> }</div>
                 <div class="cd-bar-body">
                   <div class="cd-bar-row-top">
                     <span class="cd-bar-label">{{ d.t(stat.labelKey) }}</span>
@@ -157,7 +157,7 @@
     <div class="cd-nav-grid">
       @for (section of d.visibleNavSections; track section.route) {
         <a class="cd-nav-card" [routerLink]="section.route">
-          <div class="cd-nav-icon" [innerHTML]="d.getIcon(section.icon)"></div>
+          <div class="cd-nav-icon">@if (d.iconOf(section.icon); as icon) { <app-admin-icon [name]="icon" [size]="24" /> }</div>
           <div class="cd-nav-body">
             <div class="cd-nav-title">{{ d.t(section.titleKey) }}</div>
             <div class="cd-nav-desc">{{ d.t(section.descriptionKey) }}</div>

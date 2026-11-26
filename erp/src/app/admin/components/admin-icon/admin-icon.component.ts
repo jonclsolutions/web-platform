@@ -7,7 +7,9 @@
  * @description Line icons of the admin navigation (sidebar items, module / application tabs,
  *   application cards) by name - the menus are built from data (admin-navigation.config.ts and
  *   the manifests of the applications), so an icon is a name there, not markup.
- *   Also the icons of the row buttons (RowButtonBuilderComponent).
+ *   Also the icons of the row buttons (RowButtonBuilderComponent), of the dashboards
+ *   (BaseDashboardComponent, the e-shop dashboard) and of the export formats - drawn by the
+ *   template, never inserted as HTML (no [innerHTML] / bypassSecurityTrustHtml in the admin).
  * @usage `<app-admin-icon name="folder" [size]="16" />`
  * @note Decorative only (aria-hidden) - the link / button always has its own text.
  */
@@ -15,7 +17,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 /** Names of the available icons. */
-export type AdminIconName = 'bar-chart' | 'book' | 'box' | 'briefcase' | 'building' | 'calendar' | 'cart' | 'check-circle' | 'check-square' | 'chevron-down' | 'clock' | 'code' | 'credit-card' | 'dollar' | 'external-link' | 'file-lines' | 'file-text' | 'folder' | 'globe' | 'globe-settings' | 'help-circle' | 'home' | 'image' | 'languages' | 'layers' | 'layout' | 'list' | 'lock' | 'message' | 'settings' | 'shield' | 'shield-check' | 'shopping-bag' | 'star' | 'tag' | 'trash' | 'truck' | 'user' | 'user-check' | 'users' | 'window';
+export type AdminIconName = 'bar-chart' | 'book' | 'box' | 'braces' | 'briefcase' | 'building' | 'calendar' | 'cart' | 'check-circle' | 'check-square' | 'chevron-down' | 'clipboard' | 'clock' | 'code' | 'credit-card' | 'dollar' | 'external-link' | 'file-lines' | 'file-text' | 'folder' | 'globe' | 'globe-settings' | 'help-circle' | 'home' | 'image' | 'inbox' | 'languages' | 'layers' | 'layout' | 'legal' | 'link' | 'list' | 'lock' | 'mail' | 'message' | 'package' | 'scale' | 'settings' | 'shield' | 'shield-check' | 'shopping-bag' | 'star' | 'table' | 'tag' | 'ticket' | 'trash' | 'truck' | 'user' | 'user-check' | 'users' | 'window';
 
 @Component({
   selector: 'app-admin-icon',
@@ -65,6 +67,16 @@ export type AdminIconName = 'bar-chart' | 'book' | 'box' | 'briefcase' | 'buildi
       @case ('message') { <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/> }
       @case ('settings') { <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/> }
       @case ('trash') { <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/> }
+      @case ('braces') { <path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1"/> }
+      @case ('clipboard') { <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/> }
+      @case ('inbox') { <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/> }
+      @case ('legal') { <path d="M12 3v18"/><path d="M7 21h10"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/><path d="m7 7 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m17 7 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/> }
+      @case ('link') { <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/> }
+      @case ('mail') { <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/> }
+      @case ('package') { <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/> }
+      @case ('scale') { <line x1="12" y1="3" x2="12" y2="21"/><path d="M5 8h14"/><path d="M5 8 2 15a3 3 0 0 0 6 0L5 8Z"/><path d="M19 8l-3 7a3 3 0 0 0 6 0l-3-7Z"/> }
+      @case ('table') { <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/> }
+      @case ('ticket') { <path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/> }
       @case ('tag') { <path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r="1"/> }
       }
     </svg>
