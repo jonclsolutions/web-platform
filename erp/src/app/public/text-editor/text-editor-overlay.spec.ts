@@ -22,6 +22,8 @@ describe('TextEditorOverlay', () => {
     { kind: 'text', key: 'menu.hidden' },
     { kind: 'content', section: 'faq' },
     { kind: 'text', key: 'contact.options.new' },
+    { kind: 'text', key: 'about.story_heading_2', missing: true },
+    { kind: 'content', section: 'jobs', missing: true },
   ];
   let host: jasmine.SpyObj<TextEditorOverlayHost>;
   let box: HTMLElement;
@@ -42,13 +44,16 @@ describe('TextEditorOverlay', () => {
   const layer = () => document.querySelector('jsw-text-editor-layer')!.shadowRoot!;
 
   beforeEach(() => {
-    host = jasmine.createSpyObj<TextEditorOverlayHost>('host', ['entry', 'contentLabel', 'onSelect', 'onContent', 'onScan']);
+    host = jasmine.createSpyObj<TextEditorOverlayHost>('host', ['entry', 'contentLabel', 'missingLabel', 'onSelect', 'onContent', 'onScan']);
     host.entry.and.callFake(index => entries[index]);
     host.contentLabel.and.returnValue('FAQ – upravit v části FAQ');
+    host.missingLabel.and.returnValue('Chybí');
     box = document.createElement('div');
     box.style.cssText = 'position:fixed;left:0;top:40px;width:600px;background:#fff;z-index:1;font:16px sans-serif;';
     const heading = markText('Často kladené otázky', 1, 'text').split(' ');
     box.innerHTML = `
+      <h2 style="margin:0"><span id="missing">${markText('Náš příběh', 6, 'text')}</span></h2>
+      <p style="margin:0"><span id="missing-content">${markText('Cannot load text', 7, 'content')}</span></p>
       <nav><a id="contact" href="/cs/contact">${markText('Kontakt', 0, 'text')}</a></nav>
       <h1 id="heading"><span>${heading[0]}</span> <span>${heading[1]}</span> <span>${heading[2]}</span></h1>
       <input id="search" placeholder="${markText('Hledat', 2, 'text')}">
@@ -73,14 +78,15 @@ describe('TextEditorOverlay', () => {
    * @description The scan finds 7 texts (one split into word spans) and reports the page: the
    *   path, the visible keys, the attribute text and the text hidden by CSS.
    * @input the fixture
-   * @output count 7 (the placeholder is an attribute; an option of a select is listed as `option`); onScan visible [navigation.contact,
+   * @output count 9 (the placeholder is an attribute; an option of a select is listed as `option`); onScan visible [navigation.contact,
    *   faq.header_1], hidden placeholder + hidden (menu.hidden); the middle word of the split
    *   heading hits it
    */
   it('finds the marked texts and reports the page', () => {
-    expect(overlay.count).toBe(7);
+    expect(overlay.count).toBe(9);
     const scan = host.onScan.calls.mostRecent().args[0];
-    expect(scan.visible).toEqual(['navigation.contact', 'faq.header_1']);
+    expect(scan.visible).toEqual(jasmine.arrayWithExactContents(['navigation.contact', 'faq.header_1', 'about.story_heading_2']));
+    expect(scan.missing).toEqual(['about.story_heading_2']);
     expect(scan.hidden).toContain({ key: 'contact.placeholder', where: 'placeholder' });
     expect(scan.hidden).toContain({ key: 'menu.hidden', where: 'hidden' });
     expect(scan.hidden).toContain({ key: 'contact.options.new', where: 'option' });
@@ -208,5 +214,25 @@ describe('TextEditorOverlay', () => {
     overlay.stop();
     expect(document.querySelector('jsw-text-editor-layer')).toBeNull();
     expect(document.documentElement.classList).not.toContain('jsw-text-editor-hover');
+  });
+
+  /**
+   * @description A text missing in the language (its Czech reference in place) and missing
+   *   content ('Cannot load text') are drawn orange with the "missing" label; a click selects the
+   *   missing text / reports the content section.
+   * @input mousemove over the missing heading / the missing content; clicks on both
+   * @output `.b.m` boxes; labels "Chybí · about.story_heading_2" and "Chybí · FAQ – …";
+   *   onSelect('about.story_heading_2'), onContent('jobs')
+   */
+  it('draws missing texts and content orange with the missing label', () => {
+    window.dispatchEvent(new MouseEvent('mousemove', center(document.getElementById('missing')!)));
+    expect(layer().querySelectorAll('.b.m').length).toBeGreaterThan(0);
+    expect(layer().querySelector('.l.m')!.textContent).toBe('Chybí · about.story_heading_2');
+    window.dispatchEvent(new MouseEvent('mousemove', center(document.getElementById('missing-content')!)));
+    expect(layer().querySelector('.l.c.m')!.textContent).toBe('Chybí · FAQ – upravit v části FAQ');
+    clickOn(document.getElementById('missing')!);
+    expect(host.onSelect).toHaveBeenCalledWith('about.story_heading_2');
+    clickOn(document.getElementById('missing-content')!);
+    expect(host.onContent).toHaveBeenCalledWith('jobs');
   });
 });

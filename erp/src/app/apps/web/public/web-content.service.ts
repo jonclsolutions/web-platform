@@ -168,7 +168,7 @@ export class WebContentService {
    */
   private load<T extends unknown[]>(endpoint: string, section: TextEditorContentSection, forget: () => void): Observable<T> {
     return this.publicData.get<T>(endpoint).pipe(
-      map(list => this.textEditor.markContent(list, section)),
+      map(list => this.textEditor.markContent(list, section, MISSING_TEXT)),
       catchError(() => {
         forget();
         return of([] as unknown as T);

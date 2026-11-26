@@ -24,13 +24,13 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-button-builder.component';
 import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
 import { AdminModalComponent } from '../admin-modal/admin-modal.component';
-import { LangMeta } from './base-translation-editor.component';
+import { TranslationLanguagesComponent } from './translation-languages/translation-languages.component';
 import { phoneQuery } from '../builders/table-cards';
 
 @Component({
   selector: 'app-translation-editor-view',
   standalone: true,
-  imports: [AsyncPipe, UpperCasePipe, FormsModule, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective, AdminModalComponent],
+  imports: [AsyncPipe, UpperCasePipe, FormsModule, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective, AdminModalComponent, TranslationLanguagesComponent],
   templateUrl: './translation-editor-view.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', '../../shared-styles/modal.css', './translation-editor-view.component.css'],
   changeDetection: ChangeDetectionStrategy.Default,
@@ -126,59 +126,9 @@ export class TranslationEditorViewComponent {
     this.manageOpen = true;
   }
 
-  /**
-   * @description Downloads the saved JSON of a language from its row.
-   * @param lang The language.
-   */
-  manageDownload(lang: LangMeta): void {
-    this.e.downloadSavedJson(lang.code);
-  }
-
-  /**
-   * @description The row of the open language warns that its unsaved edits are not in the download.
-   * @param lang The language.
-   */
-  hasUnsavedEdits(lang: LangMeta): boolean {
-    return this.e.isDirty && lang.code === this.e.currentLang;
-  }
-
-  /** @description Closes the window "Spravovat jazyky". */
+  /** @description Closes the window "Spravovat jazyky" (TranslationLanguagesComponent `closed`). */
   closeManage(): void {
     this.manageOpen = false;
-  }
-
-  /**
-   * @description Turns a language on / off - the window stays open (its state changes in place).
-   * @param lang The language.
-   */
-  manageToggle(lang: LangMeta): void {
-    this.e.toggleLangActive(lang);
-  }
-
-  /**
-   * @description Opens the upload of a JSON for a language - its window opens above this one,
-   *   which stays open under it (closing / finishing the upload comes back here).
-   * @param lang The language.
-   */
-  manageUpload(lang: LangMeta): void {
-    this.e.openUploadModal(lang.code);
-  }
-
-  /**
-   * @description Asks to delete a language - the confirmation opens above this window, which
-   *   stays open (a "Zrušit" by mistake comes back to the list, a delete updates it in place).
-   * @param lang The language.
-   */
-  manageDelete(lang: LangMeta): void {
-    this.e.askDeleteLang(lang);
-  }
-
-  /**
-   * @description Opens the form of a new language above this window, which stays open - the
-   *   added language appears in its list.
-   */
-  manageAdd(): void {
-    this.e.openAddForm();
   }
 
   /** The confirmation of throwing away the unsaved edits is open. */

@@ -6,7 +6,8 @@
  * @created 2026
  * @description Overlay of the website in the visual text editor: finds the marked texts of the
  *   rendered page (text-editor-markers), outlines them (translations red, content of the admin
- *   blue), shows the key of the text under the pointer and of the selected one, selects a text
+ *   blue, a text missing in the language orange - its Czech reference in its place), shows the
+ *   key of the text under the pointer and of the selected one, selects a text
  *   on a click (a link is not followed; other controls - an accordion, tabs - still work), and
  *   keeps the page from leaving the editor (forms are not
  *   sent, external links / new tabs are not opened). The page itself is never changed: the
@@ -23,8 +24,8 @@ import { stripLanguagePrefix } from '../../shared/utils/language-url';
 
 /** Entry of a mark: a translation key or a section of the content. */
 export type TextEditorEntry =
-  | { kind: 'text'; key: string }
-  | { kind: 'content'; section: TextEditorContentSection };
+  | { kind: 'text'; key: string; missing?: boolean }
+  | { kind: 'content'; section: TextEditorContentSection; missing?: boolean };
 
 /** What the overlay needs from its owner. */
 export interface TextEditorOverlayHost {
@@ -32,12 +33,14 @@ export interface TextEditorOverlayHost {
   entry(index: number): TextEditorEntry | undefined;
   /** Hover label of content of a section ("FAQ - edit in the FAQ part"). */
   contentLabel(section: TextEditorContentSection): string;
+  /** Prefix of the label of a missing text ("Chybí"). */
+  missingLabel(): string;
   /** A text was clicked. */
   onSelect(key: string): void;
   /** Content was clicked. */
   onContent(section: TextEditorContentSection): void;
   /** The page shows other texts than before. */
-  onScan(scan: { path: string; title: string; visible: string[]; hidden: TextEditorHiddenText[] }): void;
+  onScan(scan: { path: string; title: string; visible: string[]; missing: string[]; hidden: TextEditorHiddenText[] }): void;
 }
 
 /** One marked text on the page. */
@@ -76,6 +79,9 @@ const LAYER_CSS = `
 .b.s { border: 2.5px solid #ef4444; background: rgba(239, 68, 68, 0.12); }
 .l { position: absolute; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; border-radius: 4px; background: #ef4444; color: #fff; font: 600 11px/18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; pointer-events: none; }
 .l.c { background: #3b82f6; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+.b.m { border-color: #f97316; background: rgba(249, 115, 22, 0.2); }
+.b.m.s { border: 2.5px solid #f97316; background: rgba(249, 115, 22, 0.3); }
+.l.m { background: #ea580c; }
 `;
 
 export class TextEditorOverlay {
@@ -289,11 +295,13 @@ export class TextEditorOverlay {
   /** @description Sends what the page shows when it differs from the last report. */
   private report(): void {
     const visible = new Set<string>();
+    const missing = new Set<string>();
     const hidden = new Map<string, TextEditorHiddenText>();
     for (const item of this.items) {
       if (item.entry.kind !== 'text') continue;
       if (this.isShown(item.rect)) {
         visible.add(item.entry.key);
+        if (item.entry.missing) missing.add(item.entry.key);
       } else {
         // an option of a drop-down list is never drawn on the page itself
         const where = item.element.closest('option, select, datalist') ? 'option' : 'hidden';
@@ -310,6 +318,7 @@ export class TextEditorOverlay {
       path: stripLanguagePrefix(this.doc.defaultView!.location.pathname),
       title: stripMarks(this.doc.title),
       visible: [...visible],
+      missing: [...missing],
       hidden: [...hidden.values()],
     };
     const serialized = JSON.stringify(scan);
@@ -378,13 +387,15 @@ export class TextEditorOverlay {
       const selected = item.entry.kind === 'text' && item.entry.key === this.selectedKey;
       const hovered = item === this.hovered;
       const box = this.doc.createElement('div');
-      box.className = `b${item.entry.kind === 'content' ? ' c' : ''}${hovered ? ' h' : ''}${selected ? ' s' : ''}`;
+      const missingText = item.entry.missing ? ' m' : '';
+      box.className = `b${item.entry.kind === 'content' ? ' c' : ''}${missingText}${hovered ? ' h' : ''}${selected ? ' s' : ''}`;
       box.style.cssText = `left:${r!.left - OUTLINE_GAP}px;top:${r!.top - OUTLINE_GAP}px;width:${r!.width + 2 * OUTLINE_GAP}px;height:${r!.height + 2 * OUTLINE_GAP}px;`;
       parts.push(box);
       if (hovered || selected) {
         const label = this.doc.createElement('div');
-        label.className = `l${item.entry.kind === 'content' ? ' c' : ''}`;
-        label.textContent = item.entry.kind === 'text' ? item.entry.key : this.host.contentLabel(item.entry.section);
+        label.className = `l${item.entry.kind === 'content' ? ' c' : ''}${missingText}`;
+        const name = item.entry.kind === 'text' ? item.entry.key : this.host.contentLabel(item.entry.section);
+        label.textContent = item.entry.missing ? `${this.host.missingLabel()} · ${name}` : name;
         const above = r!.top - OUTLINE_GAP - 20;
         label.style.cssText = `left:${r!.left - OUTLINE_GAP}px;top:${above >= 2 ? above : r!.bottom + OUTLINE_GAP + 2}px;`;
         parts.push(label);

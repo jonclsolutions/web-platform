@@ -153,6 +153,51 @@ describe('PublicTextEditorService', () => {
   });
 
   /**
+   * @description Texts missing in the language: the Czech reference from the admin is shown in
+   *   their place (the key in brackets when Czech lacks it too) and marked as missing; a draft or
+   *   an existing text wins; another language is not touched.
+   * @input init {lang en, missing {about.heading_2: 'Náš příběh', about.x: '', faq.title: 'FAQ'}};
+   *   decorate({faq: {title: 'FAQs'}, about: {}}, 'en'); decorate for cz
+   * @output about.heading_2 'Náš příběh' (missing entry), about.x '[about.x]', faq.title 'FAQs'
+   *   (ordinary entry); cz without them
+   */
+  it('shows the Czech reference in place of a missing text', () => {
+    activate();
+    fromAdmin({
+      channel: TEXT_EDITOR_CHANNEL, type: 'init', lang: 'en', drafts: {}, selected: null, contentLabels: {}, missingLabel: 'Chybí',
+      missing: { 'about.heading_2': 'Náš příběh', 'about.x': '', 'faq.title': 'FAQ' },
+    });
+    const en = service.decorate({ faq: { title: 'FAQs' }, about: {} }, 'en') as any;
+    expect(stripMarks(en.about.heading_2)).toBe('Náš příběh');
+    expect(service.entry(scanMarks(en.about.heading_2)[0].index!)).toEqual({ kind: 'text', key: 'about.heading_2', missing: true });
+    expect(stripMarks(en.about.x)).toBe('[about.x]');
+    expect(service.entry(scanMarks(en.faq.title)[0].index!)).toEqual({ kind: 'text', key: 'faq.title' });
+    expect((service.decorate({ about: {} }, 'cz') as any).about.heading_2).toBeUndefined();
+
+    fromAdmin({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: 'en', values: { 'about.heading_2': 'Our story' } });
+    const drafted = service.decorate({ about: {} }, 'en') as any;
+    expect(stripMarks(drafted.about.heading_2)).toBe('Our story');
+    expect(keyOf(drafted.about.heading_2)).toBe('about.heading_2');
+    expect(service.entry(scanMarks(drafted.about.heading_2)[0].index!)).toEqual({ kind: 'text', key: 'about.heading_2' });
+  });
+
+  /**
+   * @description Content read in a language it lacks gives the placeholder marked as missing
+   *   content of its section; existing languages stay ordinary content.
+   * @input markContent([{name: {cz: 'Obecné'}}], 'faq', 'Cannot load text'); read name.en, name.cz
+   * @output name.en 'Cannot load text' with {content, faq, missing}; name.cz {content, faq}
+   */
+  it('marks the placeholder of content missing in a language', () => {
+    activate();
+    const [item] = service.markContent([{ name: { cz: 'Obecné', en: '' } as Record<string, string> }], 'faq', 'Cannot load text');
+    expect(stripMarks(item.name['de'])).toBe('Cannot load text');
+    expect(service.entry(scanMarks(item.name['de'])[0].index!)).toEqual({ kind: 'content', section: 'faq', missing: true });
+    expect(service.entry(scanMarks(item.name['en'])[0].index!)).toEqual({ kind: 'content', section: 'faq', missing: true });
+    expect(service.entry(scanMarks(item.name['cz'])[0].index!)).toEqual({ kind: 'content', section: 'faq' });
+    expect(Object.keys(item.name)).toEqual(['cz', 'en']);
+  });
+
+  /**
    * @description setAtPath creates the missing objects and writes into arrays by index.
    * @input {} 'a.b.c'; {list: [{x}]} 'list.0.x'
    * @output {a: {b: {c}}}; list[0].x replaced

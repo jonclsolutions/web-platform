@@ -271,8 +271,9 @@ class TranslationTest extends TestCase
      *   and built-in flags (never taken from the client); an icon for one of the codes can be
      *   uploaded with the list; invalid lists are refused.
      * @input File: web cz (built-in, icon), shop en. POST shop [{en}, {de}] + icon for de; POST web
-     *        [{cz isBuiltIn false}] ; invalid lists (no code, '../x', duplicate, not JSON).
-     * @output shop [en, de] with de icon stored; web cz still built-in with its icon; log; 422s.
+     *        [{cz isBuiltIn false}] ; invalid lists (no code, '../x', duplicate, not JSON); code 'tur'.
+     * @output shop [en, de] with de icon stored; web cz still built-in with its icon; log; 422s;
+     *         'tur' refused with the readable message of the code.
      */
     public function test_save_languages(): void
     {
@@ -302,6 +303,9 @@ class TranslationTest extends TestCase
             $this->postJson('/api/languages/shop', ['languages' => json_encode($invalid)])->assertStatus(422)->assertJson(['message' => 'Invalid language list.']);
         }
         $this->postJson('/api/languages/shop', ['languages' => 'not json'])->assertStatus(422)->assertJsonValidationErrors(['languages']);
+        $this->postJson('/api/languages/shop', ['languages' => json_encode([['code' => 'en', 'name' => 'English'], ['code' => 'tur', 'name' => 'Türkçe']])])
+            ->assertStatus(422)
+            ->assertJsonPath('errors', ['languages.1.code' => ['The language code must be 2 lowercase letters (e.g. sk, de, fr).']]);
     }
 
     /**

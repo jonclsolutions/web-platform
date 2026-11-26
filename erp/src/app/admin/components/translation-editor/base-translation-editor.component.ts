@@ -68,6 +68,9 @@ export interface LangMeta {
 /**
  * @description One flattened translation key (dot path) shown in the editor.
  */
+/** Code of a language: two lowercase letters (ISO 639-1), as accepted by the API. */
+export const LANGUAGE_CODE = /^[a-z]{2}$/;
+
 export interface FlatKey {
   path: string;
   value: string;
@@ -731,7 +734,8 @@ export abstract class BaseTranslationEditorComponent
       this.cd.markForCheck();
       return;
     }
-    if (!/^[a-z]{2,5}$/.test(code)) {
+    // two letters (ISO 639-1) - the same as the API, the language of the website URLs (/en/faq)
+    if (!LANGUAGE_CODE.test(code)) {
       this.addFormError = this.t('code_format_error');
       this.cd.markForCheck();
       return;
@@ -758,7 +762,8 @@ export abstract class BaseTranslationEditorComponent
       fd.append('target_code', code);
     }
 
-    this.dataHandler.upload<null>(`languages/${this.MODULE}`, fd)  // 204 since finding #6
+    // Quietly: a refusal is explained in the window itself (no second, global dialog).
+    this.dataHandler.postQuietly<null>(`languages/${this.MODULE}`, fd)  // 204 since finding #6
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -779,11 +784,29 @@ export abstract class BaseTranslationEditorComponent
             'success'
           );
         },
-        error: () => {
-          this.addFormError = this.t('language_save_failed_error');
+        error: (err) => {
+          this.addFormError = this.t(err?.status === 422 ? 'code_format_error' : 'language_save_failed_error');
           this.cd.markForCheck();
         }
       });
+  }
+
+  /**
+   * @description The code field of a new language: only letters, lowercase, at most 2 - a wrong
+   *   code cannot be typed (diacritics, digits and spaces are dropped as typed / pasted).
+   * @param event Input event of the field.
+   */
+  onLangCodeInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const code = input.value.toLowerCase().replace(/[^a-z]/g, '').slice(0, 2);
+    if (input.value !== code) {
+      input.value = code;
+    }
+    this.newLangCode = code;
+    if (this.addFormError) {
+      this.addFormError = '';
+    }
+    this.cd.markForCheck();
   }
 
   askDeleteLang(lang: LangMeta): void {

@@ -110,7 +110,7 @@ describe('EditEshopComponent', () => {
   /**
    * @description Languages of the shop module are added and deleted on languages/shop.
    * @input  add 'de' / 'Deutsch'; then delete English
-   * @output upload('languages/shop', FormData with module 'shop'); delete('languages/shop/en')
+   * @output postQuietly('languages/shop', FormData with module 'shop'); delete('languages/shop/en')
    */
   it('manages the languages of the shop module', fakeAsync(() => {
     component.ngOnInit();
@@ -118,7 +118,7 @@ describe('EditEshopComponent', () => {
     component.newLangCode = 'de';
     component.newLangName = 'Deutsch';
     component.confirmAddLang();
-    const [url, fd] = (ctx.dataHandler as any).upload.calls.mostRecent().args;
+    const [url, fd] = (ctx.dataHandler as any).postQuietly.calls.mostRecent().args;
     expect(url).toBe('languages/shop');
     expect((fd as FormData).get('module')).toBe('shop');
     component.askDeleteLang({ code: 'en', name: 'English', active: true });

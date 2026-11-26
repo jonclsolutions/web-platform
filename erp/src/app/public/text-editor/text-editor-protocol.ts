@@ -39,10 +39,14 @@ export interface TextEditorHiddenText {
 
 /** Admin → frame. */
 export type TextEditorToFrame =
-  /** First message after `ready`: hover labels of the content, the drafts and the selected key. */
-  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'init'; lang: string; drafts: Record<string, string>; selected: string | null; contentLabels: Partial<Record<TextEditorContentSection, string>> }
-  /** Unsaved texts of a language (whole set - replaces the previous one; empty = none). */
-  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'drafts'; lang: string; values: Record<string, string> }
+  /**
+   * First message after `ready`: hover labels (content, "missing"), the drafts, the texts missing
+   * in the language (key → Czech reference, shown in their place) and the selected key.
+   */
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'init'; lang: string; drafts: Record<string, string>; missing: Record<string, string>; selected: string | null; contentLabels: Partial<Record<TextEditorContentSection, string>>; missingLabel: string }
+  /** Unsaved texts of a language (whole set - replaces the previous one; empty = none); with the
+   *  texts missing in it when they changed. */
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'drafts'; lang: string; values: Record<string, string>; missing?: Record<string, string> }
   /** Highlight a key (null = nothing); `reveal` scrolls the page to it. */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'select'; key: string | null; reveal: boolean }
   /** The drafts were saved - they become the texts of the page. */
@@ -52,8 +56,8 @@ export type TextEditorToFrame =
 export type TextEditorFromFrame =
   /** The page of the frame is running in editor mode and waits for `init`. */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'ready' }
-  /** What the page shows: its path (without language), title, clickable and hidden keys. */
-  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'scan'; path: string; title: string; visible: string[]; hidden: TextEditorHiddenText[] }
+  /** What the page shows: its path (without language), title, clickable, missing (shown) and hidden keys. */
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'scan'; path: string; title: string; visible: string[]; missing: string[]; hidden: TextEditorHiddenText[] }
   /** A text was clicked. */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'select'; key: string }
   /** Content of the admin was clicked (FAQ question, reference…). */

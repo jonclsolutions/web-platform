@@ -1,0 +1,221 @@
+<!--
+    @file: translation-languages.component.html
+    @path: /src/app/admin/components/translation-editor/translation-languages/translation-languages.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: The languages of a translation editor: the window "Jazyky" (`open`) and the
+        windows of a new language, of the JSON upload and of deleting a language (above the window
+        "Jazyky" when it is open). Logic: translation-languages.component.ts.
+-->
+
+@if (e.showAddForm) {
+  <!-- Opened from "Spravovat jazyky" it lies above that window (prompt level), which stays open. -->
+  <app-admin-modal size="md" [heading]="e.t('add_language_button')" [level]="open ? 'prompt' : 'content'" (dismissed)="e.closeAddForm()">
+    <div class="ew-modal-content">
+
+      <div class="ew-field">
+        <label class="ew-label">{{ e.t('icon_field_label') }} <span class="ew-hint">{{ e.t('icon_field_hint') }}</span></label>
+        <div class="ew-icon-upload-row">
+
+          <div class="ew-icon-upload-zone"
+              [class.ew-icon-upload-zone--has]="e.newLangIconPreview"
+              (click)="fileInput.click()">
+
+            @if (e.newLangIconPreview) {
+              <img [src]="e.newLangIconPreview" class="ew-icon-preview" [alt]="e.t('icon_preview_alt')">
+            } @else {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+            }
+
+            <input type="file" #fileInput hidden
+                  accept="image/png,image/jpeg,image/webp"
+                  (change)="e.onIconFileSelected($event)">
+          </div>
+
+          @if (e.newLangIconPreview) {
+            <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm"
+                    (click)="e.clearIconSelection()">{{ e.t('remove_button') }}</button>
+          }
+        </div>
+      </div>
+
+      <div class="ew-field-row">
+        <div class="ew-field">
+          <label class="ew-label">{{ e.t('code_field_label') }} <span class="ew-req">*</span></label>
+          <input
+            type="text"
+            [ngModel]="e.newLangCode"
+            (input)="e.onLangCodeInput($event)"
+            placeholder="sk"
+            maxlength="2"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            class="ew-input ew-input--mono">
+          <span class="ew-hint-text">{{ e.t('code_field_hint') }}</span>
+        </div>
+        <div class="ew-field">
+          <label class="ew-label">{{ e.t('name_field_label') }} <span class="ew-req">*</span></label>
+          <input
+            type="text"
+            [(ngModel)]="e.newLangName"
+            [placeholder]="e.t('name_field_placeholder')"
+            class="ew-input">
+        </div>
+      </div>
+
+      <div class="ew-field">
+        <label class="ew-checkbox-label">
+          <input type="checkbox" [(ngModel)]="e.newLangActive" class="ew-checkbox">
+          <span class="ew-checkbox-box"></span>
+          <span>{{ e.t('active_checkbox_label') }}</span>
+        </label>
+      </div>
+
+      @if (e.addFormError) {
+        <div class="ew-form-error">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ e.addFormError }}
+        </div>
+      }
+    </div>
+
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="e.closeAddForm()">{{ e.i18n.getValue('shared.cancel') }}</button>
+      <button type="button" class="am-btn am-btn--primary" (click)="e.confirmAddLang()">{{ e.t('add_language_button') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}
+
+@if (e.showUploadModal) {
+  <app-admin-modal size="md" [heading]="e.t('upload_json_button') + ' (' + (e.uploadLangCode | uppercase) + ')'" [level]="open ? 'prompt' : 'content'" (dismissed)="e.closeUploadModal()">
+    <div class="ew-modal-content">
+      <p class="ew-modal-desc">
+        {{ e.t('upload_modal_description') }}
+      </p>
+
+      <div class="ew-json-drop-zone" (click)="jsonInput.click()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>{{ e.t('json_drop_zone_text') }} <code>.json</code> {{ e.t('json_drop_zone_text_suffix') }}</span>
+
+        <input type="file" #jsonInput hidden
+               accept=".json,application/json"
+               (change)="e.onJsonFileSelected($event)">
+      </div>
+
+      @if (e.uploadError) {
+        <div class="ew-form-error">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ e.uploadError }}
+        </div>
+      }
+      <!-- Keys of a refused upload: what the file lacks / has extra compared with Czech. -->
+      @if (e.uploadMismatch; as mismatch) {
+        <div class="ew-upload-keys">
+          @if (mismatch.missingCount) {
+            <p class="ew-upload-keys-title">{{ e.t('upload_missing_keys_label') }} ({{ mismatch.missingCount }})</p>
+            <ul class="ew-upload-keys-list">
+              @for (key of mismatch.missing; track key) { <li><code>{{ key }}</code></li> }
+            </ul>
+            @if (e.moreKeys(mismatch.missing, mismatch.missingCount); as more) { <p class="ew-upload-keys-more">{{ more }}</p> }
+          }
+          @if (mismatch.unexpectedCount) {
+            <p class="ew-upload-keys-title">{{ e.t('upload_unexpected_keys_label') }} ({{ mismatch.unexpectedCount }})</p>
+            <ul class="ew-upload-keys-list">
+              @for (key of mismatch.unexpected; track key) { <li><code>{{ key }}</code></li> }
+            </ul>
+            @if (e.moreKeys(mismatch.unexpected, mismatch.unexpectedCount); as more) { <p class="ew-upload-keys-more">{{ more }}</p> }
+          }
+        </div>
+      }
+      @if (e.uploadSuccess) {
+        <div class="ew-form-success">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          {{ e.uploadSuccess }}
+        </div>
+      }
+    </div>
+
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="e.closeUploadModal()">{{ e.i18n.getValue('shared.close') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}
+
+@if (e.langToDelete) {
+  <app-admin-modal size="sm" [heading]="e.t('delete_language_title')" [level]="open ? 'prompt' : 'content'" (dismissed)="e.cancelDelete()">
+    <div class="ew-modal-content">
+      <p class="ew-modal-desc">
+        {{ e.t('delete_confirm_prefix') }}
+        <strong>{{ e.langToDelete.name }} ({{ e.langToDelete.code | uppercase }})</strong>?
+        {{ e.t('delete_confirm_suffix') }}
+      </p>
+    </div>
+
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="e.cancelDelete()">{{ e.i18n.getValue('shared.cancel') }}</button>
+      <button type="button" class="am-btn am-btn--danger" (click)="e.confirmDeleteLang()">{{ e.t('delete_language_title') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}
+
+<!-- The window "Jazyky" (`open`): managing the languages in one window - turn on / off
+     in place; download the saved JSON of the language; upload, delete and a new language open
+     their own windows. The main language cannot be turned off or deleted. Without the edit
+     permission only the download. -->
+@if (open) {
+  <app-admin-modal size="md" [heading]="e.t('manage_languages_button')" [subheading]="e.t('manage_languages_subtitle')"
+                   (dismissed)="closeManage()">
+    <ul class="ew-manage-list">
+      @for (lang of e.languages; track e.trackByCode($index, lang)) {
+        <li class="ew-manage-row">
+          <span class="ew-manage-lang">
+            @if (lang.iconUrl) {
+              <img [src]="lang.iconUrl" class="ew-lang-icon-sm" alt="">
+            }
+            <span class="ew-lang-badge">{{ lang.code | uppercase }}</span>
+            <span class="ew-manage-name">{{ lang.name }}</span>
+          </span>
+          <span class="ew-manage-state" [class.is-off]="!lang.active">
+            {{ lang.isBuiltIn ? e.t('built_in_label') : (lang.active ? e.t('active_label') : e.t('inactive_label')) }}
+          </span>
+          <span class="ew-manage-actions">
+            @if (!lang.isBuiltIn && e.canUpdate) {
+              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm" (click)="manageToggle(lang)">
+                {{ lang.active ? e.t('deactivate_title') : e.t('activate_title') }}
+              </button>
+            }
+            <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm ew-manage-download" (click)="manageDownload(lang)"
+                    [title]="e.t('download_json_title')">
+              {{ e.t('download_json_button') }}
+            </button>
+            @if (e.canUpdate) {
+              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm ew-manage-upload" (click)="manageUpload(lang)"
+                      [title]="e.t('upload_json_title')">
+                {{ e.t('upload_json_button') }}
+              </button>
+            }
+            @if (!lang.isBuiltIn && e.canUpdate) {
+              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm ew-manage-delete" (click)="manageDelete(lang)"
+                      [title]="e.t('delete_language_title')">
+                {{ e.t('delete_button') }}
+              </button>
+            }
+          </span>
+          @if (hasUnsavedEdits(lang)) {
+            <span class="ew-manage-note" role="note">{{ e.t('unsaved_download_note') }}</span>
+          }
+        </li>
+      }
+    </ul>
+    <ng-container modal-footer>
+      @if (e.canUpdate) {
+        <button type="button" class="am-btn am-btn--secondary" (click)="manageAdd()">+ {{ e.t('add_language_button') }}</button>
+      }
+      <button type="button" class="am-btn am-btn--secondary" (click)="closeManage()">{{ e.i18n.getValue('shared.close') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

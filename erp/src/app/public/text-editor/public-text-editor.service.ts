@@ -7,7 +7,8 @@
  * @description Editor mode of the public website - the website shown in the frame of the visual
  *   text editor of the admin. Active only inside the frame of the editor on a page of the admin
  *   of the same origin; then it marks every text of the translations (LocalizationService) and
- *   of the content (WebContentService) with the invisible marks of its key, applies the unsaved
+ *   of the content (WebContentService) with the invisible marks of its key, shows the Czech
+ *   reference in place of a text missing in the language (orange), applies the unsaved
  *   texts sent by the admin (live preview), runs the overlay (outlines, selection) and talks to
  *   the admin with window messages (text-editor-protocol).
  * @usage `inject(PublicTextEditorService).active` - the cookie bar, the analytics and the language
@@ -59,6 +60,16 @@ export function isTextEditorFrame(win: Window): boolean {
 }
 
 /**
+ * @description Value at a dot path.
+ * @param target Object.
+ * @param path `a.b.0.c`.
+ * @returns The value, undefined when the path does not exist.
+ */
+export function getAtPath(target: any, path: string): unknown {
+  return path.split('.').reduce((node: any, part) => (node == null ? undefined : node[part]), target);
+}
+
+/**
  * @description Sets a value at a dot path (creates the missing objects).
  * @param target Object.
  * @param path `a.b.0.c`.
@@ -91,8 +102,14 @@ export class PublicTextEditorService {
   /** Unsaved texts of `draftLang`. */
   private drafts: Record<string, string> = {};
   private draftLang: string | null = null;
+  /** Texts missing in `draftLang`: key → Czech reference shown in their place (orange). */
+  private missing: Record<string, string> = {};
   /** Hover labels of the content sections (from the admin, in its language). */
   private contentLabels: Partial<Record<TextEditorContentSection, string>> = {};
+  /** Prefix of the label of a missing text (from the admin). */
+  private missingLabel = 'Missing';
+  private readonly missingIndex = new Map<string, number>();
+  private readonly contentMissingIndex = new Map<TextEditorContentSection, number>();
   private overlay: TextEditorOverlay | null = null;
 
   private readonly changesSource = new Subject<void>();
@@ -125,12 +142,21 @@ export class PublicTextEditorService {
       return data;
     }
     const copy = structuredClone(data);
+    const missingPaths = new Set<string>();
     if (this.draftLang === lang) {
       for (const [path, value] of Object.entries(this.drafts)) {
         setAtPath(copy, path, value);
       }
+      // a text still empty in the language shows its Czech reference (key when Czech lacks it too)
+      for (const [path, reference] of Object.entries(this.missing)) {
+        const current = getAtPath(copy, path);
+        if (typeof current !== 'string' || !current.trim()) {
+          setAtPath(copy, path, reference?.trim() ? reference : `[${path}]`);
+          missingPaths.add(path);
+        }
+      }
     }
-    return this.markTree(copy, '');
+    return this.markTree(copy, '', missingPaths);
   }
 
   /**
@@ -138,13 +164,26 @@ export class PublicTextEditorService {
    *   with its section (blue outline). Outside the editor the same list.
    * @param list Content list (FAQ categories, positions…).
    * @param section Its part of the admin.
+   * @param missingText Placeholder of a text missing in a language ('Cannot load text') - in the
+   *   editor it is marked as missing content (orange) when a page reads such a language.
    * @returns A marked copy.
    */
-  markContent<T>(list: T, section: TextEditorContentSection): T {
+  markContent<T>(list: T, section: TextEditorContentSection, missingText = ''): T {
     if (!this.active) {
       return list;
     }
     const index = this.contentEntry(section);
+    const missingIndex = this.contentMissingEntry(section);
+    // a text per language: the languages it has are marked, any other language read by a page
+    // gives the marked placeholder (`text[lang]` of localizedText())
+    const asText = (marked: Record<string, string>) => new Proxy(marked, {
+      get: (target, prop, receiver) => {
+        if (typeof prop === 'string' && LANGUAGE_KEY.test(prop) && missingText && !(typeof target[prop] === 'string' && target[prop].trim())) {
+          return markText(missingText, missingIndex, 'content');
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
     const walk = (node: any): any => {
       if (Array.isArray(node)) {
         return node.map(walk);
@@ -154,9 +193,10 @@ export class PublicTextEditorService {
         const isText = keys.length > 0 && keys.every(k => LANGUAGE_KEY.test(k) && (typeof node[k] === 'string' || node[k] == null));
         const out: any = {};
         for (const key of keys) {
-          out[key] = isText && typeof node[key] === 'string' ? markText(node[key], index, 'content') : walk(node[key]);
+          // an empty text stays empty - the page reads it as missing (the placeholder above)
+          out[key] = isText && typeof node[key] === 'string' ? (node[key].trim() ? markText(node[key], index, 'content') : node[key]) : walk(node[key]);
         }
-        return out;
+        return isText ? asText(out) : out;
       }
       return node;
     };
@@ -184,6 +224,26 @@ export class PublicTextEditorService {
     return index;
   }
 
+  /** @returns Number of the entry of a text missing in the language (created once). */
+  private missingEntry(key: string): number {
+    let index = this.missingIndex.get(key);
+    if (index === undefined) {
+      index = this.entries.push({ kind: 'text', key, missing: true }) - 1;
+      this.missingIndex.set(key, index);
+    }
+    return index;
+  }
+
+  /** @returns Number of the entry of missing content of a section (created once). */
+  private contentMissingEntry(section: TextEditorContentSection): number {
+    let index = this.contentMissingIndex.get(section);
+    if (index === undefined) {
+      index = this.entries.push({ kind: 'content', section, missing: true }) - 1;
+      this.contentMissingIndex.set(section, index);
+    }
+    return index;
+  }
+
   /** @returns Number of the entry of a content section (created once). */
   private contentEntry(section: TextEditorContentSection): number {
     let index = this.contentIndex.get(section);
@@ -198,15 +258,17 @@ export class PublicTextEditorService {
    * @description Marks every string leaf of the translations with its dot path (identifiers excepted).
    * @param node Subtree (changed in place).
    * @param path Its dot path.
+   * @param missingPaths Texts shown in place of missing ones (marked as missing).
    */
-  private markTree(node: any, path: string): any {
+  private markTree(node: any, path: string, missingPaths: Set<string>): any {
     if (typeof node === 'string') {
       const leaf = path.slice(path.lastIndexOf('.') + 1);
-      return NON_TEXT_LEAVES.has(leaf) ? node : markText(node, this.textEntry(path), 'text');
+      if (NON_TEXT_LEAVES.has(leaf)) return node;
+      return markText(node, missingPaths.has(path) ? this.missingEntry(path) : this.textEntry(path), 'text');
     }
     if (node && typeof node === 'object') {
       for (const key of Object.keys(node)) {
-        node[key] = this.markTree(node[key], path ? `${path}.${key}` : key);
+        node[key] = this.markTree(node[key], path ? `${path}.${key}` : key, missingPaths);
       }
     }
     return node;
@@ -218,6 +280,7 @@ export class PublicTextEditorService {
     this.overlay = new TextEditorOverlay(document, {
       entry: index => this.entry(index),
       contentLabel: section => this.contentLabels[section] ?? section,
+      missingLabel: () => this.missingLabel,
       onSelect: key => this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key }),
       onContent: section => this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'content', section }),
       onScan: scan => this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'scan', ...scan }),
@@ -239,10 +302,15 @@ export class PublicTextEditorService {
       switch (message.type) {
         case 'init':
           this.contentLabels = message.contentLabels ?? {};
+          this.missingLabel = message.missingLabel || this.missingLabel;
+          this.missing = { ...(message.missing ?? {}) };
           this.setDrafts(message.lang, message.drafts);
           this.overlay?.select(message.selected, false);
           break;
         case 'drafts':
+          if (message.missing) {
+            this.missing = { ...message.missing };
+          }
           this.setDrafts(message.lang, message.values);
           break;
         case 'select':

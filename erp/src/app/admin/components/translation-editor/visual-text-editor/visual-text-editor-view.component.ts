@@ -9,7 +9,9 @@
  *   page, language, Zahodit změny / Uložit, close) and a side panel with the selected text -
  *   its key, the Czech reference, the saved version and the field for the edit. Edits show on the
  *   page at once and reach the website after Uložit; content of the admin (FAQ, references…)
- *   points to its part. The translation state, saving and discarding are those of the
+ *   points to its part. A text missing in the language shows its Czech reference (orange) and is
+ *   listed in the panel; every language is offered (a switched off one with a notice and its
+ *   switch-on) and the window "Jazyky" manages them as on the list of the texts. The translation state, saving and discarding are those of the
  *   translation editor of the module (`e`, BaseTranslationEditorComponent).
  * @usage `<app-visual-text-editor-view [e]="this" [pages]="pages" backRoute="/admin/web/edit-website" />`
  *   in a page component that extends BaseTranslationEditorComponent.
@@ -24,14 +26,15 @@
  */
 
 import {
-  AfterViewInit, ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, Input, NgZone, OnDestroy,
+  AfterViewInit, ChangeDetectorRef, Component, DestroyRef, DoCheck, ElementRef, HostListener, Input, NgZone, OnDestroy,
   OnInit, ViewChild, inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { BaseTranslationEditorComponent, LangMeta } from '../base-translation-editor.component';
+import { BaseTranslationEditorComponent, FlatKey, LangMeta } from '../base-translation-editor.component';
 import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
+import { TranslationLanguagesComponent } from '../translation-languages/translation-languages.component';
 import { phoneQuery } from '../../builders/table-cards';
 import { withLanguagePrefix } from '../../../../shared/utils/language-url';
 import {
@@ -62,11 +65,11 @@ export function safeFramePath(path: string | null | undefined): string {
 @Component({
   selector: 'app-visual-text-editor-view',
   standalone: true,
-  imports: [FormsModule, AdminModalComponent],
+  imports: [FormsModule, AdminModalComponent, TranslationLanguagesComponent],
   templateUrl: './visual-text-editor-view.component.html',
   styleUrls: ['../../../shared-styles/theme.css', '../../../../shared/styles/base.css', '../../../shared-styles/modal.css', './visual-text-editor-view.component.css'],
 })
-export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnDestroy {
+export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoCheck, OnDestroy {
   /** Translation editor of the module (state, saving, discarding, texts of the page). */
   @Input({ required: true }) e!: BaseTranslationEditorComponent;
   /** Pages of the website offered in the page list. */
@@ -96,6 +99,10 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
   visibleKeys: string[] = [];
   /** Texts of the page that cannot be clicked (attributes, hidden). */
   hiddenTexts: TextEditorHiddenText[] = [];
+  /** Keys of the texts missing in the language that the page shows (Czech reference in place). */
+  missingKeys: string[] = [];
+  /** The window "Jazyky" is open. */
+  languagesOpen = false;
   /** Selected text (key), null = none. */
   selectedKey: string | null = null;
   /** Clicked content of the admin, null = none. */
@@ -109,6 +116,14 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
 
   /** Saved values of the edited texts (before their first edit since the last save / load). */
   private readonly originals = new Map<string, string>();
+  /** Language of the page shown in the frame (a deleted language switches the page to Czech). */
+  private frameLang = '';
+  /** Languages (code / state) when last seen - an added / deleted / switched language reloads the page. */
+  private languagesSeen = '';
+  /** Texts of the language when last sent (a reload of the texts sends the missing ones again). */
+  private keysSeen: FlatKey[] | null = null;
+  /** Message of the JSON upload when last seen (an upload of the open language reloads the page). */
+  private uploadSeen = '';
   private phone: MediaQueryList | null = null;
   private readonly onPhoneChange = (event: MediaQueryListEvent) => this.zone.run(() => {
     this.isPhone = event.matches;
@@ -136,6 +151,30 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
     }
   }
 
+  /**
+   * @description Follows the languages and texts of the editor changed in the window "Jazyky":
+   *   a deleted open language (Czech is opened), an added / deleted / switched language or an
+   *   uploaded JSON of the open language reload the page; reloaded texts send the missing ones.
+   */
+  ngDoCheck(): void {
+    if (this.isPhone || !this.frameRef) return;
+    const languages = this.e.languages.map(lang => `${lang.code}:${lang.active ? 1 : 0}`).join(',');
+    const uploaded = this.e.showUploadModal && this.e.uploadSuccess && this.e.uploadLangCode === this.e.currentLang ? this.e.uploadSuccess : '';
+    const reload = this.e.currentLang !== this.frameLang
+      || (this.languagesSeen !== '' && languages !== this.languagesSeen)
+      || (uploaded !== '' && uploaded !== this.uploadSeen);
+    this.languagesSeen = languages;
+    this.uploadSeen = uploaded;
+    if (reload && this.frameLang !== '') {
+      this.originals.clear();
+      this.navigateFrame(this.framePath);
+    }
+    if (this.e.flattenedKeys !== this.keysSeen) {
+      this.keysSeen = this.e.flattenedKeys;
+      this.postDrafts();
+    }
+  }
+
   /** @description Stops listening. */
   ngOnDestroy(): void {
     window.removeEventListener('message', this.onMessage);
@@ -156,9 +195,28 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
 
   // ── Page, language, leaving ─────────────────────────────────
 
-  /** @returns Active languages (the website shows only them). */
-  get activeLanguages(): LangMeta[] {
-    return this.e.languages.filter(lang => lang.active);
+  /** @returns The current language when it is switched off (visitors do not see it), else null. */
+  get inactiveLang(): LangMeta | null {
+    const lang = this.e.getCurrentLangMeta();
+    return lang && !lang.active && !lang.isBuiltIn ? lang : null;
+  }
+
+  /** @description Switches the open (switched off) language on - visitors see it at once. */
+  activateLang(): void {
+    const lang = this.inactiveLang;
+    if (lang && this.e.canUpdate) {
+      this.e.toggleLangActive(lang);
+    }
+  }
+
+  /** @description Opens the window "Jazyky" (the same as on the list of the texts). */
+  openLanguages(): void {
+    this.languagesOpen = true;
+  }
+
+  /** @description Closes the window "Jazyky". */
+  closeLanguages(): void {
+    this.languagesOpen = false;
   }
 
   /** @returns Name of the current language. */
@@ -354,6 +412,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
     const frame = this.frameRef?.nativeElement;
     if (!frame) return;
     this.framePath = safeFramePath(path);
+    this.frameLang = this.e.currentLang;
     this.frameLoading = true;
     frame.src = withLanguagePrefix(this.framePath, this.e.currentLang);
     this.cd.markForCheck();
@@ -368,9 +427,23 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
     return drafts;
   }
 
-  /** @description Sends the edits to the page. */
+  /**
+   * @returns Texts missing in the language by key with their Czech reference (shown in their
+   *   place on the page, orange); Czech itself has no reference - the page shows the key.
+   */
+  private missingTexts(): Record<string, string> {
+    const missing: Record<string, string> = {};
+    for (const key of this.e.flattenedKeys) {
+      if (key.missing) {
+        missing[key.path] = this.e.currentLang === 'cz' ? '' : this.czValue(key.path);
+      }
+    }
+    return missing;
+  }
+
+  /** @description Sends the edits and the missing texts to the page. */
   private postDrafts(): void {
-    this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: this.e.currentLang, values: this.drafts() });
+    this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: this.e.currentLang, values: this.drafts(), missing: this.missingTexts() });
   }
 
   /**
@@ -397,13 +470,15 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, OnD
           this.frameLoading = false;
           this.post({
             channel: TEXT_EDITOR_CHANNEL, type: 'init', lang: this.e.currentLang, drafts: this.drafts(),
-            selected: this.selectedKey, contentLabels: this.contentLabels(),
+            missing: this.missingTexts(), selected: this.selectedKey, contentLabels: this.contentLabels(),
+            missingLabel: this.e.t('editor_missing_label'),
           });
           break;
         case 'scan':
           this.framePath = safeFramePath(message.path);
           this.pageTitle = message.title;
           this.visibleKeys = message.visible;
+          this.missingKeys = message.missing ?? [];
           this.hiddenTexts = message.hidden;
           break;
         case 'select':

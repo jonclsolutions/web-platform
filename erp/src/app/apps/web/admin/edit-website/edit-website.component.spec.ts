@@ -23,6 +23,7 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { PageTitlesEditorComponent } from '../../../../admin/components/page-titles-editor/page-titles-editor.component';
 import { EditWebsiteComponent } from './edit-website.component';
+import { TranslationLanguagesComponent } from '../../../../admin/components/translation-editor/translation-languages/translation-languages.component';
 import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
 import { JobsEditorComponent } from './content-editors/jobs-editor/jobs-editor.component';
 import { ReferencesEditorComponent } from './content-editors/references-editor/references-editor.component';
@@ -33,6 +34,8 @@ describe('EditWebsiteComponent', () => {
   let ctx: AdminTestContext;
   let fixture: ComponentFixture<EditWebsiteComponent>;
   let component: EditWebsiteComponent;
+  /** The languages component of the page (window "Jazyky"). */
+  const langs = (): TranslationLanguagesComponent => fixture.debugElement.query(By.directive(TranslationLanguagesComponent)).componentInstance;
 
   const languages = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }, { code: 'en', name: 'English', active: true }];
   const cz = { home: { title: 'Domů', cta: 'Kontakt' }, footer: 'Patička' };
@@ -204,9 +207,10 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
-   * @description A new language needs a valid unique code (2–5 letters) and a name.
-   * @input  confirmAddLang() with '' / 'x1' / 'en' / 'SK' + 'Slovenčina'
-   * @output errors code_and_name_required_error, code_format_error, code_already_exists_error; then upload('languages/web', FormData) with 'sk'
+   * @description A new language needs a valid unique code (2 letters, as the API) and a name.
+   * @input  confirmAddLang() with '' / 'x1' / 'tur' / 'en' / 'SK' + 'Slovenčina'
+   * @output errors code_and_name_required_error, code_format_error (×2), code_already_exists_error;
+   *   then postQuietly('languages/web', FormData) with 'sk'
    */
   it('validates and adds a new language', fakeAsync(() => {
     component.ngOnInit();
@@ -217,13 +221,16 @@ describe('EditWebsiteComponent', () => {
     component.newLangCode = 'x1';
     component.confirmAddLang();
     expect(component.addFormError).toBe('edit-website.code_format_error');
+    component.newLangCode = 'tur';
+    component.confirmAddLang();
+    expect(component.addFormError).toBe('edit-website.code_format_error');
     component.newLangCode = 'en';
     component.confirmAddLang();
     expect(component.addFormError).toBe('edit-website.code_already_exists_error');
     component.newLangCode = ' SK ';
     component.newLangName = 'Slovenčina';
     component.confirmAddLang();
-    const [url, fd] = (ctx.dataHandler as any).upload.calls.mostRecent().args;
+    const [url, fd] = (ctx.dataHandler as any).postQuietly.calls.mostRecent().args;
     expect(url).toBe('languages/web');
     expect(JSON.parse((fd as FormData).get('languages') as string).map((l: any) => l.code)).toEqual(['cz', 'en', 'sk']);
     expect((fd as FormData).get('module')).toBe('web');
@@ -370,8 +377,8 @@ describe('EditWebsiteComponent', () => {
     const files: string[] = [];
     spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) { files.push(this.download); });
     (ctx.dataHandler as any).get.calls.reset();
-    view.manageDownload(component.languages[0]);
-    view.manageDownload(component.languages[1]);
+    langs().manageDownload(component.languages[0]);
+    langs().manageDownload(component.languages[1]);
     flush();
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('translations/web/cz');
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('translations/web/en');
@@ -382,16 +389,16 @@ describe('EditWebsiteComponent', () => {
     spyOn(component, 'openUploadModal');
     spyOn(component, 'askDeleteLang');
     spyOn(component, 'openAddForm');
-    view.manageToggle(en);
+    langs().manageToggle(en);
     expect(component.toggleLangActive).toHaveBeenCalledWith(en);
     expect(view.manageOpen).toBeTrue();
-    view.manageUpload(en);
+    langs().manageUpload(en);
     expect(component.openUploadModal).toHaveBeenCalledWith('en');
     expect(view.manageOpen).toBeTrue();
-    view.manageDelete(en);
+    langs().manageDelete(en);
     expect(component.askDeleteLang).toHaveBeenCalledWith(en);
     expect(view.manageOpen).toBeTrue();
-    view.manageAdd();
+    langs().manageAdd();
     expect(component.openAddForm).toHaveBeenCalled();
     expect(view.manageOpen).toBeTrue();
     discardPeriodicTasks();
@@ -418,7 +425,7 @@ describe('EditWebsiteComponent', () => {
     fixture.detectChanges();
     expect(rows()).toBe(2);
 
-    view.manageDelete(en);
+    langs().manageDelete(en);
     (component as any).cd.markForCheck();
     fixture.detectChanges();
     expect(overlays().length).toBe(2);
@@ -430,7 +437,7 @@ describe('EditWebsiteComponent', () => {
     expect(view.manageOpen).toBeTrue();
     expect(rows()).toBe(2);
 
-    view.manageDelete(en);
+    langs().manageDelete(en);
     (component as any).cd.markForCheck();
     fixture.detectChanges();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -440,7 +447,7 @@ describe('EditWebsiteComponent', () => {
     expect(view.manageOpen).toBeTrue();
     expect(overlays().length).toBe(1);
 
-    view.manageAdd();
+    langs().manageAdd();
     (component as any).cd.markForCheck();
     fixture.detectChanges();
     expect(component.showAddForm).toBeTrue();

@@ -223,6 +223,9 @@ class TranslationController extends Controller
             'languages.*'      => 'array',
             'languages.*.code' => ['required', 'string', 'distinct', 'regex:/^' . self::LANG_PATTERN . '$/'],
             'languages.*.name' => 'required|string|max:50',
+        ], [
+            // readable for the admin (instead of "languages.5.code field format is invalid")
+            'languages.*.code.regex' => 'The language code must be 2 lowercase letters (e.g. sk, de, fr).',
         ]);
         if ($entries->fails()) {
             return response()->json(['message' => 'Invalid language list.', 'errors' => $entries->errors()], 422);

@@ -162,12 +162,14 @@ describe('BaseTranslationEditorComponent', () => {
   /**
    * @description Adding a language sends the icon with its target code; a failed save shows
    *   the error and keeps the form open.
-   * @input Icon chosen, code 'De ', name 'Deutsch'; upload ok; then upload failing for 'fr'.
-   * @output FormData icon + target_code 'de', languages incl. de; current 'de'; 'language_save_failed_error'.
+   * @input Icon chosen, code 'De ', name 'Deutsch'; quiet POST ok; then the POST failing for 'fr'
+   *   (network, then 422 of the API).
+   * @output FormData icon + target_code 'de', languages incl. de; current 'de';
+   *   'language_save_failed_error', then 'code_format_error'; no global error dialog (quiet POST).
    */
   it('adds a language with an icon and reports a failed save', async () => {
     component.ngOnInit();
-    const upload = (ctx.dataHandler as any).upload as jasmine.Spy;
+    const upload = (ctx.dataHandler as any).postQuietly as jasmine.Spy;
     upload.and.returnValue(of({ status: 'ok' }));
 
     component.openAddForm();
@@ -192,6 +194,28 @@ describe('BaseTranslationEditorComponent', () => {
     component.confirmAddLang();
     expect(component.addFormError).toBe('test-editor.language_save_failed_error');
     expect(component.showAddForm).toBeTrue();
+    upload.and.returnValue(throwError(() => ({ status: 422 })));
+    component.confirmAddLang();
+    expect(component.addFormError).toBe('test-editor.code_format_error');
+    expect((ctx.dataHandler as any).upload).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @description The code field keeps only lowercase letters, at most 2 (typed or pasted) and
+   *   clears an old error of the form.
+   * @input inputs 'TUR', 'ď1 e', 'Sk'; addFormError set before
+   * @output field and newLangCode 'tu', 'e', 'sk'; addFormError ''
+   */
+  it('keeps only two lowercase letters in the code field', () => {
+    const field = document.createElement('input');
+    const type = (value: string) => { field.value = value; component.onLangCodeInput({ target: field } as unknown as Event); };
+    component.addFormError = 'x';
+    type('TUR');
+    expect([field.value, component.newLangCode, component.addFormError]).toEqual(['tu', 'tu', '']);
+    type('ď1 e');
+    expect(component.newLangCode).toBe('e');
+    type('Sk');
+    expect(field.value).toBe('sk');
   });
 
   /**

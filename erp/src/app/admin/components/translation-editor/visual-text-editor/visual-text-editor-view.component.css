@@ -88,6 +88,33 @@
   color: var(--color-white, #fff);
 }
 
+/* A switched off language (visitors do not see it): dashed, with an orange dot. */
+.te-lang--off { border-style: dashed; }
+.te-lang-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f97316;
+}
+
+.te-langs-btn { flex-shrink: 0; }
+
+/* Notice under the bar: the open language is switched off (with its switch-on). */
+.te-inactive {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.te-inactive-btn { height: 30px; }
+
 .te-lang-flag {
   width: 16px;
   height: 16px;
@@ -300,6 +327,11 @@
 .te-hidden-item--on { border-color: var(--color-rose-200); background: var(--color-rose-50); }
 .te-hidden-key { color: var(--text); font-family: var(--ff-mono); font-size: 0.72rem; overflow-wrap: anywhere; }
 .te-hidden-where { color: var(--text-dim); font-size: 0.72rem; }
+
+/* Texts missing in the language on the page (orange as their outline on the page). */
+.te-label--missing { color: #c2410c; }
+.te-missing-item { border-left: 3px solid #f97316; border-radius: 0 8px 8px 0; }
+.te-missing-item.te-hidden-item--on { border-color: #f97316; background: #fff7ed; }
 
 .te-modal-text { margin: 0; line-height: 1.5; }
 

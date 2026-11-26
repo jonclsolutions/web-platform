@@ -193,7 +193,8 @@ export class LocalizationService {
     return this.http.get<ApiEnvelope<ApiLanguage[]>>(`${this.API_URL}/languages/${this.currentModule}`).pipe(
       map(res => ({
         languages: (res.data ?? [])
-          .filter((l: ApiLanguage) => l.active)
+          // the visual text editor of the admin shows switched-off languages too (only there)
+          .filter((l: ApiLanguage) => l.active || this.textEditor.active)
           .map((l: ApiLanguage) => ({
             code: l.code,
             label: l.name,

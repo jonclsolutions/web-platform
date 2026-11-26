@@ -75,9 +75,10 @@ describe('WebTextEditorComponent', () => {
 
   /**
    * @description The editor shows the own website in a sandboxed frame named for the editor mode,
-   *   the pages of the website and the active languages only.
+   *   the pages of the website and every language (a switched off one marked).
    * @input render
-   * @output frame name, sandbox without forms / pop-ups, src '/cs'; 13 pages; languages CZ, EN
+   * @output frame name, sandbox without forms / pop-ups, src '/cs'; 13 pages; languages CZ, EN,
+   *   DE (off, dashed); no notice of a switched off language for Czech
    */
   it('shows the website in the frame of the editor', fakeAsync(() => {
     setup();
@@ -86,7 +87,9 @@ describe('WebTextEditorComponent', () => {
     expect(frame().getAttribute('sandbox')).toBe('allow-scripts allow-same-origin');
     expect(new URL(frame().src).pathname).toBe('/cs');
     expect(el.querySelectorAll('.te-page-select option').length).toBe(WEB_EDITOR_PAGES.length);
-    expect(Array.from(el.querySelectorAll('.te-lang')).map(b => b.textContent!.trim())).toEqual(['CZ', 'EN']);
+    expect(Array.from(el.querySelectorAll('.te-lang')).map(b => b.textContent!.trim().slice(0, 2))).toEqual(['CZ', 'EN', 'DE']);
+    expect(el.querySelectorAll('.te-lang--off').length).toBe(1);
+    expect(el.querySelector('.te-inactive')).toBeNull();
     expect(el.querySelector('.te-badge')).not.toBeNull();
     discardPeriodicTasks();
   }));
@@ -143,7 +146,7 @@ describe('WebTextEditorComponent', () => {
     field.value = 'Dotazy';
     field.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: 'cz', values: { 'faq.title': 'Dotazy' } });
+    expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: 'cz', values: { 'faq.title': 'Dotazy' }, missing: {} });
     expect(view.savedValue('faq.title')).toBe('Časté dotazy');
     expect(component.changedPaths.size).toBe(1);
 
@@ -212,6 +215,73 @@ describe('WebTextEditorComponent', () => {
     view.confirmPending();
     flush();
     expect(answer).toBeTrue();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description A switched off language: the notice under the bar with its switch-on; the texts
+   *   it lacks go to the page with their Czech reference (init and after the texts load) and the
+   *   missing texts the page shows are listed in the panel - a click selects them.
+   * @input DE (off, no texts); ready; scan with missing faq.sub; click the list; Zapnout jazyk
+   * @output notice; init missing {faq.title: 'Časté dotazy', faq.sub: 'Podtitulek'} and the label;
+   *   list of 1 → selected faq.sub; the language turned on (upload languages/web), notice gone,
+   *   the page reloaded
+   */
+  it('shows the missing texts and switches a switched off language on', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    view.switchLang('de');
+    flush();
+    fixture.detectChanges();
+    expect(component.currentLang).toBe('de');
+    expect(el.querySelector('.te-inactive')!.textContent).toContain('editor_inactive_message');
+    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'drafts', lang: 'de', missing: { 'faq.title': 'Časté dotazy', 'faq.sub': 'Podtitulek' } }));
+
+    fromPage({ type: 'ready' });
+    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'init', lang: 'de', missing: { 'faq.title': 'Časté dotazy', 'faq.sub': 'Podtitulek' }, missingLabel: jasmine.stringContaining('editor_missing_label') }));
+    fromPage({ type: 'scan', path: '/faq', title: '', visible: ['faq.sub'], missing: ['faq.sub'], hidden: [] });
+    const items = el.querySelectorAll('.te-missing-item');
+    expect(items.length).toBe(1);
+    (items[0] as HTMLButtonElement).click();
+    flush();
+    expect(view.selectedKey).toBe('faq.sub');
+    expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key: 'faq.sub', reveal: true });
+
+    frame().src = 'about:blank';
+    (el.querySelector('.te-inactive-btn') as HTMLButtonElement).click();
+    flush();
+    fixture.detectChanges();
+    expect((ctx.dataHandler as any).upload).toHaveBeenCalledWith('languages/web', jasmine.any(FormData));
+    expect(component.languages.find(l => l.code === 'de')!.active).toBeTrue();
+    expect(el.querySelector('.te-inactive')).toBeNull();
+    expect(new URL(frame().src).pathname).toBe('/de/faq');
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description The window "Jazyky" of the editor is the one of the list of the texts: every
+   *   language with its actions; deleting the open language opens Czech in the page.
+   * @input Jazyky; DE; delete DE (confirmed)
+   * @output window with 3 rows; after the delete the language cz and the page /cs
+   */
+  it('manages the languages in the window "Jazyky"', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.te-langs-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(document.querySelectorAll('.ew-manage-row').length).toBe(3);
+
+    view.switchLang('de');
+    flush();
+    fixture.detectChanges();
+    expect(new URL(frame().src).pathname).toBe('/de');
+    (ctx.dataHandler as any).delete.and.returnValue(of({}));
+    component.askDeleteLang(component.languages.find(l => l.code === 'de')!);
+    component.confirmDeleteLang();
+    flush();
+    fixture.detectChanges();
+    expect(component.currentLang).toBe('cz');
+    expect(new URL(frame().src).pathname).toBe('/cs');
     discardPeriodicTasks();
   }));
 

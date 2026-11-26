@@ -522,7 +522,7 @@
                 },
                 {
                   "label": "Kód jazyka",
-                  "text": "2-5 malých písmen, například sk, de, fr. Každý kód jen jednou.",
+                  "text": "2 malá písmena (mezinárodní zkratka jazyka), například sk, de, fr. Jiné znaky do pole nejdou napsat. Každý kód jen jednou.",
                   "active": false
                 },
                 {
@@ -690,6 +690,14 @@
                 {
                   "title": "Modrý rámeček",
                   "text": "Obsah z administrace. Kliknutí ho otevře jako na webu (například odpověď na otázku) a panel nabídne odkaz do části, kde se upravuje."
+                },
+                {
+                  "title": "Oranžový rámeček",
+                  "text": "Text, který v jazyce chybí. Na jeho místě je česká předloha (nebo klíč) a nad ním Chybí a klíč; v panelu je seznam Chybějící texty této stránky. Obsah z administrace, který v jazyce chybí, ukazuje Cannot load text - také oranžově, s odkazem do své části."
+                },
+                {
+                  "title": "Vypnutý jazyk",
+                  "text": "V horní liště jsou všechny jazyky, vypnutý je čárkovaný s tečkou. Po jeho otevření lišta upozorní, že ho návštěvníci nevidí, a tlačítko Zapnout jazyk ho zapne. Spravovat jazyky otevře stejné okno jako na záložce Překlady (přidání, nahrání a stažení JSON, smazání)."
                 },
                 {
                   "title": "Další texty stránky",

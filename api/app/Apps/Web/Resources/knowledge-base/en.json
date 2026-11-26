@@ -522,7 +522,7 @@
                 },
                 {
                   "label": "Language code",
-                  "text": "2-5 lower-case letters, for example sk, de, fr. Every code only once.",
+                  "text": "2 lower-case letters (the international code of the language), for example sk, de, fr. Other characters cannot be typed into the field. Every code only once.",
                   "active": false
                 },
                 {
@@ -690,6 +690,14 @@
                 {
                   "title": "Blue outline",
                   "text": "Content from the admin. A click opens it as on the website (for example the answer to a question) and the panel offers a link to the part where it is edited."
+                },
+                {
+                  "title": "Orange outline",
+                  "text": "A text missing in the language. The Czech reference (or the key) is shown in its place with Missing and the key above it; the panel lists the Missing texts of this page. Content from the admin missing in the language shows Cannot load text - orange too, with a link to its part."
+                },
+                {
+                  "title": "Switched off language",
+                  "text": "The top bar offers every language, a switched off one dashed with a dot. When it is open, a notice says visitors do not see it and Switch the language on turns it on. Manage languages opens the same window as on the Translations tab (adding, uploading and downloading the JSON, deleting)."
                 },
                 {
                   "title": "Other texts of the page",
