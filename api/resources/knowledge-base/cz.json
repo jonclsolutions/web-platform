@@ -1789,13 +1789,17 @@
     },
     "settings": {
       "navLabel": "Firemní profil",
-      "header": "Firemní profil - firemní údaje a názvy stránek",
+      "header": "Firemní profil - firemní údaje",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Stránka Firemní profil má dvě záložky: Firemní údaje (logo, údaje o firmě a sociální sítě, které se ukazují návštěvníkům a v e-mailech) a Názvy stránek (název administrace v záložce prohlížeče). Jak dlouho se uchovávají osobní údaje, nastavíte na stránce Právní dokumenty, záložka Retence dat."
+              "content": "Stránka Firemní profil obsahuje firemní údaje: logo, údaje o firmě a sociální sítě, které se ukazují návštěvníkům a v e-mailech. Jak dlouho se uchovávají osobní údaje, nastavíte na stránce Právní dokumenty, záložka Retence dat."
+            },
+            {
+              "type": "text",
+              "content": "Název administrace v záložce prohlížeče se needituje: je to „Administrace | název firmy“ v jazyce administrace (název firmy je ten z údajů o firmě). Názvy stránek webu a e-shopu se nastavují v jejich aplikacích (Upravit web, Upravit e-shop)."
             },
             {
               "type": "alert",
@@ -1805,7 +1809,7 @@
           ]
         },
         {
-          "heading": "01. Záložka Firemní údaje - logo",
+          "heading": "01. Logo",
           "blocks": [
             {
               "type": "flow",
@@ -1834,7 +1838,7 @@
           ]
         },
         {
-          "heading": "02. Záložka Firemní údaje - údaje o firmě",
+          "heading": "02. Údaje o firmě",
           "blocks": [
             {
               "type": "grid",
@@ -1889,7 +1893,7 @@
           ]
         },
         {
-          "heading": "03. Záložka Firemní údaje - sociální sítě",
+          "heading": "03. Sociální sítě",
           "blocks": [
             {
               "type": "flow",
@@ -1924,28 +1928,6 @@
             {
               "type": "text",
               "content": "Sociální sítě se zobrazují na veřejném webu, v e-shopu, v klientském portálu a na stránkách údržby. Přidávání vyžaduje oprávnění core-legal-config-create, úprava core-legal-config-update a mazání core-legal-config-delete."
-            }
-          ]
-        },
-        {
-          "heading": "04. Záložka Názvy stránek",
-          "blocks": [
-            {
-              "type": "text",
-              "content": "Nastavujete zde text, který se zobrazí v záložce prohlížeče pro celou administraci a přihlašovací stránky (řádek Celá administrace a přihlášení), zvlášť pro každý jazyk administrace."
-            },
-            {
-              "type": "list",
-              "ordered": true,
-              "items": [
-                "Přepínačem Jazyk názvů zvolte jazyk.",
-                "Upravte název v poli. Náhled záložky nad polem ukazuje, jak bude záložka vypadat.",
-                "Tlačítkem Uložit vpravo v hlavičce uložíte změny; Zahodit změny je vrátí. Počet neuložených změn vidíte vedle nadpisu."
-              ]
-            },
-            {
-              "type": "text",
-              "content": "Prázdné pole se ukáže jako „Cannot load text“ - název vyplňte ve všech jazycích. Doporučená délka je do 60 znaků. Názvy stránek webu a e-shopu se nastavují v jejich aplikacích (Upravit web, Upravit e-shop)."
             }
           ]
         }

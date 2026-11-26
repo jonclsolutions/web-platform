@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Types of PageTitlesEditorComponent (table `legal_page_titles`; API per area:
- *   `web/page-titles`, `shop/page-titles`, `legal/config/page-titles` for the administration).
+ *   `web/page-titles`, `shop/page-titles`, `project-portal/page-titles`; the administration has
+ *   no editable titles).
  * @dependencies none
  */
 
@@ -22,9 +23,8 @@ export interface PageTitleLang {
 }
 
 /**
- * Area a page belongs to – also selects the language set and the module that manages it: the id
- * of an application (its texts page, its languages) or 'admin' (core/settings: one shared title
- * for the whole administration, in the languages of every application).
+ * Area a page belongs to – the id of the application that manages it (its texts page, its
+ * languages).
  */
 export type PageTitleArea = string;
 

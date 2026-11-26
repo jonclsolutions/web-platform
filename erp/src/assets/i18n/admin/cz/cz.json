@@ -3,6 +3,7 @@
     "confirm": "Potvrdit",
     "cancel": "Zrušit",
     "inactive_language_title": "Vypnutý jazyk – návštěvníci ho nevidí. Doplňte ho celý, pak ho v okně Jazyky zapnete.",
+    "page_title_panel": "Administrace",
     "save": "Uložit",
     "close": "Zavřít",
     "add": "Přidat",
@@ -462,13 +463,12 @@
   "pt_load_error": "Názvy stránek se nepodařilo načíst. Zkuste stránku obnovit.",
   "pt_language_label": "Jazyk názvů:",
   "pt_missing_lang_title": "Stránky bez názvu v tomto jazyce: {count}",
-  "pt_missing_banner": "Chybějící názvy stránek v jazyce {lang}: {count}. Návštěvníci místo nich uvidí název v jiném jazyce.",
+  "pt_missing_banner": "Chybějící názvy stránek v jazyce {lang}: {count}. Návštěvníci místo nich uvidí „Cannot load text“.",
   "pt_saved_title": "Uloženo"
 },
 "settings": {
-  "pt_page_admin_panel": "Celá administrace a přihlášení",
   "page_title": "Firemní profil",
-  "page_subtitle": "Logo, firemní údaje, sociální sítě a názvy stránek administrace",
+  "page_subtitle": "Logo, firemní údaje a sociální sítě",
 
   "logo_card_title": "Logo",
   "logo_alt": "Logo webu",
@@ -535,10 +535,7 @@
   "social_delete_confirm_title": "Smazat odkaz",
   "social_delete_confirm_message": "Opravdu chcete smazat odkaz „{name}\"? Bude smazána i ikonka.",
   "social_deleted_title": "Smazáno",
-  "social_deleted_message": "Odkaz „{name}\" byl smazán.",
-  "tabs_label": "Sekce firemního profilu",
-    "tab_company": "Firemní údaje",
-    "tab_page_titles": "Názvy stránek"
+  "social_deleted_message": "Odkaz „{name}\" byl smazán."
 },
 "permission-descriptions": {
   "view-deleted": "Zobrazit smazané záznamy v koši napříč moduly",
@@ -822,7 +819,7 @@
     "nav_logs_title": "Logy systému",
     "nav_logs_desc": "Auditní záznamy autentizace a systému",
     "nav_settings_title": "Firemní profil",
-    "nav_settings_desc": "Logo, firemní údaje, sociální sítě a názvy stránek administrace",
+    "nav_settings_desc": "Logo, firemní údaje a sociální sítě",
 
     "section_recent_activity": "Poslední systémové události",
     "activity_card_title": "Systémové logy",

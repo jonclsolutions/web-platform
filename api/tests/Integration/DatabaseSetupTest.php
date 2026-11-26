@@ -381,8 +381,8 @@ class DatabaseSetupTest extends TestCase
      * @input empty database (test schema); BaseDataSeeder.
      * @output permissions = the data files of the core and of every registered application (keys incl.
      *   view-core, view-web, view-eshop, view-project-portal, core-administrators-view);
-     *   sysadmin with every permission and protected; 27 titles incl. web.not-found and
-     *   admin.panel; types gdpr / tos / cookies; web + shop active; placeholder company details
+     *   sysadmin with every permission and protected; 26 titles incl. web.not-found, none of the
+     *   administration (its tab title is a text of the admin UI); types gdpr / tos / cookies; web + shop active; placeholder company details
      *   (English, example.com, no analytics ID - the GA field switched off) with the default logo;
      *   neutral page titles ("Company name", no brand); English legal templates
      *   8 / 10 / 7 sections with placeholders; logo + flags on the public disk; the e-shop row
@@ -421,10 +421,10 @@ class DatabaseSetupTest extends TestCase
         $sysadmin = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
         $this->assertTrue($sysadmin->isProtected());
         $this->assertSame(count($expected), $sysadmin->permissions()->count());
-        $this->assertSame(27, DB::table('legal_page_titles')->count());
+        $this->assertSame(26, DB::table('legal_page_titles')->count());
         $this->assertTrue(DB::table('legal_page_titles')->where(['area' => 'web', 'page_key' => 'not-found'])->exists());
         $this->assertSame('/projects/login/:token', DB::table('legal_page_titles')->where(['area' => 'project-portal', 'page_key' => 'login'])->value('route_path'));
-        $this->assertTrue(DB::table('legal_page_titles')->where(['area' => 'admin', 'page_key' => 'panel'])->exists());
+        $this->assertFalse(DB::table('legal_page_titles')->where('area', 'admin')->exists());
         $this->assertEqualsCanonicalizing(['gdpr', 'tos', 'cookies'], DocumentType::pluck('slug')->all());
         $this->assertTrue(WebSiteSetting::firstOrFail()->is_web_active);
         $this->assertSame('Your request has been accepted', WebSiteSetting::firstOrFail()->raw_request_email_title_i18n['en']);
@@ -480,7 +480,7 @@ class DatabaseSetupTest extends TestCase
      * @input config apps.apps = [missing manifest, a non-manifest class]; BaseDataSeeder; then
      *   only the web application registered.
      * @output modules() []; 23 core permissions incl. view-core, no web-/shop- key; sysadmin 23;
-     *   1 page title (admin.panel); no web / shop settings rows; logo, no flags; company details
+     *   no page title (the administration has none); no web / shop settings rows; logo, no flags; company details
      *   + legal types; then web only: 38 permissions incl. view-web (no project-portal-* - they
      *   belong to the project portal), web settings row, no shop row.
      */
@@ -497,7 +497,7 @@ class DatabaseSetupTest extends TestCase
         $this->assertContains('view-core', $keys);
         $this->assertSame([], array_values(array_filter($keys, fn ($k) => preg_match('/^(web|shop)-|^view-(web|eshop)$/', $k))));
         $this->assertSame(23, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
-        $this->assertSame(['admin'], DB::table('legal_page_titles')->distinct()->pluck('area')->all());
+        $this->assertSame(0, DB::table('legal_page_titles')->count());
         $this->assertSame(0, WebSiteSetting::count());
         $this->assertSame(0, ShopSiteSetting::count());
         $this->assertSame(0, ShopPaymentMethod::count());
@@ -524,7 +524,7 @@ class DatabaseSetupTest extends TestCase
      *   sections replaced by an own Czech one; logo file replaced, one flag deleted; sysadmin
      *   soft-deleted; one permission row removed; seeded again.
      * @output edits kept (company, own gdpr section only, own logo); deleted flag restored; role
-     *   restored with every permission of the data files; no duplicate; 27 titles, 1 row in each
+     *   restored with every permission of the data files; no duplicate; 26 titles, 1 row in each
      *   settings table.
      */
     public function test_base_data_seeder_only_adds(): void
@@ -551,7 +551,7 @@ class DatabaseSetupTest extends TestCase
         $role = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
         $this->assertSame(count(BaseDataSeeder::permissions()), $role->permissions()->count());
         $this->assertSame(count(BaseDataSeeder::permissions()), CorePermission::count());
-        $this->assertSame(27, DB::table('legal_page_titles')->count());
+        $this->assertSame(26, DB::table('legal_page_titles')->count());
         $this->assertSame(1, WebSiteSetting::count());
         $this->assertSame(1, ProjectPortalSetting::count());
         $this->assertSame(1, ShopSiteSetting::count());

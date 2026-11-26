@@ -5,10 +5,10 @@
  * @author JS
  * @created 2026
  * @description Editor of the browser page titles (<title>, the headline in search results) of
- * ONE area. Every module manages its own pages: an application in its texts page (area = its
- * id, e.g. web/edit-website, shop/edit-eshop) and the core in core/settings (area 'admin') -
- * removing an application removes its page titles with it. Languages of the application (the
- * administration: the languages of every application), a live browser tab preview, one input
+ * ONE area. Every application manages its own pages in its texts page (area = its id, e.g.
+ * web/edit-website, shop/edit-eshop, project-portal settings) - removing an application removes
+ * its page titles with it. The administration has none (its tab title is a text of the admin
+ * UI, PageTitleStrategy). Languages of the application, a live browser tab preview, one input
  * per page; only changed rows are saved.
  * @usage `<app-page-titles-editor area="web" endpoint="web/page-titles"
  *   updatePermission="web-edit-website-update" labelSection="edit-website"
@@ -121,7 +121,7 @@ export class PageTitlesEditorComponent implements OnInit {
     this.cd.markForCheck();
 
     forkJoin({
-      langs: this.loadLanguages(this.area === 'admin' ? null : this.area),
+      langs: this.loadLanguages(this.area),
       data: this.dataHandler.get<PageTitleRow[]>(this.endpoint),
       logo: this.logoSrc === undefined ? this.loadPublicLogo() : of(null),
     }).subscribe({
@@ -142,12 +142,12 @@ export class PageTitlesEditorComponent implements OnInit {
   }
 
   /**
-   * @description Active languages of an application (null = of every application, for the
-   *   titles of the administration); a failure = empty list (fallback above).
-   * @param module Application id or null.
+   * @description Languages of an application (the switched off ones too); a failure = empty
+   *   list (fallback above).
+   * @param module Application id.
    */
-  private loadLanguages(module: string | null): Observable<PageTitleLang[]> {
-    const endpoint = module ? `languages/${module}` : 'languages';
+  private loadLanguages(module: string): Observable<PageTitleLang[]> {
+    const endpoint = `languages/${module}`;
     return this.resourceCache.get(
       `page-titles:${endpoint}`,
       () => this.dataHandler.get<PageTitleLang[]>(endpoint),

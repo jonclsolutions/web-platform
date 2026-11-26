@@ -8,7 +8,8 @@
  * @created 2026
  * @description Feature tests of the site configuration (SiteConfigurationController,
  *   PageTitleController): company details with translated tagline / copyright and logo,
- *   social links with icons, page titles (admin + public), the public configuration.
+ *   social links with icons, page titles (of the applications + public; the administration has
+ *   none - its tab title is a text of the admin UI), the public configuration.
  * @dependencies
  * - Tests\TestCase; Storage fake (public disk).
  */
@@ -234,12 +235,13 @@ class SiteConfigurationTest extends TestCase
      *   collapses whitespace (max 120 chars), ignores invalid language keys, logs only changed
      *   rows into the module's log and refuses ids of another area or stale ids; the public map
      *   leaves out empty translations.
-     * @input admin.users (0), shop.cart (1), web.home (2) {cz, en Home}, web.about (1); accounts
-     *   without permission, web editor, shop editor, core config editor.
-     * @output 403 without permission and for other modules; web [about, home], shop [cart], admin
-     *   [users]; home cz '<b>…</b>  x' → '… x', en kept, de without <i>, fr (not a web language)
+     * @input shop.cart (1), web.home (2) {cz, en Home}, web.about (1); accounts without
+     *   permission, web editor, shop editor, core config editor.
+     * @output 403 without permission and for other modules; web [about, home], shop [cart]; no
+     *   endpoint of the administration any more (404 / 405 for the core config editor); home
+     *   cz '<b>…</b>  x' → '… x', en kept, de without <i>, fr (not a web language)
      *   and a stored title of a deleted language (sk) dropped; 1 web_logs row; cart id
-     *   on the web endpoint / id 999 → 422; shop_logs / core_logs rows; public map.
+     *   on the web endpoint / id 999 → 422; shop_logs rows; public map.
      */
     public function test_page_titles(): void
     {
@@ -255,13 +257,12 @@ class SiteConfigurationTest extends TestCase
         $this->app->useStoragePath($storage);
         $this->beforeApplicationDestroyed(fn () => \Illuminate\Support\Facades\File::deleteDirectory($storage));
 
-        $users = $this->pageTitle('admin', 'users', 0);
         $cart = $this->pageTitle('shop', 'cart', 1, ['cz' => '', 'en' => null]);
         $home = $this->pageTitle('web', 'home', 2, ['cz' => 'Domů', 'en' => 'Home', 'sk' => 'Domov']);
         $about = $this->pageTitle('web', 'about', 1);
 
         $this->signIn($this->user());
-        foreach (['/api/web/page-titles', '/api/shop/page-titles', '/api/legal/config/page-titles'] as $url) {
+        foreach (['/api/web/page-titles', '/api/shop/page-titles'] as $url) {
             $this->getJson($url)->assertStatus(403);
         }
 
@@ -269,7 +270,6 @@ class SiteConfigurationTest extends TestCase
         $this->signIn($this->userWith(['web-edit-website-view', 'web-edit-website-update']));
         $this->getJson('/api/web/page-titles')->assertOk()->assertJsonPath('data.*.id', [$about->id, $home->id]);
         $this->getJson('/api/shop/page-titles')->assertStatus(403);
-        $this->getJson('/api/legal/config/page-titles')->assertStatus(403);
 
         $this->putJson('/api/web/page-titles', ['titles' => [
             ['id' => $home->id, 'title_i18n' => ['CZ' => "<b>Úvod</b>\n  x", 'de' => '<i>' . str_repeat('d', 110) . '</i>', 'bad key!' => 'x', 'fr' => 'Accueil']],
@@ -296,12 +296,11 @@ class SiteConfigurationTest extends TestCase
         $this->assertTrue(\App\Apps\Shop\Models\ShopLog::where('description', 'Updated page title: shop.cart')->exists());
         $this->getJson('/api/web/page-titles')->assertStatus(403);
 
-        // Administration (core settings).
+        // Administration: no editable titles (the tab title is a text of the admin UI).
         $this->signIn($this->userWith(['core-legal-config-view', 'core-legal-config-update']));
-        $this->getJson('/api/legal/config/page-titles')->assertOk()->assertJsonPath('data.*.id', [$users->id]);
-        $this->putJson('/api/legal/config/page-titles', ['titles' => [['id' => $users->id, 'title_i18n' => ['cz' => 'Správa']]]])->assertOk();
-        $this->assertCoreLog('update', 'Updated page title: admin.users');
-        $this->putJson('/api/legal/config/page-titles', ['titles' => [['id' => $home->id, 'title_i18n' => ['cz' => 'x']]]])->assertStatus(422);
+        $this->getJson('/api/legal/config/page-titles')->assertNotFound();
+        // (the fallback route answers GET only - another method is 405)
+        $this->putJson('/api/legal/config/page-titles', ['titles' => [['id' => $home->id, 'title_i18n' => ['cz' => 'x']]]])->assertStatus(405);
 
         $this->app['auth']->forgetGuards();
         $public = $this->getJson('/api/public/legal/page-titles')->assertOk()->json('data');

@@ -6,21 +6,25 @@
  * @created 2026
  * @description Sets the browser tab title (<title>) of public pages from the texts
  *   the client writes in admin - tab "Page titles" of the module that owns the pages
- *   (web: Edit website, e-shop: Edit e-shop, administration: Web settings).
+ *   (web: Edit website, e-shop: Edit e-shop, ...). The administration has no editable titles:
+ *   its title is a text of the admin UI with the company name.
  * @dependencies
  * - PublicDataService: loads the title map once from `public/legal/page-titles`.
  * - LocalizationService: current language of the public pages + its changes (title switches
  *   immediately when the visitor changes the language).
- * - AdminLocalizationService: language of the administration UI for the admin titles
- *   (`admin.*` keys) - resolved only when such a page is shown (it loads the admin texts).
+ * - AdminLocalizationService: the admin titles (`admin.*` keys → `shared.page_title_*` of the
+ *   admin UI texts, in the admin UI language) - resolved only when such a page is shown (it loads
+ *   the admin texts); PublicDataService.siteSettingsValue$: the company name appended to them.
  * @usage
  *   1) Every public route gets `title: 'area.page_key'` (e.g. 'web.services'),
  *      see app.routes.ts. The key must match a row in `legal_page_titles`.
  *   2) Register in app.config.ts:
  *        { provide: TitleStrategy, useClass: PageTitleStrategy }
- * @note The administration (keys `admin.*`: admin, login) uses the language of the admin UI, not
- *   the one the visitor chose on the public site (both live in the same browser storage - a
- *   public site viewed in German must not turn the admin title into 'Cannot load text').
+ * @note The administration (keys `admin.*`: admin, login) is not editable: `admin.panel` →
+ *   `shared.page_title_panel` of the admin UI texts ('Administrace') + ' | ' + the company name
+ *   of the company details, in the language of the admin UI - not the one the visitor chose on the
+ *   public site (both live in the same browser storage). Before the admin texts load: the
+ *   index.html title; a text missing in them: 'Cannot load text'.
  * @note A page with titles: its title in the current language, else 'Cannot load text' - never
  *   the title of another language (a missing title shows that something is wrong; a language is
  *   switched on only with all its titles). Without a title map / a row of the page: the static
@@ -35,7 +39,7 @@ import { DOCUMENT } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError, skip } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { PublicDataService } from './public-data.service';
 import { LocalizationService } from './localization.service';
 import { AdminLocalizationService } from '../../core/services/admin-localization.service';
@@ -64,6 +68,10 @@ export class PageTitleStrategy extends TitleStrategy {
   private localization: LocalizationService | null = null;
   /** Resolved on the first admin page only (never on the public site - it loads the admin texts). */
   private adminLocalization: AdminLocalizationService | null = null;
+  /** The admin UI texts are loaded (any language) - until then the index.html title. */
+  private adminTextsLoaded = false;
+  /** Company name of the company details (appended to the admin title), '' when unknown. */
+  private companyName = '';
   private initialized = false;
 
   private titles: PageTitleMap = {};
@@ -114,27 +122,42 @@ export class PageTitleStrategy extends TitleStrategy {
    */
   private resolve(key: string | null): string {
     if (!key) return this.fallbackTitle;
+    if (key.startsWith(ADMIN_KEY_PREFIX)) return this.adminTitle(key.slice(ADMIN_KEY_PREFIX.length));
 
     const byLang = this.titles[key];
     if (!byLang || typeof byLang !== 'object' || Array.isArray(byLang)) return this.fallbackTitle;
 
-    const lang = key.startsWith(ADMIN_KEY_PREFIX) ? this.adminLanguage() : (this.localization?.getCurrentLanguage() ?? 'cz');
+    const lang = this.localization?.getCurrentLanguage() ?? 'cz';
     const own = byLang[lang];
     // never the title of another language
     return typeof own === 'string' && own.trim() !== '' ? own : MISSING_TEXT;
   }
 
   /**
-   * @description Language of the administration UI; on the first call also follows its changes
-   *   (the title switches with the admin language).
-   * @returns Admin language code (`cz`, `en`).
+   * @description Title of an admin page: its admin UI text (`shared.page_title_<page>`) and the
+   *   company name. On the first call follows the admin texts (loaded / another admin language)
+   *   and the company details.
+   * @param page Page of the key without `admin.` (e.g. 'panel').
+   * @returns 'Administrace | Firma'; without a company name the text alone; index.html title
+   *   before the texts load.
    */
-  private adminLanguage(): string {
+  private adminTitle(page: string): string {
     if (!this.adminLocalization) {
-      this.adminLocalization = this.injector.get(AdminLocalizationService);
-      // skip(1): the current value is used right now; later switches re-apply the title
-      this.adminLocalization.currentLanguage$.pipe(skip(1)).subscribe(() => this.apply());
+      const admin = this.injector.get(AdminLocalizationService);
+      this.adminLocalization = admin;
+      // singleton - lives as long as the app; the current values arrive synchronously
+      admin.translations$.subscribe(texts => {
+        this.adminTextsLoaded = texts !== null;
+        this.apply();
+      });
+      this.injector.get(PublicDataService).siteSettingsValue$.subscribe(config => {
+        const name = config?.settings?.company_name;
+        this.companyName = typeof name === 'string' ? name.trim() : '';
+        this.apply();
+      });
     }
-    return this.adminLocalization.getCurrentLanguage();
+    if (!this.adminTextsLoaded) return this.fallbackTitle;
+    const text = this.adminLocalization.getValue(`shared.page_title_${page.replace(/-/g, '_')}`);
+    return this.companyName ? `${text} | ${this.companyName}` : text;
   }
 }

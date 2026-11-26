@@ -7,10 +7,11 @@
  * @description Unit tests of PageTitleStrategy: the route title key is resolved from the
  *   page-title map loaded once from the API in the current language - a title missing in it is
  *   'Cannot load text' (never another language); the title follows language changes; a failed or
- *   malformed map / an unknown page gives the document title; admin pages use the admin UI language.
+ *   malformed map / an unknown page gives the document title; admin pages are not editable - their
+ *   title is a text of the admin UI (its language) with the company name.
  * @dependencies
- * - PublicDataService spy, LocalizationService and AdminLocalizationService stubs (language
- *   Subjects), real Title service;
+ * - PublicDataService spy (+ siteSettingsValue$ Subject), LocalizationService stub (language
+ *   Subject), AdminLocalizationService stub (texts Subject), real Title service;
  *   buildTitle() spied to return the route's title key.
  */
 
@@ -28,7 +29,8 @@ describe('PageTitleStrategy', () => {
   let strategy: PageTitleStrategy;
   let publicData: jasmine.SpyObj<PublicDataService>;
   let language$: BehaviorSubject<string>;
-  let adminLanguage$: BehaviorSubject<string>;
+  let adminTexts$: BehaviorSubject<Record<string, any> | null>;
+  let siteSettings$: BehaviorSubject<any>;
   let title: Title;
   let originalTitle: string;
 
@@ -41,14 +43,20 @@ describe('PageTitleStrategy', () => {
   beforeEach(() => {
     originalTitle = document.title;
     document.title = 'RPSW';
-    publicData = jasmine.createSpyObj('PublicDataService', ['get']);
+    siteSettings$ = new BehaviorSubject<any>(null);
+    publicData = jasmine.createSpyObj('PublicDataService', ['get'], { siteSettingsValue$: siteSettings$ });
     language$ = new BehaviorSubject('en');
-    adminLanguage$ = new BehaviorSubject('cz');
+    adminTexts$ = new BehaviorSubject<Record<string, any> | null>(null);
+    /** getValue of the admin texts: the string at the path, else 'Cannot load text'. */
+    const adminValue = (path: string) => {
+      const value = path.split('.').reduce((node: any, part) => node?.[part], adminTexts$.value);
+      return typeof value === 'string' ? value : 'Cannot load text';
+    };
     TestBed.configureTestingModule({
       providers: [
         { provide: PublicDataService, useValue: publicData },
         { provide: LocalizationService, useValue: { currentLanguage$: language$, getCurrentLanguage: () => language$.value } },
-        { provide: AdminLocalizationService, useValue: { currentLanguage$: adminLanguage$, getCurrentLanguage: () => adminLanguage$.value } }
+        { provide: AdminLocalizationService, useValue: { translations$: adminTexts$, getValue: adminValue } }
       ]
     });
     strategy = TestBed.inject(PageTitleStrategy);
@@ -88,19 +96,27 @@ describe('PageTitleStrategy', () => {
   });
 
   /**
-   * @description The administration (admin.* keys) follows the language of the admin UI, not the
-   *   one chosen on the public site; the public pages keep the public language.
-   * @input Map {admin.panel: {cz: 'Administrace', en: 'Administration'}, web.home: {de: 'Start'}};
-   *   public language de, admin cz; admin page; admin → en; public page.
-   * @output 'Administrace'; 'Administration' (re-applied on the switch); 'Start'.
+   * @description The administration (admin.* keys) is not editable: the text of the admin UI
+   *   (its language, never the public one) with the company name; the map is not used for it.
+   * @input Map {admin.panel: {de: 'Editiert'}, web.home: {de: 'Start'}}; public language de; admin
+   *   page before the admin texts; texts cz {page_title_panel: 'Administrace'}; company 'Firma ';
+   *   texts en; texts without the key; public page.
+   * @output 'RPSW'; 'Administrace'; 'Administrace | Firma'; 'Administration | Firma';
+   *   'Cannot load text | Firma'; 'Start'.
    */
-  it('uses the admin language for the administration', () => {
-    publicData.get.and.returnValue(of({ 'admin.panel': { cz: 'Administrace', en: 'Administration' }, 'web.home': { de: 'Start' } }) as any);
+  it('takes the admin title from the admin texts', () => {
+    publicData.get.and.returnValue(of({ 'admin.panel': { de: 'Editiert' }, 'web.home': { de: 'Start' } }) as any);
     language$.next('de');
     go('admin.panel');
+    expect(title.getTitle()).toBe('RPSW');
+    adminTexts$.next({ shared: { page_title_panel: 'Administrace' } });
     expect(title.getTitle()).toBe('Administrace');
-    adminLanguage$.next('en');
-    expect(title.getTitle()).toBe('Administration');
+    siteSettings$.next({ settings: { company_name: 'Firma ' } });
+    expect(title.getTitle()).toBe('Administrace | Firma');
+    adminTexts$.next({ shared: { page_title_panel: 'Administration' } });
+    expect(title.getTitle()).toBe('Administration | Firma');
+    adminTexts$.next({ shared: {} });
+    expect(title.getTitle()).toBe('Cannot load text | Firma');
     go('web.home');
     expect(title.getTitle()).toBe('Start');
   });

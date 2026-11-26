@@ -10,13 +10,14 @@
  *              ONE area, each managed by its own module (route default `area`):
  *              - web   - web/page-titles   (web/edit-website, web-edit-website-view / -update),
  *              - shop  - shop/page-titles  (shop/edit-eshop, shop-edit-eshop-view / -update),
- *              - admin - legal/config/page-titles (core/settings, core-legal-config-view / -update).
- *              Removing a module from a branched application therefore removes its page
+ *              - any other application with pages of its own (e.g. project-portal).
+ *              The administration has no editable titles - its tab title is a text of the admin
+ *              UI (assets/i18n/admin, PageTitleStrategy). Removing a module from a branched application therefore removes its page
  *              titles with it. Public: map "area.page_key" => { lang: title } for the
  *              Angular PageTitleStrategy.
- * @dependencies PageTitle; AppRegistry::logModel() (audit log of the area's application,
- *   CoreLog for the admin area); TranslationController::languageCodes() / allLanguageCodes()
- *   (titles are stored only in the languages of the area).
+ * @dependencies PageTitle; AppRegistry::logModel() (audit log of the area's application, CoreLog
+ *   as the last resort); TranslationController::languageCodes() (titles are stored only in the
+ *   languages of the area).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -49,7 +50,7 @@ class PageTitleController extends Controller
     /**
      * Lists the pages of one area with their titles.
      *
-     * @param string $area Route default: 'web', 'shop' or 'admin'.
+     * @param string $area Route default: the application id ('web', 'shop', ...).
      * @return JsonResponse { data: PageTitle[] }
      */
     public function index(string $area): JsonResponse
@@ -62,7 +63,7 @@ class PageTitleController extends Controller
      * are changed, other languages already stored stay untouched.
      *
      * @param Request $request { titles: [{ id: int, title_i18n: { lang: string } }] }
-     * @param string $area Route default: 'web', 'shop' or 'admin' - only its rows can change.
+     * @param string $area Route default: the application id - only its rows can change.
      * @return JsonResponse { data: PageTitle[] } – the fresh list of the area.
      */
     public function update(Request $request, string $area): JsonResponse
@@ -86,7 +87,7 @@ class PageTitleController extends Controller
         $changed = [];
         // Only the languages of the area are stored (an admin page opened before a language was
         // deleted cannot bring it back; a title of a deleted language left behind is dropped).
-        $languages = array_flip($area === 'admin' ? TranslationController::allLanguageCodes() : TranslationController::languageCodes($area));
+        $languages = array_flip(TranslationController::languageCodes($area));
 
         DB::transaction(function () use ($rows, $items, $languages, &$changed) {
             foreach ($rows as $id => $row) {
@@ -141,7 +142,7 @@ class PageTitleController extends Controller
     /**
      * Rows of one area ordered for the admin list (sort_order).
      *
-     * @param string $area 'web', 'shop' or 'admin'.
+     * @param string $area Application id ('web', 'shop', ...).
      * @return \Illuminate\Support\Collection<int, PageTitle>
      */
     private function orderedRows(string $area)

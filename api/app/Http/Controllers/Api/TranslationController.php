@@ -652,7 +652,7 @@ class TranslationController extends Controller
 
     /**
      * @description Codes of the languages of every module (lower case) - the languages the texts
-     *   shared by all modules (site settings, page titles of the administration) may be stored in.
+     *   shared by all modules (site settings) may be stored in.
      * @return string[]
      */
     public static function allLanguageCodes(): array

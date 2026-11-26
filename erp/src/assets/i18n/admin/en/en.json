@@ -3,6 +3,7 @@
     "confirm": "Confirm",
     "cancel": "Cancel",
     "inactive_language_title": "Switched off language – visitors do not see it. Fill it in completely, then switch it on in the Languages window.",
+    "page_title_panel": "Administration",
     "save": "Save",
     "close": "Close",
     "add": "Add",
@@ -462,13 +463,12 @@
   "pt_load_error": "Page titles could not be loaded. Please reload the page.",
   "pt_language_label": "Language of the titles:",
   "pt_missing_lang_title": "Pages without a title in this language: {count}",
-  "pt_missing_banner": "Page titles missing in {lang}: {count}. Visitors see the title of another language instead.",
+  "pt_missing_banner": "Page titles missing in {lang}: {count}. Visitors see 'Cannot load text' instead.",
   "pt_saved_title": "Saved"
 },
 "settings": {
-  "pt_page_admin_panel": "Whole administration and login",
   "page_title": "Company profile",
-  "page_subtitle": "Logo, company details, social networks and page titles of the administration",
+  "page_subtitle": "Logo, company details and social networks",
 
   "logo_card_title": "Logo",
   "logo_alt": "Website logo",
@@ -535,10 +535,7 @@
   "social_delete_confirm_title": "Delete link",
   "social_delete_confirm_message": "Are you sure you want to delete the link \"{name}\"? Its icon will be deleted too.",
   "social_deleted_title": "Deleted",
-  "social_deleted_message": "Link \"{name}\" was deleted.",
-  "tabs_label": "Parts of the company profile",
-    "tab_company": "Company details",
-    "tab_page_titles": "Page titles"
+  "social_deleted_message": "Link \"{name}\" was deleted."
 },
 "permission-descriptions": {
   "view-deleted": "View soft-deleted records in the trash across modules",
@@ -822,7 +819,7 @@
     "nav_logs_title": "System logs",
     "nav_logs_desc": "Authentication and system audit records",
     "nav_settings_title": "Company profile",
-    "nav_settings_desc": "Logo, company details, social networks and page titles of the administration",
+    "nav_settings_desc": "Logo, company details and social networks",
 
     "section_recent_activity": "Recent system events",
     "activity_card_title": "System logs",

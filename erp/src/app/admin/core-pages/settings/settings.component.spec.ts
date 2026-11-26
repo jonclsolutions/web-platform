@@ -5,8 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of SettingsComponent – company settings (incl. logo upload and
- *   per-language texts), social links (add / save / delete with icon upload), the page-titles
- *   tab hosting PageTitlesEditorComponent of the administration (data retention: legal documents).
+ *   per-language texts), social links (add / save / delete with icon upload); no tabs - no data
+ *   retention (legal documents page) and no page titles (the administration has none).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, permission stub),
  *   ResourceCacheService (real)
@@ -17,8 +17,6 @@ import { of, throwError } from 'rxjs';
 
 import { SettingsComponent } from './settings.component';
 import { environment } from '../../../../environments/environment';
-import { By } from '@angular/platform-browser';
-import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('SettingsComponent', () => {
@@ -33,10 +31,6 @@ describe('SettingsComponent', () => {
     },
     social_links: [{ id: 5, name: 'LinkedIn', url: 'https://l', icon_path: 'li.png', position: 1 }]
   };
-  /** Payload of GET legal/config/page-titles - the administration's rows. */
-  const pageTitles = [
-    { id: 3, area: 'admin', page_key: 'panel', route_path: '/admin', title_i18n: { cz: 'Administrace' } }
-  ];
 
   beforeEach(async () => {
     ctx = createAdminTestContext();
@@ -44,7 +38,6 @@ describe('SettingsComponent', () => {
       if (url === 'languages') return of([{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }]);
       if (url === 'languages/shop') return of([]);
       if (url === 'legal/config') return of(JSON.parse(JSON.stringify(config)));
-      if (url === 'legal/config/page-titles') return of(JSON.parse(JSON.stringify(pageTitles)));
       return of({});
     });
     await TestBed.configureTestingModule({ imports: [SettingsComponent], providers: ctx.providers }).compileComponents();
@@ -300,38 +293,6 @@ describe('SettingsComponent', () => {
   });
 
   /**
-   * @description The page titles tab shows only the administration's title (the web / e-shop titles
-   *   live in their modules): the editor is created on the first open with area 'admin' and the
-   *   core endpoint, stays created (hidden) on another tab, and its unsaved state sets the tab dot.
-   * @input switchTab('page_titles'); dirtyChange(true); switchTab('company').
-   * @output app-page-titles-editor area admin, endpoint legal/config/page-titles, permission
-   *   core-legal-config-update, labels of settings; dot on the tab; editor hidden, not destroyed.
-   */
-  it('hosts the page titles editor of the administration', fakeAsync(() => {
-    fixture.detectChanges();
-    flush();
-    expect(fixture.nativeElement.querySelector('app-page-titles-editor')).toBeNull();
-    component.switchTab('page_titles');
-    fixture.detectChanges();
-    const el = fixture.debugElement.query(By.css('app-page-titles-editor'));
-    const editor = el.componentInstance as PageTitlesEditorComponent;
-    expect([editor.area, editor.endpoint, editor.updatePermission, editor.labelSection])
-      .toEqual(['admin', 'legal/config/page-titles', 'core-legal-config-update', 'settings']);
-    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('legal/config/page-titles');
-
-    editor.dirtyChange.emit(true);
-    fixture.detectChanges();
-    expect(component.ptIsDirty).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.rbb-dot')).not.toBeNull();
-
-    component.switchTab('company');
-    fixture.detectChanges();
-    expect(el.nativeElement.style.display).toBe('none');
-    expect(fixture.debugElement.query(By.css('app-page-titles-editor')).componentInstance).toBe(editor);
-    discardPeriodicTasks();
-  }));
-
-  /**
    * @description The page renders the company name field value.
    * @input  detectChanges()
    * @output an input contains 'RPSW'
@@ -349,24 +310,21 @@ describe('SettingsComponent', () => {
     const input = (f?: File) => ({ target: { files: f ? [f] : [], value: 'x' } } as any);
 
     /**
-     * @description Languages: the current language missing in the list switches to the first;
-     *   a failed language load falls back to Czech; inactive languages are hidden; tab / language
-     *   switches and language names.
-     * @input languages [en, de inactive] (current cz); then languages error; switchLang / switchTab; getLangName.
-     * @output currentLang 'en', ['en']; fallback [cz]; switches applied once; 'English' / 'XX'.
-     */
-    /**
-     * @description The company profile has only its own tabs - data retention moved to the legal
-     *   documents page (2026-11) and is never loaded here; saving is at the top of the card.
+     * @description The company profile has no tabs - data retention moved to the legal documents
+     *   page (2026-11) and is never loaded here, the administration has no page titles; saving is
+     *   at the top of the card.
      * @input render.
-     * @output tabs company, page_titles; the save button in the sticky header of the company card
-     *   (no bottom bar); no app-retention-settings; no get('core/retention_settings').
+     * @output no tab row; the save button in the sticky header of the company card (no bottom
+     *   bar); no app-retention-settings / app-page-titles-editor; no get('core/retention_settings')
+     *   nor get('legal/config/page-titles').
      */
-    it('has no data retention tab', fakeAsync(() => {
+    it('has no data retention and no page titles tab', fakeAsync(() => {
       (ctx.dataHandler as any).get.and.callFake((url: string) =>
         url === 'languages' ? of([{ code: 'cz', name: 'Čeština', active: true }]) : of(JSON.parse(JSON.stringify(config))));
       fixture.detectChanges();
-      expect(component.tabItems.map(t => t.value)).toEqual(['company', 'page_titles']);
+      expect(fixture.nativeElement.querySelector('app-row-button-builder[kind="tabs"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-page-titles-editor')).toBeNull();
+      expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('legal/config/page-titles');
       // The save button is in the sticky header of the company card - no floating bar at the bottom.
       expect(fixture.nativeElement.querySelector('.ws-card-header--actions .ws-btn-primary')).not.toBeNull();
       expect(fixture.nativeElement.querySelector('.ws-form-footer')).toBeNull();
@@ -375,7 +333,15 @@ describe('SettingsComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('handles languages, tabs and names', fakeAsync(() => {
+    /**
+     * @description Languages: the current language missing in the list switches to the first;
+     *   a failed language load falls back to Czech; switched off languages are offered (muted tab -
+     *   filled in before they are switched on); language switches and language names.
+     * @input languages [en, de inactive] (current cz); then languages error; switchLang; getLangName.
+     * @output currentLang 'en', ['en', 'de'] (de muted); fallback [cz]; switches applied once;
+     *   'English' / 'XX'.
+     */
+    it('handles languages and names', fakeAsync(() => {
       (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages'
         ? of([{ code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }])
         : of(JSON.parse(JSON.stringify(config))));
@@ -389,8 +355,6 @@ describe('SettingsComponent', () => {
       component.switchLang('en');
       component.switchLang('cz');
       expect(component.currentLang).toBe('cz');
-      component.switchTab('company');
-      expect(component.activeTab).toBe('company');
 
       (component as any).resourceCache.invalidate('settings:languages');
       (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages' ? throwError(() => new Error('x')) : of({}));

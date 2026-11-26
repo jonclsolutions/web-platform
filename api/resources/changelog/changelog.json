@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Firemní profil: záložka Názvy stránek zmizela – název administrace v záložce prohlížeče se needituje, je to „Administrace | název firmy“ v jazyce administrace (CZ/EN). Dosavadní upravené názvy administrace se smažou."
+        },
+        {
             "type": "fixed",
             "area": "core",
             "part": "admin",

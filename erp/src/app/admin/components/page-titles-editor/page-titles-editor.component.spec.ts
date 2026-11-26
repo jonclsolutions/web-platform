@@ -151,17 +151,18 @@ describe('PageTitlesEditorComponent', () => {
   });
 
   /**
-   * @description An application uses only its own languages (Czech when it has none); the
-   *   administration ('admin') uses the languages of every application; a given logoSrc is used
-   *   as is (no public config call); a language missing from the list switches to the first one.
-   * @input area shop, logoSrc null: shop languages [en]; then none; area admin with logoSrc:
-   *   all languages [cz, en].
+   * @description An application uses only its own languages (Czech when it has none); a given
+   *   logoSrc is used as is (no public config call); a language missing from the list switches to
+   *   the first one.
+   * @input area shop, logoSrc null: shop languages [en]; then none; area project-portal with
+   *   logoSrc: its languages [cz, en, de].
    * @output languages ['en'], lang 'en', favicon null, no public config call, never the web
-   *   languages; ['cz']; admin: get('languages') → ['cz', 'en'], favicon '/x.png'.
+   *   languages; ['cz']; project-portal: get('languages/project-portal') → ['cz', 'en', 'de'],
+   *   favicon '/x.png'.
    */
   it('uses the languages of its application', () => {
     const get = (shop: any) => (url: string) =>
-      url === 'languages/shop' ? shop : url === 'languages' ? of(web) : url.endsWith('page-titles') ? of([]) : of({});
+      url === 'languages/shop' ? shop : url === 'languages/project-portal' ? of(web) : url.endsWith('page-titles') ? of([]) : of({});
     create({ area: 'shop', endpoint: 'shop/page-titles', logoSrc: null }, get(of([{ code: 'en', name: 'English', active: true }])));
     expect(component.languages.map(l => l.code)).toEqual(['en']);
     expect(component.lang).toBe('en');
@@ -175,8 +176,8 @@ describe('PageTitlesEditorComponent', () => {
     expect(component.languages.map(l => l.code)).toEqual(['cz']);
     fixture.destroy();
 
-    create({ area: 'admin', endpoint: 'legal/config/page-titles', logoSrc: '/x.png' }, get(of([])));
-    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('languages');
+    create({ area: 'project-portal', endpoint: 'project-portal/page-titles', logoSrc: '/x.png' }, get(of([])));
+    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('languages/project-portal');
     expect(component.languages.map(l => l.code)).toEqual(['cz', 'en', 'de']);
     expect(component.faviconSrc).toBe('/x.png');
   });

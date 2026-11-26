@@ -8,7 +8,6 @@
  * @description The data EVERY installation needs before the first login (local and production).
  *   Core part (data/):
  *   - the core permission keys (data/permissions.php),
- *   - the browser tab title of the admin (data/page_titles.php),
  *   - the legal document types gdpr / tos / cookies (data/document_types.php),
  *   - neutral placeholder company details (data/legal_site_settings.php) with a default logo -
  *     the public footer, contact page and FAQ render only when they exist,
@@ -59,7 +58,6 @@ class BaseDataSeeder extends Seeder
     {
         DB::transaction(function () {
             ModuleBaseDataSeeder::addPermissions($this->data('permissions'));
-            ModuleBaseDataSeeder::addPageTitles($this->data('page_titles'));
             $this->seedDocumentTypes();
             $this->seedCompanyDetails();
             $this->seedLegalDocuments();

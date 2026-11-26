@@ -391,14 +391,6 @@ Route::prefix('legal')->group(function () {
         Route::put('/settings',      [SiteConfigurationController::class, 'updateSettings'])
             ->middleware('permission:core-legal-config-update');
  
-        // Browser titles of the administration; web / shop titles: web/page-titles, shop/page-titles.
-        Route::get('/page-titles',   [PageTitleController::class, 'index'])
-            ->defaults('area', 'admin')
-            ->middleware('permission:core-legal-config-view');
-        Route::put('/page-titles',   [PageTitleController::class, 'update'])
-            ->defaults('area', 'admin')
-            ->middleware('permission:core-legal-config-update');
- 
         Route::post('/social',       [SiteConfigurationController::class, 'storeSocial'])
             ->middleware('permission:core-legal-config-create');
         Route::put('/social/{id}',   [SiteConfigurationController::class, 'updateSocial'])

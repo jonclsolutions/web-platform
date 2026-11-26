@@ -1789,13 +1789,17 @@
     },
     "settings": {
       "navLabel": "Company profile",
-      "header": "Company profile - company details and page titles",
+      "header": "Company profile - company details",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The Company profile page has two tabs: Company details (logo, company details and social media shown to visitors and in e-mails) and Page titles (the name of the administration in the browser tab). How long personal data are kept is set on the Legal documents page, tab Data retention."
+              "content": "The Company profile page holds the company details: the logo, the company details and the social media shown to visitors and in e-mails. How long personal data are kept is set on the Legal documents page, tab Data retention."
+            },
+            {
+              "type": "text",
+              "content": "The name of the administration in the browser tab is not edited: it is 'Administration | company name' in the language of the administration (the company name of the company details). Page titles of the website and the e-shop are set in their applications (Edit website, Edit e-shop)."
             },
             {
               "type": "alert",
@@ -1805,7 +1809,7 @@
           ]
         },
         {
-          "heading": "01. Tab Company details - logo",
+          "heading": "01. Logo",
           "blocks": [
             {
               "type": "flow",
@@ -1834,7 +1838,7 @@
           ]
         },
         {
-          "heading": "02. Tab Company details - company details",
+          "heading": "02. Company details",
           "blocks": [
             {
               "type": "grid",
@@ -1889,7 +1893,7 @@
           ]
         },
         {
-          "heading": "03. Tab Company details - social media",
+          "heading": "03. Social media",
           "blocks": [
             {
               "type": "flow",
@@ -1924,28 +1928,6 @@
             {
               "type": "text",
               "content": "Social media are shown on the public website, in the e-shop, in the client portal and on the maintenance pages. Adding requires core-legal-config-create, editing core-legal-config-update and deleting core-legal-config-delete."
-            }
-          ]
-        },
-        {
-          "heading": "04. Tab Page titles",
-          "blocks": [
-            {
-              "type": "text",
-              "content": "Here you set the text shown in the browser tab for the whole administration and the sign-in pages (row Whole administration and login), separately for every language of the administration."
-            },
-            {
-              "type": "list",
-              "ordered": true,
-              "items": [
-                "Choose the language with the switch Language of the titles.",
-                "Edit the title in the field. The tab preview above the field shows how the tab will look.",
-                "Save at the right of the header saves the changes; Discard changes reverts them. The number of unsaved changes is next to the heading."
-              ]
-            },
-            {
-              "type": "text",
-              "content": "An empty field shows as 'Cannot load text' - fill in the title in all languages. The recommended length is up to 60 characters. Page titles of the website and the e-shop are set in their applications (Edit website, Edit e-shop)."
             }
           ]
         }
