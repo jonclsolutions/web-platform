@@ -28,8 +28,10 @@
 
 <!-- Page tabs: the texts, the browser page titles and the extra tabs of the application -->
 <div class="ew-page-head">
+  <!-- `compactActions`: on a phone the parts are a drop-down (one row instead of a long scrolling one). -->
   <app-row-button-builder class="ew-page-tabs" kind="tabs" [stretch]="true" [items]="e.tabItems" [active]="e.activeTab"
-                          [ariaLabel]="e.t('tabs_label')" (selected)="e.switchTab($event)" />
+                          [ariaLabel]="e.t('tabs_label')" [phoneSelect]="compactActions"
+                          [othersHint]="e.t('tabs_others_waiting')" (selected)="e.switchTab($event)" />
 </div>
 
 <!-- Every tab stays created once opened and is only hidden - unsaved edits survive a tab switch. -->
@@ -37,6 +39,15 @@
      [class.ew-root--compact]="compactActions" [class.ew-root--has-savebar]="compactActions && e.isDirty">
   <div class="ew-topbar" appStickyBar>
     <div class="ew-topbar-left">
+      <!-- `compactActions`: the heading of the part, like the headers of the other parts. -->
+      @if (compactActions) {
+        <span class="ew-topbar-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>
+          </svg>
+          {{ e.t('tab_translations') }}
+        </span>
+      }
       @if (e.getCurrentLangMeta(); as meta) {
         <div class="ew-current-lang">
           @if (meta.iconUrl) {
@@ -313,7 +324,8 @@
 <ng-content></ng-content>
 
 @if (e.showAddForm) {
-  <app-admin-modal size="md" [heading]="e.t('add_language_button')" (dismissed)="e.closeAddForm()">
+  <!-- Opened from "Spravovat jazyky" it lies above that window (prompt level), which stays open. -->
+  <app-admin-modal size="md" [heading]="e.t('add_language_button')" [level]="manageOpen ? 'prompt' : 'content'" (dismissed)="e.closeAddForm()">
     <div class="ew-modal-content">
 
       <div class="ew-field">
@@ -389,7 +401,7 @@
 }
 
 @if (e.showUploadModal) {
-  <app-admin-modal size="md" [heading]="e.t('upload_json_button') + ' (' + (e.uploadLangCode | uppercase) + ')'" (dismissed)="e.closeUploadModal()">
+  <app-admin-modal size="md" [heading]="e.t('upload_json_button') + ' (' + (e.uploadLangCode | uppercase) + ')'" [level]="manageOpen ? 'prompt' : 'content'" (dismissed)="e.closeUploadModal()">
     <div class="ew-modal-content">
       <p class="ew-modal-desc">
         {{ e.t('upload_modal_description') }}
@@ -444,7 +456,7 @@
 }
 
 @if (e.langToDelete) {
-  <app-admin-modal size="sm" [heading]="e.t('delete_language_title')" (dismissed)="e.cancelDelete()">
+  <app-admin-modal size="sm" [heading]="e.t('delete_language_title')" [level]="manageOpen ? 'prompt' : 'content'" (dismissed)="e.cancelDelete()">
     <div class="ew-modal-content">
       <p class="ew-modal-desc">
         {{ e.t('delete_confirm_prefix') }}

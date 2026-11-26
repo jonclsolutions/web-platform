@@ -246,7 +246,7 @@
     "page_title": "Website texts"
   },
   "web-content-editor": {
-    "faq_card_title": "Frequently asked questions (FAQ)",
+    "faq_card_title": "FAQ",
     "faq_intro": "Categories are shown as tabs on the website, questions in their order. The answer is plain text - its lines are kept.",
     "faq_empty": "No category yet.",
     "faq_add_category": "Add category",
@@ -259,7 +259,7 @@
     "faq_answer": "Answer",
     "faq_question_count": "Questions: {count}",
     "faq_move_to": "Move to…",
-    "jobs_card_title": "Open positions",
+    "jobs_card_title": "Jobs",
     "jobs_intro": "The preview (title and short description) is shown in the list of positions, the type, place and text blocks in the detail. The text is plain - lines and bullets (•) are kept.",
     "jobs_empty": "No position yet.",
     "jobs_add": "Add position",

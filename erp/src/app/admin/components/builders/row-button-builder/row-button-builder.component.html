@@ -5,7 +5,7 @@
     @author: JS
     @created: 2026
     @description: Row of buttons: buttons (tabs / filter) or links (nav), each with an icon or a
-        flag, the text, an optional number and dot.
+        flag, the text, an optional number and dot; tabs with `phoneSelect` are a drop-down on a phone.
 -->
 <ng-template #content let-item>
   @if (item.icon) {
@@ -32,7 +32,43 @@
     }
   </nav>
 } @else {
-  <div class="rbb" [class.rbb--sm]="size === 'sm'" [class.rbb--stretch]="stretch"
+  <!-- `phoneSelect` (tabs): on a phone the row is a drop-down - the active tab as the trigger,
+       the tabs as a list with their icon, number and dot; "+n" on the trigger tells how many other
+       tabs wait (a number or a dot). The row itself is hidden there by CSS; wider it is replaced
+       whenever it does not fit (`collapsed`) and stays only measured (`.rbb--measure`). -->
+  @if (phoneSelect && kind === 'tabs') {
+    <div class="rbb-select" [class.rbb-select--on]="collapsed" (keydown)="onSelectKeydown($event)">
+      <button #selectTrigger type="button" class="rbb-select-trigger" aria-haspopup="listbox"
+              [attr.aria-expanded]="menuOpen" [attr.aria-label]="ariaLabel || null" (click)="toggleMenu()">
+        @if (activeItem; as current) {
+          <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: current }"></ng-container>
+        }
+        @if (othersWaiting > 0) {
+          <span class="rbb-select-others" [attr.title]="othersHint || null">
+            <span aria-hidden="true">+{{ othersWaiting }}</span>
+            @if (othersHint) { <span class="rbb-sr">{{ othersHint }}</span> }
+          </span>
+        }
+        <app-admin-icon class="rbb-select-chevron" name="chevron-down" [size]="16" />
+      </button>
+      @if (menuOpen) {
+        <div class="rbb-select-menu" role="listbox" [attr.aria-label]="ariaLabel || null">
+          @for (item of visibleItems; track item.value) {
+            <button type="button" class="rbb-select-option" role="option" [class.active]="isActive(item)"
+                    [attr.aria-selected]="isActive(item)" [attr.title]="item.title || null"
+                    [disabled]="item.disabled" (click)="choose(item, $event)">
+              <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }"></ng-container>
+              @if (isActive(item)) {
+                <svg class="rbb-select-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+  <div class="rbb" [class.rbb--sm]="size === 'sm'" [class.rbb--stretch]="stretch" [class.rbb--has-select]="phoneSelect && kind === 'tabs'" [class.rbb--measure]="collapsed"
        [attr.role]="kind === 'tabs' ? 'tablist' : 'group'" [attr.aria-label]="ariaLabel || null">
     @for (item of visibleItems; track item.value) {
       <button type="button" class="rbb-btn" [class.active]="isActive(item)" [class.rbb-btn--danger]="item.tone === 'danger'" [class.rbb-btn--attention]="item.tone === 'attention'"

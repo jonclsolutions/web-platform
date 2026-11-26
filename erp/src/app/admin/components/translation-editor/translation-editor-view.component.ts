@@ -89,26 +89,28 @@ export class TranslationEditorViewComponent {
   }
 
   /**
-   * @description Opens the upload of a JSON for a language (its own window - this one closes).
+   * @description Opens the upload of a JSON for a language - its window opens above this one,
+   *   which stays open under it (closing / finishing the upload comes back here).
    * @param lang The language.
    */
   manageUpload(lang: LangMeta): void {
-    this.manageOpen = false;
     this.e.openUploadModal(lang.code);
   }
 
   /**
-   * @description Asks to delete a language (its own confirmation window - this one closes).
+   * @description Asks to delete a language - the confirmation opens above this window, which
+   *   stays open (a "Zrušit" by mistake comes back to the list, a delete updates it in place).
    * @param lang The language.
    */
   manageDelete(lang: LangMeta): void {
-    this.manageOpen = false;
     this.e.askDeleteLang(lang);
   }
 
-  /** @description Opens the form of a new language (its own window - this one closes). */
+  /**
+   * @description Opens the form of a new language above this window, which stays open - the
+   *   added language appears in its list.
+   */
   manageAdd(): void {
-    this.manageOpen = false;
     this.e.openAddForm();
   }
 

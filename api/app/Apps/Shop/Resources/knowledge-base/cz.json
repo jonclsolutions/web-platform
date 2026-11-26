@@ -1467,7 +1467,7 @@
                 "Jazyk je i v adrese e-shopu, například /cs/shop/catalog česky a /en/shop/catalog anglicky - stejně jako u webu (nápověda Texty webu, kapitola 03). Aktivní jazyk má e-shop v adrese sám, nic dalšího se nenastavuje.",
                 "Tabulka Klíč (JSON cesta) / Hodnota, hledání, statistika klíčů a chybějících textů, filtr chybějících.",
                 "Stažení a nahrání JSON pro překladatele.",
-                "Tlačítko Uložit změny uloží texty aktuálního jazyka.",
+                "Tlačítko Uložit uloží texty aktuálního jazyka.",
                 "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou. Že v zapnutých jazycích chybí texty, ukazuje oranžová tečka u položky Texty e-shopu v menu a pruh nad jazyky na této stránce: kolik textů chybí v kterém jazyce a tlačítko, které jazyk otevře jen s chybějícími texty. Tečka i pruh zmizí po doplnění."
               ]
             },

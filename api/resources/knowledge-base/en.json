@@ -1940,7 +1940,7 @@
               "items": [
                 "Choose the language with the switch Language of the titles.",
                 "Edit the title in the field. The tab preview above the field shows how the tab will look.",
-                "Save page titles saves the changes; Discard changes reverts them. The number of unsaved changes is above the buttons."
+                "Save at the right of the header saves the changes; Discard changes reverts them. The number of unsaved changes is next to the heading."
               ]
             },
             {

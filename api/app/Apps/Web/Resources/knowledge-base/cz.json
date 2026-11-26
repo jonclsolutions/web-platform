@@ -496,7 +496,7 @@
             },
             {
               "type": "text",
-              "content": "Záložka, ve které máte neuložené změny, je označená. Každá záložka se ukládá samostatně svým tlačítkem."
+              "content": "Záložka, ve které máte neuložené změny, má oranžovou tečku; oranžové číslo u záložky je počet chybějících textů. Každá záložka se ukládá samostatně tlačítkem Uložit v hlavičce své části. Na telefonu, a také na užší obrazovce, kde se všechny záložky nevejdou, jsou záložky rozbalovací výběr: nahoře je otevřená část, klepnutím zobrazíte všechny části s jejich čísly a tečkami. Údaj „+1“ vedle šipky znamená, že jiná část má chybějící texty nebo neuložené změny."
             }
           ]
         },
@@ -512,7 +512,7 @@
               "steps": [
                 {
                   "label": "Přidat jazyk",
-                  "text": "V okně Jazyky tlačítkem + Přidat jazyk otevřete formulář.",
+                  "text": "V okně Jazyky tlačítkem + Přidat jazyk otevřete formulář. Okno Jazyky pod ním zůstane otevřené a nový jazyk se v něm hned objeví.",
                   "active": true
                 },
                 {
@@ -542,7 +542,7 @@
               "ordered": false,
               "items": [
                 "V okně Jazyky jazyk tlačítkem Deaktivovat nebo Aktivovat vypnete či zapnete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
-                "Tlačítkem Smazat jazyk smažete (po potvrzení). Smažou se i všechny jeho texty - překlady, obsah stránek, názvy stránek a texty e-mailů. Pokud jazyk chcete jen dočasně skrýt, deaktivujte ho.",
+                "Tlačítkem Smazat jazyk smažete (po potvrzení; když dáte Zrušit, zůstanete v okně Jazyky). Smažou se i všechny jeho texty - překlady, obsah stránek, názvy stránek a texty e-mailů. Pokud jazyk chcete jen dočasně skrýt, deaktivujte ho.",
                 "Stáhnout JSON a Nahrát JSON jsou u každého jazyka v okně Jazyky (viz kapitola 05)."
               ]
             }
@@ -617,13 +617,13 @@
                   "active": false
                 },
                 {
-                  "label": "Uložit změny",
-                  "text": "Tlačítko Uložit změny uloží texty aktuálního jazyka; v závorce ukazuje počet upravených textů. Při posouvání zůstává přilepené nahoře, na telefonu se objeví dole, jakmile něco upravíte.",
+                  "label": "Uložit",
+                  "text": "Tlačítko Uložit vpravo v hlavičce Překladů uloží texty aktuálního jazyka; v závorce ukazuje počet upravených textů. Při posouvání zůstává přilepené nahoře, na telefonu se objeví dole, jakmile něco upravíte.",
                   "active": false
                 },
                 {
-                  "label": "Zrušit změny",
-                  "text": "Vedle tlačítka Uložit změny je Zrušit změny (jen když máte něco neuloženého). Po potvrzení zahodí všechny neuložené úpravy jazyka a vrátí texty na poslední uloženou verzi. Krok nejde vrátit.",
+                  "label": "Zahodit změny",
+                  "text": "Vedle tlačítka Uložit je Zahodit změny (jen když máte něco neuloženého). Po potvrzení zahodí všechny neuložené úpravy jazyka a vrátí texty na poslední uloženou verzi. Krok nejde vrátit.",
                   "active": false
                 }
               ]
@@ -685,7 +685,7 @@
               "items": [
                 "Přepínačem Jazyk názvů zvolte jazyk.",
                 "Upravte názvy - náhled záložky ukazuje výsledek. Google zobrazí zhruba prvních 60 znaků.",
-                "Uložit názvy stránek uloží změny, Zahodit změny je vrátí."
+                "Uložit v hlavičce uloží změny, Zahodit změny je vrátí."
               ]
             },
             {

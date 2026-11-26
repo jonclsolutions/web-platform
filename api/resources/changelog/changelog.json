@@ -1,6 +1,36 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: the Languages window stays open under Add language, Upload JSON and the delete confirmation - a cancelled delete or a closed form comes back to the list instead of closing it."
+        },
+        {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: on wide screens (Full HD) the part tabs could stay a drop-down after it was shown once - the tabs now take the whole width, so the row comes back whenever it fits."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: Translations is a card like the other parts - the heading on the left, Discard changes and Save on the right; the part tabs become the drop-down also on wider screens whenever they do not fit; the language tabs scroll without a scrollbar."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts and page titles: every part saves with the same Save and discards with Discard changes; short headings like the part names (Page titles, FAQ); on a phone the heading and Save share one row, without the unsaved badge."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: on a phone the parts of the page (Translations, Page titles, FAQ…) are a drop-down instead of a long scrolling row - the open part on top, every part with its missing count and unsaved dot, “+n” when other parts wait."
+        },
+        {
             "type": "changed",
             "area": "web",
             "part": "admin",

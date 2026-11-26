@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Styles of the shared row of buttons of the administration.
+    @description: Styles of the shared row of buttons of the administration and of its phone
+        drop-down (tabs with `phoneSelect`).
 */
 
 /*
@@ -17,8 +18,16 @@
 */
 :host {
   display: block;
+  position: relative;
   max-width: 100%;
   min-width: 0;
+}
+
+/* `phoneSelect` tabs: the whole given width (the place of the row is measured - see
+   RowButtonBuilderComponent.selectHost). */
+:host(.rbb-host--select) {
+  flex: 1 1 auto;
+  width: 100%;
 }
 
 .rbb {
@@ -117,3 +126,150 @@
   .rbb--stretch { width: auto; }
   .rbb--stretch .rbb-btn { flex: 1; padding: 8px 10px; }
 }
+
+/*
+    @module: Phone drop-down of the tabs (`phoneSelect`)
+    @description: On a phone (≤ 640 px), and wider whenever the row of the tabs does not fit,
+      the tabs are one full-width trigger with the active tab (icon, text, its number / dot),
+      "+n" when other tabs wait and a chevron; the list below it shows every tab with its icon,
+      number and dot, the active one with a tick. Where the row fits it stays.
+    @usage: .rbb-select > button.rbb-select-trigger (> .rbb-select-others, .rbb-select-chevron)
+      + .rbb-select-menu[role=listbox] > button.rbb-select-option(.active) > … .rbb-select-check
+*/
+.rbb-select { display: none; position: relative; width: fit-content; min-width: min(100%, 260px); max-width: 100%; }
+
+.rbb-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Shown: on a phone always, wider when the row of the tabs does not fit (`.rbb-select--on`,
+   the row then stays only measured - `.rbb--measure`). */
+.rbb-select--on { display: block; }
+
+.rbb--measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: none;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .rbb--has-select { display: none; }
+  .rbb-select { display: block; width: auto; }
+}
+
+.rbb-select-trigger,
+.rbb-select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-zinc-900);
+  text-align: left;
+  cursor: pointer;
+}
+
+.rbb-select-trigger {
+  min-height: 44px;
+  padding: 0 14px 0 16px;
+  background: var(--color-white, #fff);
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.06);
+}
+
+.rbb-select-trigger[aria-expanded='true'] { border-color: var(--color-zinc-400); }
+
+.rbb-select-trigger:focus-visible,
+.rbb-select-option:focus-visible {
+  outline: 2px solid var(--color-zinc-900);
+  outline-offset: 2px;
+}
+
+.rbb-select-trigger .rbb-label,
+.rbb-select-option .rbb-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "+n" - other tabs wait: amber outline, not a dot (the active tab may have its own dot). */
+.rbb-select-others {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 1px 7px;
+  border: 1px solid var(--color-amber-200);
+  background: var(--color-amber-50);
+  border-radius: 999px;
+  color: var(--color-amber-800, #92400e);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rbb-select-chevron {
+  margin-left: auto;
+  color: var(--color-zinc-500);
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.rbb-select-others + .rbb-select-chevron { margin-left: 0; }
+
+.rbb-select-trigger[aria-expanded='true'] .rbb-select-chevron { transform: rotate(180deg); }
+
+.rbb-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--color-white, #fff);
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(24, 24, 27, 0.16);
+}
+
+.rbb-select-option {
+  min-height: 44px;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--color-zinc-700);
+}
+
+.rbb-select-option:hover { background: var(--color-zinc-50, #fafafa); }
+
+.rbb-select-option.active {
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-900);
+}
+
+.rbb-select-option:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.rbb-select-check {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+

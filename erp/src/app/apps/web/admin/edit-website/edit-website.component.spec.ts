@@ -293,6 +293,10 @@ describe('EditWebsiteComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
     expect(view.compactActions).toBeTrue();
+    // On a phone the parts of the page are a drop-down.
+    const tabs = fixture.debugElement.query(By.css('app-row-button-builder.ew-page-tabs')).componentInstance;
+    expect(tabs.phoneSelect).toBeTrue();
+    expect(tabs.othersHint).toBe('edit-website.tabs_others_waiting');
     expect(el.querySelector('app-page-header .ew-langs-btn')).not.toBeNull();
     expect(el.querySelector('app-page-header app-action-menu-builder')).toBeNull();
     expect(el.querySelectorAll('.ew-topbar-right .ew-btn--ghost').length).toBe(0);
@@ -319,15 +323,16 @@ describe('EditWebsiteComponent', () => {
    *   tabs only switch the language (no small action icons); a row per language with its state;
    *   the main language can only download / upload its JSON; download fetches the SAVED JSON of
    *   any language and the row of the open language with unsaved edits says so; turning on / off
-   *   stays in the window; upload / delete / a new language close it and open their own window.
+   *   stays in the window; upload / delete / a new language open their own window above it and
+   *   the window stays open.
    * @input  render; openManage(); edit a text; download CZ and EN; toggle EN; upload EN; reopen,
-   *   delete EN; reopen, add
+   *   delete EN; add
    * @output no .ew-lang-tab-actions, no letter stand-ins (codes CZ, EN), no "+ Přidat jazyk" tab;
    *   2 rows - CZ main with
    *   [download, upload], EN with 4 actions;
    *   note only in the CZ row after the edit; get('translations/web/cz') + ('translations/web/en')
-   *   and 2 files; toggleLangActive(EN) with the window open; openUploadModal('en') and closed;
-   *   askDeleteLang(EN); openAddForm()
+   *   and 2 files; toggleLangActive(EN), openUploadModal('en'), askDeleteLang(EN), openAddForm() -
+   *   the window open after each
    */
   it('manages the languages and their JSON in one window', fakeAsync(() => {
     fixture.detectChanges();
@@ -381,14 +386,70 @@ describe('EditWebsiteComponent', () => {
     expect(view.manageOpen).toBeTrue();
     view.manageUpload(en);
     expect(component.openUploadModal).toHaveBeenCalledWith('en');
-    expect(view.manageOpen).toBeFalse();
-    view.openManage();
+    expect(view.manageOpen).toBeTrue();
     view.manageDelete(en);
     expect(component.askDeleteLang).toHaveBeenCalledWith(en);
-    view.openManage();
+    expect(view.manageOpen).toBeTrue();
     view.manageAdd();
     expect(component.openAddForm).toHaveBeenCalled();
-    expect(view.manageOpen).toBeFalse();
+    expect(view.manageOpen).toBeTrue();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description A window opened from "Spravovat jazyky" lies above it (prompt level) and the
+   *   window stays: a delete cancelled by mistake (Zrušit or Escape) and a closed "Přidat jazyk"
+   *   come back to the list; Escape closes only the top window.
+   * @input  render; open the window; delete EN → Zrušit; delete EN → Escape; add → close
+   * @output the confirmation on the prompt level above the window; after each: the confirmation /
+   *   form gone, the window and its 2 rows still there
+   */
+  it('keeps the languages window open under its own windows', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
+    const en = component.languages.find(l => l.code === 'en')!;
+    const rows = () => document.querySelectorAll('.ew-manage-row').length;
+    const overlays = () => Array.from(document.querySelectorAll('.am-overlay')) as HTMLElement[];
+    (el.querySelector('.ew-langs-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(rows()).toBe(2);
+
+    view.manageDelete(en);
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(overlays().length).toBe(2);
+    expect(overlays().some(o => o.getAttribute('data-level') === 'prompt')).toBeTrue();
+    component.cancelDelete();
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(component.langToDelete).toBeNull();
+    expect(view.manageOpen).toBeTrue();
+    expect(rows()).toBe(2);
+
+    view.manageDelete(en);
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(component.langToDelete).toBeNull();
+    expect(view.manageOpen).toBeTrue();
+    expect(overlays().length).toBe(1);
+
+    view.manageAdd();
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(component.showAddForm).toBeTrue();
+    component.closeAddForm();
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(view.manageOpen).toBeTrue();
+    expect(rows()).toBe(2);
+    view.closeManage();
+    fixture.detectChanges();
     discardPeriodicTasks();
   }));
 

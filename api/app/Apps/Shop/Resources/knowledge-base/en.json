@@ -1467,7 +1467,7 @@
                 "The language is in the e-shop address too, for example /cs/shop/catalog in Czech and /en/shop/catalog in English - the same as on the website (manual Website texts, chapter 03). An active language gets its addresses by itself, nothing else is set.",
                 "The table Key (JSON path) / Value, search, statistics of keys and missing texts, the filter of missing ones.",
                 "Downloading and uploading JSON for a translator.",
-                "Save changes stores the texts of the current language.",
+                "Save stores the texts of the current language.",
                 "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing (filter of missing ones) and texts the application no longer uses are removed. An orange dot at this page in the menu and a banner above the languages on this page show that texts are missing in the active languages: how many are missing in which language and a button that opens the language with only its missing texts. The dot and the banner disappear once the texts are filled."
               ]
             },

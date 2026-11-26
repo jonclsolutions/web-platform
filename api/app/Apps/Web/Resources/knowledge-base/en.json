@@ -496,7 +496,7 @@
             },
             {
               "type": "text",
-              "content": "A tab with unsaved changes is marked. Every tab is saved separately with its own button."
+              "content": "A tab with unsaved changes has an orange dot; the orange number of a tab is the count of missing texts. Every tab is saved separately with Save in the header of its part. On a phone, and also on a narrower screen where not all tabs fit, the tabs are a drop-down: the open part is at the top, a tap shows all parts with their numbers and dots. “+1” next to the arrow means another part has missing texts or unsaved changes."
             }
           ]
         },
@@ -512,7 +512,7 @@
               "steps": [
                 {
                   "label": "Add language",
-                  "text": "In the Languages window + Add language opens the form.",
+                  "text": "In the Languages window + Add language opens the form. The Languages window stays open under it and the new language appears there right away.",
                   "active": true
                 },
                 {
@@ -542,7 +542,7 @@
               "ordered": false,
               "items": [
                 "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see an inactive language, its texts stay.",
-                "Delete deletes the language (after a confirmation). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
+                "Delete deletes the language (after a confirmation; Cancel keeps you in the Languages window). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
                 "Download JSON and Upload JSON are at every language in the Languages window (see chapter 05)."
               ]
             }
@@ -617,13 +617,13 @@
                   "active": false
                 },
                 {
-                  "label": "Save changes",
-                  "text": "Save changes stores the texts of the current language; the number in brackets is the count of edited texts. While scrolling it stays stuck at the top; on a phone it appears at the bottom as soon as you edit something.",
+                  "label": "Save",
+                  "text": "Save at the right of the Translations header stores the texts of the current language; the number in brackets is the count of edited texts. While scrolling it stays stuck at the top; on a phone it appears at the bottom as soon as you edit something.",
                   "active": false
                 },
                 {
                   "label": "Discard changes",
-                  "text": "Next to Save changes is Discard changes (only when something is unsaved). After a confirmation it throws away all unsaved edits of the language and brings back the last saved texts. This cannot be undone.",
+                  "text": "Next to Save is Discard changes (only when something is unsaved). After a confirmation it throws away all unsaved edits of the language and brings back the last saved texts. This cannot be undone.",
                   "active": false
                 }
               ]
@@ -685,7 +685,7 @@
               "items": [
                 "Choose the language with Language of the titles.",
                 "Edit the titles - the tab preview shows the result. Google shows roughly the first 60 characters.",
-                "Save page titles saves the changes, Discard changes reverts them."
+                "Save in the header saves the changes, Discard changes reverts them."
               ]
             },
             {
