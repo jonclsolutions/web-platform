@@ -19,6 +19,9 @@
  * `this.captcha.nextToken().pipe(switchMap(token => post(...)))`.
  * @note The Turnstile script is loaded only here (lazy, TurnstileService). Cloudflare Turnstile
  * sets no tracking cookie - it must be named as a processor in the privacy policy (GDPR).
+ * @note Not in the visual text editor of the admin (PublicTextEditorService): its forms are never
+ * sent, so Cloudflare is not called at all (no request to a third party, no challenge in the
+ * preview); the widget is invisible anyway, so the page looks the same.
  * @dependencies
  * - TurnstileService: script loading, render / reset / remove of the widget.
  */
@@ -30,6 +33,7 @@ import {
 import { BehaviorSubject, Observable, Subject, defer, filter, map, merge, take, throwError, timeout } from 'rxjs';
 import { CaptchaUnavailableError } from '../../utils/public-form-errors';
 import { TurnstileService, TurnstileTheme } from '../../../core/services/turnstile.service';
+import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
 
 /** @description Name of the honeypot field - must match PublicFormGuard::HONEYPOT_FIELD. */
 export const HONEYPOT_FIELD = 'website';
@@ -71,6 +75,8 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
   readonly trapName = HONEYPOT_FIELD;
 
   private turnstile = inject(TurnstileService);
+  /** Visual text editor of the admin: no check (its forms are never sent). */
+  private textEditor = inject(PublicTextEditorService);
   private token$ = new BehaviorSubject<string | null>(null);
   private failed$ = new Subject<void>();
   private widgetId: string | null = null;
@@ -82,6 +88,9 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
    * after the form was closed is removed at once.
    */
   ngAfterViewInit(): void {
+    if (this.textEditor.active) {
+      return;
+    }
     this.turnstile.render(
       this.container.nativeElement,
       (token) => this.token$.next(token),

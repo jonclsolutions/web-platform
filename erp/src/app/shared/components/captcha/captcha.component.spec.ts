@@ -13,6 +13,7 @@
  */
 
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { PublicTextEditorService } from '../../../public/text-editor/public-text-editor.service';
 import { CAPTCHA_TOKEN_TIMEOUT_MS, CaptchaComponent, HONEYPOT_FIELD } from './captcha.component';
 import { TurnstileService } from '../../../core/services/turnstile.service';
 import { CaptchaUnavailableError } from '../../utils/public-form-errors';
@@ -137,5 +138,24 @@ describe('CaptchaComponent', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(turnstile.remove).toHaveBeenCalledWith('late');
+  });
+
+  /**
+   * @description In the visual text editor of the admin the widget is not rendered - no request to
+   *   Cloudflare, no error text; the honeypot stays (the page looks the same).
+   * @input PublicTextEditorService active
+   * @output render not called; no .captcha-error; the trap field present
+   */
+  it('stays off in the visual text editor', () => {
+    const editorTurnstile = { render: jasmine.createSpy('render'), reset: jasmine.createSpy('reset'), remove: jasmine.createSpy('remove') };
+    TestBed.configureTestingModule({
+      imports: [CaptchaComponent],
+      providers: [{ provide: TurnstileService, useValue: editorTurnstile }, { provide: PublicTextEditorService, useValue: { active: true } }],
+    });
+    const editorFixture = TestBed.createComponent(CaptchaComponent);
+    editorFixture.detectChanges();
+    expect(editorTurnstile.render).not.toHaveBeenCalled();
+    expect(editorFixture.nativeElement.querySelector('.captcha-error')).toBeNull();
+    expect(editorFixture.nativeElement.querySelector(`input[name="${HONEYPOT_FIELD}"]`)).not.toBeNull();
   });
 });

@@ -4,6 +4,12 @@
             "type": "changed",
             "area": "web",
             "part": "admin",
+            "text": "Editor textů přímo na stránkách: ochrana formulářů (Cloudflare Turnstile) se v náhledu nenačítá – formuláře se v editoru neodesílají, takže se nevolá služba třetí strany a nemůže se ukázat její chyba ani výzva."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
             "text": "Editor textů přímo na stránkách: zkratky Ctrl/Cmd+S a Esc, tiché „Uloženo“ místo okna přes lištu, pole roste s textem, poznámka při oprávnění jen ke čtení, titulek stránky „Načítá se“ / „nemá vlastní titulek“, další texty seskupené a zkrácené a štítky se nepřekrývají."
         },
         {
