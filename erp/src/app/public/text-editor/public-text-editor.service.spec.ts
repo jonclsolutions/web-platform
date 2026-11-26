@@ -151,20 +151,24 @@ describe('PublicTextEditorService', () => {
   });
 
   /**
-   * @description Saving: `commit` hands the drafts with their language over (the texts service
-   *   writes them into the loaded texts) and clears them.
-   * @input drafts {faq.title} cz; commit
-   * @output commits$ {lang cz, values}; then changes$; decorate shows the source again
+   * @description Saving: `commit` hands the saved texts with their language over (the texts
+   *   service writes them into the loaded texts) and drops the drafts it saved; a draft written
+   *   after the save started (another text than saved) stays.
+   * @input drafts {faq.title: 'Nové', faq.sub: 'Později'} cz; commit cz {faq.title: 'Nové', faq.sub: 'Dřív'}
+   * @output commits$ {lang cz, values}; then changes$; decorate shows the source title again and
+   *   the draft of faq.sub
    */
-  it('hands the saved drafts over and clears them', () => {
+  it('hands the saved texts over and drops the saved drafts', () => {
     activate();
     const events: string[] = [];
     service.commits$.subscribe(commit => events.push(`commit:${commit.lang}:${commit.values['faq.title']}`));
     service.changes$.subscribe(() => events.push('changes'));
-    fromAdmin({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: 'cz', values: { 'faq.title': 'Nové' } });
-    fromAdmin({ channel: TEXT_EDITOR_CHANNEL, type: 'commit' });
+    fromAdmin({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: 'cz', values: { 'faq.title': 'Nové', 'faq.sub': 'Později' } });
+    fromAdmin({ channel: TEXT_EDITOR_CHANNEL, type: 'commit', lang: 'cz', values: { 'faq.title': 'Nové', 'faq.sub': 'Dřív' } });
     expect(events).toEqual(['changes', 'commit:cz:Nové', 'changes']);
-    expect(stripMarks(service.decorate({ faq: { title: 'Staré' } }, 'cz').faq.title)).toBe('Staré');
+    const shown = service.decorate({ faq: { title: 'Staré', sub: 'Sub' } }, 'cz');
+    expect(stripMarks(shown.faq.title)).toBe('Staré');
+    expect(stripMarks(shown.faq.sub)).toBe('Později');
   });
 
   /**

@@ -73,8 +73,8 @@ export type TextEditorToFrame =
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'drafts'; lang: string; values: Record<string, string>; missing?: Record<string, string> }
   /** Highlight a key (null = nothing); `reveal` scrolls the page to it. */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'select'; key: string | null; reveal: boolean }
-  /** The drafts were saved - they become the texts of the page. */
-  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'commit' };
+  /** Texts of a language were saved (key → text as stored) - they become the texts of the page. */
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'commit'; lang: string; values: Record<string, string> };
 
 /** Frame → admin. */
 export type TextEditorFromFrame =

@@ -41,15 +41,17 @@ describe('EditWebsiteComponent', () => {
   const cz = { home: { title: 'Domů', cta: 'Kontakt' }, footer: 'Patička' };
   const en = { home: { title: 'Home', cta: '' }, extra: 'Only EN' };
 
-  /** DataHandler.get answers: languages and translations per language of the 'web' module. */
+  /** DataHandler.get / getQuietly (the texts) answers: languages and translations per language of the 'web' module. */
   const answer = (overrides: Record<string, any> = {}) => {
-    (ctx.dataHandler as any).get.and.callFake((url: string) => {
+    const route = (url: string) => {
       if (url in overrides) return overrides[url];
       if (url === 'languages/web') return of(JSON.parse(JSON.stringify(languages)));
       if (url === 'translations/web/cz') return of(JSON.parse(JSON.stringify(cz)));
       if (url === 'translations/web/en') return of(JSON.parse(JSON.stringify(en)));
-      return throwError(() => new Error('404'));
-    });
+      return throwError(() => ({ status: 404 }));
+    };
+    (ctx.dataHandler as any).get.and.callFake(route);
+    (ctx.dataHandler as any).getQuietly.and.callFake(route);
   };
 
   const setup = async (granted: string[] | 'all' = 'all') => {
@@ -67,13 +69,13 @@ describe('EditWebsiteComponent', () => {
   /**
    * @description The page is configured for the 'web' module and the 'edit-website' texts.
    * @input  t('page_title'); ngOnInit()
-   * @output 'edit-website.page_title'; get('languages/web'), get('translations/web/cz'); languages cz, en
+   * @output 'edit-website.page_title'; get('languages/web'), getQuietly('translations/web/cz'); languages cz, en
    */
   it('loads the languages and translations of the web module', fakeAsync(() => {
     expect(component.t('page_title')).toBe('edit-website.page_title');
     component.ngOnInit();
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('languages/web');
-    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('translations/web/cz');
+    expect((ctx.dataHandler as any).getQuietly).toHaveBeenCalledWith('translations/web/cz');
     expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
     expect(component.currentLang).toBe('cz');
     expect(component.totalCount).toBe(3);
@@ -129,16 +131,16 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
-   * @description Saving posts the whole language to the web module and clears the dirty flag.
+   * @description Saving posts the changed texts to the web module and clears the dirty flag.
    * @input  updateValue('footer', 'Nová'); onSubmit()
-   * @output post('save_translations/web', { lang: 'cz', data: { …, footer: 'Nová' } }); isDirty false; success alert
+   * @output post('save_translations/web', { lang: 'cz', changes: [{ path: 'footer', value: 'Nová' }] }); isDirty false; success alert
    */
   it('saves the translations of the current language', fakeAsync(() => {
     component.ngOnInit();
     component.updateValue('footer', 'Nová');
     component.onSubmit();
     expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/web',
-      { lang: 'cz', data: jasmine.objectContaining({ footer: 'Nová' }) });
+      { lang: 'cz', changes: [{ path: 'footer', value: 'Nová' }] });
     expect(component.isDirty).toBeFalse();
     expect(ctx.alert.open).toHaveBeenCalledWith('edit-website.admin_title', 'edit-website.translations_saved_message', 'success');
     flush();
@@ -338,7 +340,7 @@ describe('EditWebsiteComponent', () => {
    * @output no .ew-lang-tab-actions, no letter stand-ins (codes CZ, EN), no "+ Přidat jazyk" tab;
    *   2 rows - CZ main with
    *   [download, upload], EN with 4 actions;
-   *   note only in the CZ row after the edit; get('translations/web/cz') + ('translations/web/en')
+   *   note only in the CZ row after the edit; getQuietly('translations/web/cz') + ('translations/web/en')
    *   and 2 files; toggleLangActive(EN), openUploadModal('en'), askDeleteLang(EN), openAddForm() -
    *   the window open after each
    */
@@ -376,12 +378,12 @@ describe('EditWebsiteComponent', () => {
 
     const files: string[] = [];
     spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) { files.push(this.download); });
-    (ctx.dataHandler as any).get.calls.reset();
+    (ctx.dataHandler as any).getQuietly.calls.reset();
     langs().manageDownload(component.languages[0]);
     langs().manageDownload(component.languages[1]);
     flush();
-    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('translations/web/cz');
-    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('translations/web/en');
+    expect((ctx.dataHandler as any).getQuietly).toHaveBeenCalledWith('translations/web/cz');
+    expect((ctx.dataHandler as any).getQuietly).toHaveBeenCalledWith('translations/web/en');
     expect(files).toEqual(['cz.json', 'en.json']);
 
     const en = component.languages.find(l => l.code === 'en')!;

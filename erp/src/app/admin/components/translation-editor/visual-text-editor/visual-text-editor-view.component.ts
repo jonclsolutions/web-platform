@@ -193,8 +193,10 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     window.addEventListener('message', this.onMessage);
     // a window after saving would cover the bar of the editor - a quiet "Uloženo" by the button
     this.e.saveAlert = false;
-    this.e.saved$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'commit' });
+    // the saved texts become those of the page; edits made while the save ran stay drafts
+    this.e.saved$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(values => {
+      this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'commit', lang: this.e.currentLang, values });
+      this.postDrafts();
       this.showSavedNotice();
     });
   }
@@ -544,7 +546,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
    * @param value New text.
    */
   edit(path: string, value: string): void {
-    if (!this.e.canUpdate) return;
+    if (!this.e.canEditTexts) return;
     this.e.updateValue(path, value);
     this.postDrafts();
     this.fitField();

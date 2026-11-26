@@ -48,12 +48,15 @@ describe('WebTextEditorComponent', () => {
     localStorage.removeItem('jsw_languages');
     spyOn(window, 'matchMedia').and.returnValue({ matches: phone, addEventListener: () => {}, removeEventListener: () => {} } as unknown as MediaQueryList);
     ctx = createAdminTestContext();
-    (ctx.dataHandler as any).get.and.callFake((url: string) => {
+    // get: the languages; getQuietly: the texts (a missing language answers 404)
+    const route = (url: string) => {
       if (url === 'languages/web') return of(structuredClone(languages));
       if (url === 'translations/web/cz') return of(structuredClone(cz));
       if (url === 'translations/web/en') return of(structuredClone(en));
-      return throwError(() => new Error('404'));
-    });
+      return throwError(() => ({ status: 404 }));
+    };
+    (ctx.dataHandler as any).get.and.callFake(route);
+    (ctx.dataHandler as any).getQuietly.and.callFake(route);
     (ctx.dataHandler as any).post.and.returnValue(of({}));
     TestBed.configureTestingModule({ imports: [WebTextEditorComponent], providers: ctx.providers });
     fixture = TestBed.createComponent(WebTextEditorComponent);
@@ -136,7 +139,8 @@ describe('WebTextEditorComponent', () => {
    *   panel keeps the saved version; saving hands the drafts over (commit).
    * @input select faq.title; type 'Dotazy'; save
    * @output drafts {faq.title: 'Dotazy'}; saved version 'Časté dotazy'; save label with 1;
-   *   POST save_translations/web; commit sent; not dirty
+   *   POST save_translations/web with the change; commit {cz, faq.title: 'Dotazy'} sent, then the
+   *   drafts (none left); not dirty
    */
   it('previews the edits live and saves them', fakeAsync(() => {
     setup();
@@ -153,8 +157,9 @@ describe('WebTextEditorComponent', () => {
 
     (el.querySelector('.te-btn--primary') as HTMLButtonElement).click();
     flush();
-    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/web', jasmine.objectContaining({ lang: 'cz' }));
-    expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'commit' });
+    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/web', { lang: 'cz', changes: [{ path: 'faq.title', value: 'Dotazy' }] });
+    expect(sent[sent.length - 2]).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'commit', lang: 'cz', values: { 'faq.title': 'Dotazy' } });
+    expect(lastSent()).toEqual(jasmine.objectContaining({ type: 'drafts', lang: 'cz', values: {} }));
     expect(component.isDirty).toBeFalse();
     discardPeriodicTasks();
   }));

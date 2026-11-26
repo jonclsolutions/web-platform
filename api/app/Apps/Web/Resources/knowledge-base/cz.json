@@ -649,6 +649,10 @@
               "type": "alert",
               "variant": "warning",
               "content": "Klíč neměňte - text pod ním web hledá. Měňte jen hodnotu. Neuložené změny se ztratí, když přepnete jazyk nebo odejdete ze stránky bez uložení."
+            },
+            {
+              "type": "text",
+              "content": "Uložení zapíše jen texty, které jste změnili - texty, které mezitím uložil někdo jiný (nebo vy v jiné záložce prohlížeče), zůstanou. Během ukládání je tlačítko Uložit neaktivní; co mezitím napíšete, zůstane jako neuložená změna. Když se texty jazyka nepodaří načíst (výpadek serveru nebo připojení), nejde je upravovat ani ukládat - zkuste to znovu za chvíli."
             }
           ]
         },

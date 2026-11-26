@@ -19,6 +19,7 @@ use App\Models\Core\CoreLog;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Support\Apps\AppRegistry;
@@ -57,6 +58,21 @@ class TranslationController extends Controller
     /** @var string Role that passes every permission check (see CheckPermission). */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
 
+    /** @var string Dot path of a text of a translation file (`home.hero.title`, `items.0.label`). */
+    public const KEY_PATH_PATTERN = '[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*';
+
+    /** @var int Most texts one save of the editor may change. */
+    private const MAX_CHANGES = 5000;
+
+    /** @var int Longest text of a translation (characters). */
+    private const MAX_TEXT_LENGTH = 10000;
+
+    /** @var int How long the write lock of a language file is held at most (seconds). */
+    private const WRITE_LOCK_SECONDS = 10;
+
+    /** @var int How long a save waits for another save of the same language (seconds). */
+    private const WRITE_LOCK_WAIT_SECONDS = 5;
+
     /**
      * @var array<int, array<string, mixed>> Languages of a module that has none stored yet.
      */
@@ -88,13 +104,21 @@ class TranslationController extends Controller
     }
 
     /**
-     * @description Saves the texts of one language of a module (editor "Save changes", or the
-     *   upload of a JSON file with `upload: true`).
+     * @description Saves the texts of one language of a module: the changed texts of the editors
+     *   (`changes` - merged into the stored file) or a whole uploaded JSON file (`data`,
+     *   `upload: true`).
+     * @note `changes` [{path, value}]: only these texts are written, every other text of the file
+     *   stays as stored - two admins (or two tabs) saving different texts of one language never
+     *   overwrite each other. A path must be a text of the primary language or of the file itself
+     *   (422 with the unknown paths, nothing written). The answer has the texts as stored
+     *   (`values` - plain text, PlainText::fromHtml()).
      * @note An upload must have exactly the keys of the primary language (Czech on the server;
      *   for Czech itself its current keys) - missing or extra keys are refused with 422 and the
      *   lists of keys, nothing is written (a wrong file must never wipe texts). In an uploaded
      *   other language empty texts are left out (= missing, the editor marks them, the public page
      *   shows its fallback instead of an empty text).
+     * @note Writes of one language run one at a time (cache lock) and replace the file at once
+     *   (temporary file + rename) - a reader never gets a half-written file.
      */
     public function save(Request $request, string $module): JsonResponse
     {
@@ -103,14 +127,20 @@ class TranslationController extends Controller
         }
 
         $request->validate([
-            'lang'   => ['required', 'string', 'max:6', 'regex:/^' . self::LANG_PATTERN . '$/'],
-            'data'   => 'required|array',
-            'upload' => 'sometimes|boolean',
+            'lang'            => ['required', 'string', 'max:6', 'regex:/^' . self::LANG_PATTERN . '$/'],
+            // the whole language (upload of a JSON file) or only the changed texts (the editors)
+            'data'            => 'required_without:changes|prohibits:changes|array',
+            'changes'         => 'required_without:data|array|min:1|max:' . self::MAX_CHANGES,
+            'changes.*'       => 'array:path,value',
+            'changes.*.path'  => ['required', 'string', 'max:255', 'regex:/^' . self::KEY_PATH_PATTERN . '$/'],
+            'changes.*.value' => ['present', 'nullable', 'string', 'max:' . self::MAX_TEXT_LENGTH],
+            'upload'          => 'sometimes|boolean|prohibits:changes',
         ]);
 
         $lang = $request->input('lang');
+        $partial = $request->has('changes');
         // plain text only: older HTML (<br>, <p>) becomes new lines, any other tag is removed
-        $newData = PlainText::tree($request->input('data'));
+        $newData = $partial ? [] : PlainText::tree($request->input('data'));
 
         if ($request->boolean('upload')) {
             if ($mismatch = $this->uploadMismatch($module, $newData)) {
@@ -129,10 +159,34 @@ class TranslationController extends Controller
                 File::makeDirectory($directory, 0755, true, true);
             }
 
-            $oldData = File::exists($filePath) ? json_decode(File::get($filePath), true) ?? [] : [];
-            $changes = $this->getDeepDiff($oldData, $newData);
+            // one write of the language at a time: a save reads the stored texts and writes them back
+            $result = Cache::lock("translations:{$module}:{$lang}", self::WRITE_LOCK_SECONDS)
+                ->block(self::WRITE_LOCK_WAIT_SECONDS, function () use ($partial, $request, $module, $filePath, $newData) {
+                    $oldData = self::readTexts($filePath);
+                    $saved = [];
+                    if ($partial) {
+                        if ($oldData === null) {
+                            // an unreadable file is never replaced by the few changed texts
+                            throw new \RuntimeException("The stored texts of {$filePath} are not valid JSON.");
+                        }
+                        [$newData, $saved, $unknown] = self::mergeChanges($oldData, MissingTranslations::primary($module) ?? [], $request->input('changes'));
+                        if ($unknown !== []) {
+                            return response()->json([
+                                'message'       => 'The texts are not in the translations of the module.',
+                                'unknown'       => array_slice($unknown, 0, self::UPLOAD_MISMATCH_LIST),
+                                'unknown_count' => count($unknown),
+                            ], 422);
+                        }
+                    }
+                    self::writeTexts($filePath, $newData);
 
-            File::put($filePath, json_encode($newData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                    return [$oldData ?? [], $newData, $saved];
+                });
+            if ($result instanceof JsonResponse) {
+                return $result;
+            }
+            [$oldData, $newData, $saved] = $result;
+            $changes = $this->getDeepDiff($oldData, $newData);
 
             $action = $request->boolean('upload') ? 'Upload' : 'Update';
             $description = $changes
@@ -141,10 +195,99 @@ class TranslationController extends Controller
 
             $this->logAction($request, $this->logModel($module), 'update', "Translation:{$module}", $description, null, 'Translation');
 
-            return $this->respond(['detected_changes' => count($changes)]);
+            return $this->respond($partial
+                ? ['detected_changes' => count($changes), 'values' => (object) $saved]
+                : ['detected_changes' => count($changes)]);
         } catch (\Exception $e) {
             report($e); // full detail (class, file, trace) to the core log
             return response()->json(['message' => 'Saving translations failed.'], 500);
+        }
+    }
+
+    /**
+     * @description Writes the changed texts of the editor into the stored texts of a language.
+     * @param array $stored Texts of the language as stored.
+     * @param array $primary Texts of the primary language (the keys a language may have).
+     * @param array<int, array{path: string, value: ?string}> $changes Changed texts.
+     * @return array{0: array, 1: array<string, string>, 2: array<int, string>} The merged texts,
+     *   the texts as stored by path (plain text) and the paths that are no text of the module.
+     */
+    private static function mergeChanges(array $stored, array $primary, array $changes): array
+    {
+        $known = array_flip(array_merge(MissingTranslations::keyPaths($primary), MissingTranslations::keyPaths($stored)));
+        $merged = $stored;
+        $saved = [];
+        $unknown = [];
+        foreach ($changes as $change) {
+            $path = (string) $change['path'];
+            $text = PlainText::fromHtml((string) ($change['value'] ?? ''));
+            if (!isset($known[$path]) || !self::setText($merged, $path, $text)) {
+                $unknown[] = $path;
+                continue;
+            }
+            $saved[$path] = $text;
+        }
+
+        return [$merged, $saved, $unknown];
+    }
+
+    /**
+     * @description Sets a text at a dot path (creates the missing groups).
+     * @param array $data Texts (changed in place).
+     * @param string $path Dot path of the text.
+     * @param string $text Text.
+     * @return bool false when the path runs through a text or ends at a group (nothing changed).
+     */
+    private static function setText(array &$data, string $path, string $text): bool
+    {
+        $parts = explode('.', $path);
+        $last = array_pop($parts);
+        $node = &$data;
+        foreach ($parts as $part) {
+            if (!array_key_exists($part, $node)) {
+                $node[$part] = [];
+            } elseif (!is_array($node[$part])) {
+                return false;
+            }
+            $node = &$node[$part];
+        }
+        if (array_key_exists($last, $node) && is_array($node[$last])) {
+            return false;
+        }
+        $node[$last] = $text;
+
+        return true;
+    }
+
+    /**
+     * @description Texts of a language file.
+     * @param string $path Translation file.
+     * @return array|null Its texts ([] when it does not exist yet), null when it is not valid JSON.
+     */
+    private static function readTexts(string $path): ?array
+    {
+        if (!File::exists($path)) {
+            return [];
+        }
+        $data = json_decode(File::get($path), true);
+
+        return is_array($data) ? $data : null;
+    }
+
+    /**
+     * @description Replaces a translation file at once: the texts go to a temporary file beside it,
+     *   which then takes its place (rename) - a reader gets the old or the new file, never a part.
+     * @param string $path Translation file.
+     * @param array $data Texts.
+     * @throws \RuntimeException When the file cannot be written.
+     */
+    private static function writeTexts(string $path, array $data): void
+    {
+        $temporary = $path . '.' . bin2hex(random_bytes(6)) . '.tmp';
+        $written = File::put($temporary, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        if ($written === false || !@rename($temporary, $path)) {
+            File::delete($temporary);
+            throw new \RuntimeException("The translation file {$path} could not be written.");
         }
     }
 

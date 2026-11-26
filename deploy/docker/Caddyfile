@@ -28,12 +28,13 @@
 #               consent); NO inline script and NO eval
 #   style-src   'unsafe-inline' is required by Angular (component styles are <style> elements)
 #   font-src    the fonts are self-hosted (src/fonts.css)
-#   frame-src   only the Turnstile widget; frame-ancestors 'self' = no clickjacking
+#   frame-src   own pages (the visual text editor of the admin shows the website in a frame) +
+#               the Turnstile widget; frame-ancestors 'self' = no clickjacking
 #   report-uri  every blocked resource is recorded as the security event csp_violation (admin)
 # To diagnose a broken page, rename the header to Content-Security-Policy-Report-Only.
 (security_headers) {
 	header {
-		Content-Security-Policy "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests; report-uri /api/csp-report"
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src 'self' https://challenges.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests; report-uri /api/csp-report"
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
 		Referrer-Policy "strict-origin-when-cross-origin"

@@ -165,6 +165,54 @@ class TranslationTest extends TestCase
     }
 
     /**
+     * @description Saving the changed texts of the editor (`changes`): only they are written into
+     *   the stored file (texts saved meanwhile elsewhere stay), as plain text, answered as stored;
+     *   a path that is no text of the module (or a group) is refused with nothing written; an
+     *   unreadable stored file is never replaced by the changes; the file is replaced at once (no
+     *   temporary file stays).
+     * @input cz {home: {title, text}, items: [a, b]}; en {home: {title: Old}, extra: Keep};
+     *   changes en home.text 'Hello<br>world'; then home.title + items.1; unknown nope.x / group
+     *   home; invalid paths, data + changes together, upload with changes, too long text; en.json
+     *   not valid JSON.
+     * @output 200 values {home.text: "Hello\nworld"}, file {home: {title: Old, text}, extra: Keep};
+     *   title + items.1 written, extra kept; 422 unknown [nope.x, home] count 2, file unchanged;
+     *   422 changes.0.path / data / upload / changes.0.value; 500 with the file unchanged; no *.tmp.
+     */
+    public function test_save_changes_merges_into_the_stored_texts(): void
+    {
+        $this->signIn($this->userWith(self::EDITOR));
+        File::ensureDirectoryExists($this->file('web'));
+        File::put($this->file('web/cz.json'), json_encode(['home' => ['title' => 'Domů', 'text' => 'Text'], 'items' => ['a', 'b']]));
+        File::put($this->file('web/en.json'), json_encode(['home' => ['title' => 'Old'], 'extra' => 'Keep']));
+        $stored = fn () => json_decode(File::get($this->file('web/en.json')), true);
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.text', 'value' => 'Hello<br>world']]])
+            ->assertOk()->assertJsonPath('data.values', ['home.text' => "Hello\nworld"])->assertJsonPath('data.detected_changes', 1);
+        $this->assertSame(['home' => ['title' => 'Old', 'text' => "Hello\nworld"], 'extra' => 'Keep'], $stored());
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.title', 'value' => 'Home'], ['path' => 'items.1', 'value' => 'B']]])->assertOk();
+        $this->assertSame(['home' => ['title' => 'Home', 'text' => "Hello\nworld"], 'extra' => 'Keep', 'items' => [1 => 'B']], $stored());
+        $this->assertTrue(WebLog::where('description', 'like', 'Update en.json: CHNG:home.title(Old->Home)%')->exists());
+
+        $before = File::get($this->file('web/en.json'));
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'nope.x', 'value' => 'x'], ['path' => 'home', 'value' => 'x'], ['path' => 'extra', 'value' => 'ok']]])
+            ->assertStatus(422)->assertJsonPath('unknown', ['nope.x', 'home'])->assertJsonPath('unknown_count', 2);
+        $this->assertSame($before, File::get($this->file('web/en.json')));
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'a..b', 'value' => 'x']]])->assertStatus(422)->assertJsonValidationErrors(['changes.0.path']);
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'extra', 'value' => 'x']], 'data' => ['a' => 'b']])->assertStatus(422)->assertJsonValidationErrors(['data']);
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'extra', 'value' => 'x']], 'upload' => true])->assertStatus(422)->assertJsonValidationErrors(['upload']);
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'extra', 'value' => str_repeat('x', 10001)]]])->assertStatus(422)->assertJsonValidationErrors(['changes.0.value']);
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => []])->assertStatus(422)->assertJsonValidationErrors(['data']);
+
+        File::put($this->file('web/en.json'), '{bad');
+        Exceptions::fake();
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'changes' => [['path' => 'home.title', 'value' => 'X']]])->assertStatus(500);
+        $this->assertSame('{bad', File::get($this->file('web/en.json')));
+        $this->assertSame([], glob($this->file('web/*.tmp')));
+    }
+
+    /**
      * @description The languages of all applications together (core pages such as the legal
      *   documents): one entry per code, the first one wins, with icon URLs; public.
      * @input languages.json: cz (web), EN (web), en (shop), de (shop, with icon).

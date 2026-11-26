@@ -15,6 +15,12 @@
  * @note `isDirty` (unsaved changes) - set by `updateValue()`, reset after saving, after a
  * (re)load of the translations, after adding and after deleting the current language. Drives
  * the "Save changes" button of the template.
+ * @note Saving sends only the changed texts (`changes`) - the API merges them into the stored
+ * language, so texts saved meanwhile in another tab or by another admin stay. One save at a
+ * time (`saving`); a text edited again while it runs stays a change.
+ * @note A language that cannot be loaded (any error but 404 - a language without a file yet)
+ * cannot be edited or saved (`loadFailed`): its empty texts must never be taken for the stored
+ * ones. A newer load of the texts wins over an older one still running (another language).
  * @note `canUpdate`: the GET routes (`languages/{module}`, `translations/{module}/{lang}`) are
  * public (read by the public web), so only the mutating actions are guarded.
  *
@@ -25,7 +31,7 @@
  */
 
 import { ChangeDetectorRef, Directive, inject, OnInit, OnDestroy } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
@@ -302,8 +308,22 @@ export abstract class BaseTranslationEditorComponent
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
 
-  /** The texts of the current language were saved (the visual text editor hands its drafts over). */
-  readonly saved$ = new Subject<void>();
+  /**
+   * The texts of the current language were saved: the saved texts by key as the API stored them
+   * (the visual text editor hands its drafts over).
+   */
+  readonly saved$ = new Subject<Record<string, string>>();
+  /** A save of the texts is running (the save button and Ctrl+S wait for it). */
+  saving = false;
+  /**
+   * The texts of the current language could not be loaded (not a missing file - the server or
+   * the network failed): nothing can be edited or saved until a load succeeds.
+   */
+  loadFailed = false;
+  /** Running load of the texts of a language (a newer one cancels it). */
+  private loadSubscription: Subscription | null = null;
+  /** Count of the loads of the texts (a save answered after a new load leaves its state alone). */
+  private loadCount = 0;
   /** The success window after saving the texts (the visual editor shows its own quiet "Uloženo"). */
   saveAlert = true;
 
@@ -365,6 +385,11 @@ export abstract class BaseTranslationEditorComponent
    */
   get canUpdate(): boolean {
     return this.permissionService.hasPermission(this.UPDATE_PERMISSION);
+  }
+
+  /** @returns Whether the texts of the current language may be edited (permission, loaded). */
+  get canEditTexts(): boolean {
+    return this.canUpdate && !this.loadFailed;
   }
 
   constructor(
@@ -442,7 +467,8 @@ export abstract class BaseTranslationEditorComponent
     }
     return this.resourceCache.get(
       key,
-      () => this.dataHandler.get<any>(`translations/${this.MODULE}/${lang}`),
+      // quietly: the editor explains a failure itself (a missing language is no error)
+      () => this.dataHandler.getQuietly<any>(`translations/${this.MODULE}/${lang}`),
       this.TRANSLATIONS_TTL_MS
     );
   }
@@ -477,13 +503,23 @@ export abstract class BaseTranslationEditorComponent
     this.refreshTranslations();
   }
 
+  /**
+   * @description Loads the texts of the current language again (unsaved edits are dropped). A
+   *   load still running for another language is cancelled - its answer must never fill this one.
+   *   A language without a file yet (404) gets the empty keys of Czech; any other failure leaves
+   *   the language unloaded (`loadFailed` - nothing to edit or save).
+   */
   public refreshTranslations(): void {
     this.isDirty = false;
     this.changedPaths.clear();
     this.errorMessage = null;
+    this.loadFailed = false;
+    this.loadCount++;
     this.cd.markForCheck();
 
-    this.fetchTranslations(this.currentLang)
+    const lang = this.currentLang;
+    this.loadSubscription?.unsubscribe();
+    this.loadSubscription = this.fetchTranslations(lang)
       .pipe(
         Core.takeUntil(this.destroy$),
         Core.finalize(() => {
@@ -493,6 +529,7 @@ export abstract class BaseTranslationEditorComponent
       )
       .subscribe({
         next: (data) => {
+          if (lang !== this.currentLang) return;
           // a private copy - the cached response must stay untouched
           this.translations = structuredClone(data ?? {});
           this.buildFlatList();
@@ -502,13 +539,29 @@ export abstract class BaseTranslationEditorComponent
             this.filterMissing();
           }
         },
-        error: () => {
+        error: (err) => {
+          if (lang !== this.currentLang) return;
+          if (err?.status !== 404) {
+            // the stored texts are unknown - empty fields would look like missing texts and a
+            // save would write them
+            this.loadFailed = true;
+            this.translations = {};
+            this.flattenedKeys = [];
+            this.savedValues = new Map();
+            this.applyFilter();
+            this.alertDialogService.open(
+              this.i18n.getValue('shared.error'),
+              this.t('translations_load_failed_message').replace('{lang}', lang),
+              'danger'
+            );
+            return;
+          }
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.buildFlatList();
           this.applyFilter();
           this.alertDialogService.open(
             this.t('info_title'),
-            this.t('translations_not_found_message').replace('{lang}', this.currentLang),
+            this.t('translations_not_found_message').replace('{lang}', lang),
             'info'
           );
         }
@@ -622,6 +675,31 @@ export abstract class BaseTranslationEditorComponent
     this.refreshTranslations();
   }
 
+  /**
+   * @description The sent texts become the saved ones, as the API stored them (plain text - the
+   *   field then shows that). A text edited again while the save ran stays a change.
+   * @param sent Texts sent by the save.
+   * @param stored Texts as stored by the API, by key.
+   * @returns The saved texts by key.
+   */
+  private markSaved(sent: { path: string; value: string }[], stored: Record<string, string>): Record<string, string> {
+    const saved: Record<string, string> = {};
+    for (const { path, value } of sent) {
+      const text = typeof stored[path] === 'string' ? stored[path] : value;
+      saved[path] = text;
+      this.savedValues.set(path, text);
+      const current = this.currentValueOf(path);
+      if (current === value && text !== value) {
+        this.writeValue(path, text);
+      }
+      if (this.currentValueOf(path) === text) {
+        this.changedPaths.delete(path);
+      }
+    }
+    this.isDirty = this.changedPaths.size > 0;
+    return saved;
+  }
+
   /** A language opened from the "texts missing" banner shows only its missing texts once loaded. */
   private missingAfterLoad = false;
 
@@ -670,19 +748,8 @@ export abstract class BaseTranslationEditorComponent
    * @param newValue New translation value.
    */
   updateValue(path: string, newValue: string): void {
-    const keys = path.split('.');
-    let temp = this.translations;
-    for (let i = 0; i < keys.length - 1; i++) {
-      if (!temp[keys[i]]) temp[keys[i]] = {};
-      temp = temp[keys[i]];
-    }
-    temp[keys[keys.length - 1]] = newValue;
-
-    const item = this.flattenedKeys.find(k => k.path === path);
-    if (item) {
-      item.value   = newValue;
-      item.missing = (typeof newValue === 'string' ? newValue : String(newValue)).trim() === '';
-    }
+    if (this.loadFailed) return;
+    this.writeValue(path, newValue);
 
     // the last edited text goes to the end (the editor lists them from the last one); a text
     // written back to its saved value is no longer a change
@@ -692,6 +759,36 @@ export abstract class BaseTranslationEditorComponent
     }
     this.isDirty = this.changedPaths.size > 0;
     this.cd.markForCheck();
+  }
+
+  /**
+   * @description Writes a text into `translations` (nested) and the flat list - no change tracking.
+   * @param path Dot path of the key.
+   * @param value Text.
+   */
+  private writeValue(path: string, value: string): void {
+    const keys = path.split('.');
+    let temp = this.translations;
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (!temp[keys[i]]) temp[keys[i]] = {};
+      temp = temp[keys[i]];
+    }
+    temp[keys[keys.length - 1]] = value;
+
+    const item = this.flattenedKeys.find(k => k.path === path);
+    if (item) {
+      item.value   = value;
+      item.missing = (typeof value === 'string' ? value : String(value)).trim() === '';
+    }
+  }
+
+  /**
+   * @param path Dot path of the key.
+   * @returns Its current (possibly edited) text.
+   */
+  private currentValueOf(path: string): string {
+    const item = this.flattenedKeys.find(k => k.path === path);
+    return item ? item.value : '';
   }
 
   /**
@@ -748,29 +845,43 @@ export abstract class BaseTranslationEditorComponent
    * success.
    */
   onSubmit(): void {
-    if (!this.canUpdate) return;
+    if (!this.canEditTexts || this.saving || this.changedPaths.size === 0) return;
 
-    this.dataHandler.post(`save_translations/${this.MODULE}`, {
-      lang: this.currentLang,
-      data: this.translations
-    }).pipe(Core.takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.isDirty = false;
-        this.changedPaths.clear();
-        this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.currentLang}`);
+    const lang = this.currentLang;
+    const loadCount = this.loadCount;
+    // only the changed texts - the API merges them into the stored language
+    const changes = [...this.changedPaths].map(path => ({ path, value: this.currentValueOf(path) }));
+    this.saving = true;
+    this.cd.markForCheck();
+
+    this.dataHandler.post<{ values?: Record<string, string> } | null>(`save_translations/${this.MODULE}`, { lang, changes }).pipe(
+      Core.takeUntil(this.destroy$),
+      Core.finalize(() => {
+        this.saving = false;
+        this.cd.markForCheck();
+      })
+    ).subscribe({
+      next: (answer) => {
+        this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${lang}`);
         // open tabs of the website in this browser show the saved texts at once
-        announceTexts({ kind: 'texts', module: this.MODULE, lang: this.currentLang });
+        announceTexts({ kind: 'texts', module: this.MODULE, lang });
         this.notifications.refresh(); // the orange numbers follow the saved texts at once
+        if (lang !== this.currentLang || loadCount !== this.loadCount) {
+          // the texts were loaded again meanwhile (another language, discarded edits) - their
+          // state is not this save's; a reload of the same language shows what is stored now
+          if (lang === this.currentLang && !this.isDirty) this.refreshTranslations();
+          return;
+        }
+        const saved = this.markSaved(changes, answer?.values ?? {});
         if (this.saveAlert) {
           this.alertDialogService.open(
             this.t('admin_title'),
-            this.t('translations_saved_message').replace('{lang}', this.currentLang),
+            this.t('translations_saved_message').replace('{lang}', lang),
             'success'
           );
         }
-        this.buildFlatList();
         this.applyFilter();
-        this.saved$.next();
+        this.saved$.next(saved);
         this.cd.markForCheck();
       },
       error: () => {
@@ -1101,7 +1212,11 @@ export abstract class BaseTranslationEditorComponent
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (data) => this.saveJsonFile(code, this.withMissingKeys(this.buildEmptyFromCz(this.czTranslations), data ?? {})),
-        error: () => this.saveJsonFile(code, this.buildEmptyFromCz(this.czTranslations)),
+        // no file yet: the empty keys of Czech; a failed load gives no file (an empty one taken for
+        // the stored texts and uploaded back would wipe them)
+        error: (err) => err?.status === 404
+          ? this.saveJsonFile(code, this.buildEmptyFromCz(this.czTranslations))
+          : this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('translations_load_failed_message').replace('{lang}', code), 'danger'),
       });
   }
 

@@ -34,12 +34,15 @@ describe('EditEshopComponent', () => {
   const setup = async (granted: string[] | 'all' = 'all') => {
     localStorage.removeItem('jsw_languages');
     ctx = createAdminTestContext({ granted });
-    (ctx.dataHandler as any).get.and.callFake((url: string) => {
+    // get: the languages; getQuietly: the texts (the editor explains a failed load itself)
+    const route = (url: string) => {
       if (url === 'languages/shop') return of(JSON.parse(JSON.stringify(languages)));
       if (url === 'translations/shop/cz') return of(JSON.parse(JSON.stringify(cz)));
       if (url === 'translations/shop/en') return of(JSON.parse(JSON.stringify(en)));
-      return throwError(() => new Error('404'));
-    });
+      return throwError(() => ({ status: 404 }));
+    };
+    (ctx.dataHandler as any).get.and.callFake(route);
+    (ctx.dataHandler as any).getQuietly.and.callFake(route);
     await TestBed.configureTestingModule({ imports: [EditEshopComponent], providers: ctx.providers }).compileComponents();
     fixture = TestBed.createComponent(EditEshopComponent);
     component = fixture.componentInstance;
@@ -51,13 +54,13 @@ describe('EditEshopComponent', () => {
   /**
    * @description The page is configured for the 'shop' module and the 'edit-eshop' texts.
    * @input  t('page_title'); ngOnInit()
-   * @output 'edit-eshop.page_title'; get('languages/shop'), get('translations/shop/cz'); 3 keys
+   * @output 'edit-eshop.page_title'; get('languages/shop'), getQuietly('translations/shop/cz'); 3 keys
    */
   it('loads the languages and translations of the shop module', fakeAsync(() => {
     expect(component.t('page_title')).toBe('edit-eshop.page_title');
     component.ngOnInit();
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('languages/shop');
-    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('translations/shop/cz');
+    expect((ctx.dataHandler as any).getQuietly).toHaveBeenCalledWith('translations/shop/cz');
     expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
     expect(component.totalCount).toBe(3);
     flush();
@@ -77,16 +80,16 @@ describe('EditEshopComponent', () => {
   }));
 
   /**
-   * @description Saving posts the current language to save_translations/shop.
+   * @description Saving posts the changed texts of the current language to save_translations/shop.
    * @input  updateValue('checkout', 'K pokladně'); onSubmit()
-   * @output post('save_translations/shop', { lang: 'cz', data: { …, checkout: 'K pokladně' } }); success alert
+   * @output post('save_translations/shop', { lang: 'cz', changes: [{ path: 'checkout', value: 'K pokladně' }] }); success alert
    */
   it('saves the translations of the shop module', fakeAsync(() => {
     component.ngOnInit();
     component.updateValue('checkout', 'K pokladně');
     component.onSubmit();
     expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('save_translations/shop',
-      { lang: 'cz', data: jasmine.objectContaining({ checkout: 'K pokladně' }) });
+      { lang: 'cz', changes: [{ path: 'checkout', value: 'K pokladně' }] });
     expect(ctx.alert.open).toHaveBeenCalledWith('edit-eshop.admin_title', 'edit-eshop.translations_saved_message', 'success');
     flush();
   }));

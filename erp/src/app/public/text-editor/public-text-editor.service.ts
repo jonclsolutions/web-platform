@@ -331,10 +331,14 @@ export class PublicTextEditorService {
           this.navigate(message.url);
           break;
         case 'commit':
-          if (this.draftLang) {
-            this.commitsSource.next({ lang: this.draftLang, values: { ...this.drafts } });
+          // the saved texts become those of the language; a draft written after the save started
+          // (another text than saved) stays - the admin sends its drafts again right after
+          this.commitsSource.next({ lang: message.lang, values: { ...(message.values ?? {}) } });
+          if (message.lang === this.draftLang) {
+            for (const [path, value] of Object.entries(message.values ?? {})) {
+              if (this.drafts[path] === value) delete this.drafts[path];
+            }
           }
-          this.drafts = {};
           this.changesSource.next();
           break;
       }

@@ -1,6 +1,24 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Texty a jazyky: uložení posílá jen změněné texty a server je sloučí s uloženými – texty uložené mezitím v jiné záložce nebo jiným adminem se nepřepíšou. Soubor se zapisuje najednou a pod zámkem. Co napíšete během ukládání, zůstane neuloženou změnou."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Texty a jazyky: když se texty jazyka nepodaří načíst (chyba serveru nebo připojení), editor je neukáže jako prázdné a nedovolí je upravit ani uložit; nestáhne ani prázdný JSON. Pozdější odpověď dříve otevřeného jazyka už nepřepíše právě otevřený jazyk."
+        },
+        {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů na stránkách: produkční hlavička CSP povoluje rámec vlastního webu (frame-src 'self') – bez toho prohlížeč na serveru náhled v editoru zablokoval."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",

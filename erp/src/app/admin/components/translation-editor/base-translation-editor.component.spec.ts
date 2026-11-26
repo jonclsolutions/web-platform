@@ -9,7 +9,9 @@
  *   reach: unsaved edits never leak into the shared cache (bugfix 2026-10-23), missing Czech
  *   reference, icon selection (size limit, preview), add-language with icon and failure,
  *   delete failure, toggle success, JSON upload (valid / invalid / failing / current language
- *   reload), JSON download and the textarea auto-height.
+ *   reload), JSON download and the textarea auto-height; a language that failed to load is not
+ *   editable, a late answer of another language is ignored, a save sends only the changed texts
+ *   and keeps edits made while it runs.
  * @dependencies
  * - createAdminTestContext (DataHandler spy, alert spy, permission stub, i18n stub), real
  *   ResourceCacheService (the cache whose objects must not be mutated).
@@ -17,7 +19,7 @@
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { BaseTranslationEditorComponent } from './base-translation-editor.component';
 import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
@@ -63,13 +65,16 @@ describe('BaseTranslationEditorComponent', () => {
     en: { home: { title: 'Home' } }
   };
 
-  /** Routes DataHandler.get by URL; `overrides` win. */
-  const answer = (overrides: Record<string, Observable<any>> = {}) =>
-    get.and.callFake((url: string) => overrides[url] ?? ({
+  /** Routes DataHandler.get / getQuietly (the texts) by URL; `overrides` win; else 404. */
+  const answer = (overrides: Record<string, Observable<any>> = {}) => {
+    const route = (url: string) => overrides[url] ?? ({
       'languages/test': of(shared.languages),
       'translations/test/cz': of(shared.cz),
       'translations/test/en': of(shared.en)
-    } as Record<string, Observable<any>>)[url] ?? throwError(() => new Error('404')));
+    } as Record<string, Observable<any>>)[url] ?? throwError(() => ({ status: 404 }));
+    get.and.callFake(route);
+    (ctx.dataHandler as any).getQuietly.and.callFake(route);
+  };
 
   beforeEach(() => {
     localStorage.removeItem('jsw_languages');
@@ -179,17 +184,110 @@ describe('BaseTranslationEditorComponent', () => {
   });
 
   /**
-   * @description Without the Czech reference the editor still loads the language (no keys to
-   *   compare); refresh forces a new request only when asked.
-   * @input translations/test/cz fails.
-   * @output czTranslations {}; current cz translations empty with an info alert.
+   * @description Without the Czech reference file (404) the editor still opens the language (no
+   *   keys to compare) with an info alert.
+   * @input translations/test/cz → 404.
+   * @output czTranslations {}; current cz translations empty; info alert; editable.
    */
   it('works without the Czech reference', fakeAsync(() => {
-    answer({ 'translations/test/cz': throwError(() => new Error('down')) });
+    answer({ 'translations/test/cz': throwError(() => ({ status: 404 })) });
     component.ngOnInit();
     expect(component.czTranslations).toEqual({});
     expect(component.flattenedKeys).toEqual([]);
     expect(ctx.alert.open).toHaveBeenCalledWith('test-editor.info_title', jasmine.any(String), 'info');
+    expect(component.loadFailed).toBeFalse();
+    flush();
+  }));
+
+  /**
+   * @description A language that cannot be loaded (server / network error, not 404) is not
+   *   taken for an empty one: nothing to edit or save, an error alert; a later successful load
+   *   makes it editable again. Its saved JSON is not downloaded empty either.
+   * @input translations/test/en → 500; loadLang('en'); updateValue; onSubmit(); downloadSavedJson('en');
+   *   then en answers; refreshTranslations()
+   * @output loadFailed, no keys, canEditTexts false, alert 'translations_load_failed_message'
+   *   (danger), no POST, no file; after the reload 'Home' editable
+   */
+  it('does not edit a language that failed to load', fakeAsync(() => {
+    answer({ 'translations/test/en': throwError(() => ({ status: 500 })) });
+    component.ngOnInit();
+    component.loadLang('en');
+    expect(component.loadFailed).toBeTrue();
+    expect(component.flattenedKeys).toEqual([]);
+    expect(component.canEditTexts).toBeFalse();
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.error', 'test-editor.translations_load_failed_message', 'danger');
+    component.updateValue('home.title', 'X');
+    expect(component.isDirty).toBeFalse();
+    component.onSubmit();
+    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
+    const click = spyOn(HTMLAnchorElement.prototype, 'click');
+    component.downloadSavedJson('en');
+    expect(click).not.toHaveBeenCalled();
+
+    answer();
+    component.refreshTranslations();
+    expect(component.loadFailed).toBeFalse();
+    expect(component.translations.home.title).toBe('Home');
+    expect(component.canEditTexts).toBeTrue();
+    flush();
+  }));
+
+  /**
+   * @description A newer load wins: the answer of a language opened before (still loading) never
+   *   fills the language opened after it.
+   * @input en answers late (Subject); loadLang('en'), loadLang('cz'); en answers {home: {title: 'Late'}}
+   * @output current cz with 'Domů'
+   */
+  it('ignores the late answer of a language opened before', fakeAsync(() => {
+    const late = new Subject<any>();
+    answer({ 'translations/test/en': late });
+    component.ngOnInit();
+    component.loadLang('en');
+    component.loadLang('cz');
+    late.next({ home: { title: 'Late' } });
+    late.complete();
+    expect(component.currentLang).toBe('cz');
+    expect(component.translations.home.title).toBe('Domů');
+    flush();
+  }));
+
+  /**
+   * @description Saving sends only the changed texts, one save at a time; the texts as stored by
+   *   the API become the saved ones (plain text shown in the field); a text edited again while
+   *   the save ran stays a change; `saved$` gives the saved texts.
+   * @input cz {home: {title, sub}}; edit title 'A<b>', sub 'S'; onSubmit() (answer held); onSubmit()
+   *   again; edit sub 'S2'; answer {values: {home.title: 'A', home.sub: 'S'}}
+   * @output one POST {lang cz, changes [title, sub]}; saving while held; after: title 'A' saved and
+   *   shown, sub still changed (S2), dirty; saved$ {home.title: 'A', home.sub: 'S'}
+   */
+  it('saves only the changed texts and keeps edits made meanwhile', fakeAsync(() => {
+    shared.cz = { home: { title: 'Domů', sub: 'Pod' } } as any;
+    component.ngOnInit();
+    const post = (ctx.dataHandler as any).post as jasmine.Spy;
+    const answerOfSave = new Subject<any>();
+    post.and.returnValue(answerOfSave);
+    let saved: Record<string, string> | null = null;
+    component.saved$.subscribe(values => saved = values);
+
+    component.updateValue('home.title', 'A<b>');
+    component.updateValue('home.sub', 'S');
+    component.onSubmit();
+    component.onSubmit();
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledWith('save_translations/test', { lang: 'cz', changes: [{ path: 'home.title', value: 'A<b>' }, { path: 'home.sub', value: 'S' }] });
+    expect(component.saving).toBeTrue();
+
+    component.updateValue('home.sub', 'S2');
+    answerOfSave.next({ detected_changes: 2, values: { 'home.title': 'A', 'home.sub': 'S' } });
+    answerOfSave.complete();
+    expect(component.saving).toBeFalse();
+    expect(component.translations.home.title).toBe('A');
+    expect(component.savedValueOf('home.title')).toBe('A');
+    expect(component.changedPaths.has('home.title')).toBeFalse();
+    expect([...component.changedPaths]).toEqual(['home.sub']);
+    expect(component.savedValueOf('home.sub')).toBe('S');
+    expect(component.isDirty).toBeTrue();
+    expect(saved!).toEqual({ 'home.title': 'A', 'home.sub': 'S' });
     flush();
   }));
 
@@ -364,11 +462,12 @@ describe('BaseTranslationEditorComponent', () => {
     expect(component.uploadError).toBe('');
     expect(component.uploadMismatch).toBeNull();
 
-    get.calls.reset();
+    const getQuietly = (ctx.dataHandler as any).getQuietly as jasmine.Spy;
+    getQuietly.calls.reset();
     component.openUploadModal('cz');
     choose('{"home": {"title": "Nový"}}');
-    await readerDone(() => get.calls.count() > 0);
-    expect(get).toHaveBeenCalledWith('translations/test/cz');
+    await readerDone(() => getQuietly.calls.count() > 0);
+    expect(getQuietly).toHaveBeenCalledWith('translations/test/cz');
     component.closeUploadModal();
     expect(component.showUploadModal).toBeFalse();
   });
@@ -447,6 +546,7 @@ describe('BaseTranslationEditorComponent', () => {
     component.ngOnInit();
     (ctx.dataHandler as any).post.and.returnValue(of({}));
     const announced = spyOn(BroadcastChannel.prototype, 'postMessage');
+    component.updateValue('home.title', 'Úvod');
     component.onSubmit();
     expect(notifications.refresh).toHaveBeenCalled();
     // open tabs of the website in this browser are told (texts-broadcast)

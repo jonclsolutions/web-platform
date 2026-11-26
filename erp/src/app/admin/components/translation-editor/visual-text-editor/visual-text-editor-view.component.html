@@ -76,12 +76,13 @@
           {{ e.t('editor_saved_notice') }}
         </span>
       }
-      @if (e.canUpdate) {
+      @if (e.canEditTexts) {
         @if (e.isDirty) {
-          <button type="button" class="te-btn te-btn--ghost" (click)="askDiscard()">{{ e.t('discard_changes_button') }}</button>
+          <button type="button" class="te-btn te-btn--ghost" [disabled]="e.saving" (click)="askDiscard()">{{ e.t('discard_changes_button') }}</button>
         }
-        <button type="button" class="te-btn te-btn--primary" [disabled]="!e.isDirty" (click)="save()"
-                [title]="e.isDirty ? e.t('editor_changed_tooltip') : ''">{{ saveLabel }}</button>
+        <!-- One save at a time: edits made while it runs stay unsaved changes. -->
+        <button type="button" class="te-btn te-btn--primary" [disabled]="!e.isDirty || e.saving" (click)="save()"
+                [title]="e.isDirty ? e.t('editor_changed_tooltip') : ''">{{ e.saving ? e.t('saving_label') : saveLabel }}</button>
       }
       <button type="button" class="te-close" (click)="close()" [attr.aria-label]="e.t('editor_close')" [title]="e.t('editor_close')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -129,19 +130,22 @@
           <div class="te-label">{{ e.t('editor_saved_label').replace('{lang}', langName) }}</div>
           <div class="te-ref">{{ savedValue(key) || '—' }}</div>
           <label class="te-label" for="te-value">{{ e.t('editor_edit_label').replace('{lang}', langName) }}</label>
-          <!-- Without the edit permission: the text can be read, not changed - say why. -->
+          <!-- Without the edit permission / when the texts of the language failed to load: the
+               text can be read, not changed - say why. -->
           @if (!e.canUpdate) {
             <p class="te-readonly" role="note">{{ e.t('editor_readonly_note') }}</p>
+          } @else if (e.loadFailed) {
+            <p class="te-readonly" role="note">{{ e.t('editor_load_failed_note') }}</p>
           }
           <textarea #valueField id="te-value" class="te-value" rows="3"
-                    [class.te-value--missing]="!currentValue(key).trim()"
+                    [class.te-value--missing]="!currentValue(key).trim() && !e.loadFailed"
                     [ngModel]="currentValue(key)" (ngModelChange)="edit(key, $event)"
-                    [readonly]="!e.canUpdate"></textarea>
-          @if (!currentValue(key).trim()) {
+                    [readonly]="!e.canEditTexts"></textarea>
+          @if (!currentValue(key).trim() && !e.loadFailed) {
             <p class="te-missing">{{ e.t('editor_missing') }}</p>
           }
           <!-- A changed text: back to its saved version (no confirmation - one text). -->
-          @if (e.canUpdate && e.changedPaths.has(key)) {
+          @if (e.canEditTexts && e.changedPaths.has(key)) {
             <button type="button" class="te-revert" (click)="revert(key)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
               {{ e.t('editor_revert_button') }}
@@ -174,7 +178,7 @@
                     </span>
                     <span class="te-changed-value">{{ text.value || '—' }}</span>
                   </button>
-                  @if (e.canUpdate) {
+                  @if (e.canEditTexts) {
                     <button type="button" class="te-changed-revert" (click)="revert(text.path)"
                             [title]="e.t('editor_revert_button')" [attr.aria-label]="e.t('editor_revert_button') + ': ' + text.path">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>

@@ -649,6 +649,10 @@
               "type": "alert",
               "variant": "warning",
               "content": "Do not change the key - the website looks the text up by it. Change only the value. Unsaved changes are lost when you switch the language or leave the page without saving."
+            },
+            {
+              "type": "text",
+              "content": "Saving writes only the texts you changed - texts saved meanwhile by someone else (or by you in another browser tab) stay. While saving, the Save button is off; what you type meanwhile stays an unsaved change. When the texts of a language cannot be loaded (server or connection outage), they cannot be edited or saved - try again in a moment."
             }
           ]
         },
