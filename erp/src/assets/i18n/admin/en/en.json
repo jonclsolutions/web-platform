@@ -1497,6 +1497,7 @@
     "editor_saved_label": "{lang} – saved version",
     "editor_edit_label": "{lang} – edit",
     "editor_missing": "The text is missing in this language.",
+    "editor_shared_note": "Shared text – it is on every page of the website, a change shows everywhere.",
     "editor_saved_notice": "Saved",
     "editor_readonly_note": "You have read-only access – the text cannot be changed here.",
     "editor_page_title_loading": "Loading…",

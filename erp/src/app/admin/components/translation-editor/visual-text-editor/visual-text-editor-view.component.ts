@@ -110,6 +110,11 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   @Input({ required: true }) e!: BaseTranslationEditorComponent;
   /** Pages of the website offered in the page list. */
   @Input() pages: VisualEditorPage[] = [];
+  /**
+   * Starts of the keys of texts shown on every page (menu, footer, cookie bar…) - the panel warns
+   * that an edit changes them everywhere.
+   */
+  @Input() sharedKeyPrefixes: string[] = [];
   /** Pages reached by a click in the preview (details), named in the page list when shown. */
   @Input() detailPages: VisualEditorDetailPage[] = [];
   /** Page of the admin the editor returns to (the list of the texts). */
@@ -386,6 +391,14 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
       return `${this.e.t(detail.labelKey)} (${decodeURIComponent(last)})`;
     }
     return `${this.e.t('editor_page_other')} (${this.framePath})`;
+  }
+
+  /**
+   * @param key Translation key.
+   * @returns Whether the text is shown on every page of the website (a shared part).
+   */
+  isShared(key: string): boolean {
+    return this.sharedKeyPrefixes.some(prefix => key.startsWith(prefix));
   }
 
   /** @returns Label of the save button with the count of the edits. */

@@ -669,7 +669,7 @@
                 },
                 {
                   "label": "Klikněte na text",
-                  "text": "Po najetí myší se nad textem ukáže jeho klíč. Kliknutím text vyberete - odkazy se v editoru neotevírají, ostatní tlačítka (například rozbalení otázky) fungují jako na webu, takže upravíte i skrytou odpověď. Vpravo se ukáže panel s klíčem, českou předlohou, uloženou verzí a polem pro úpravu.",
+                  "text": "Po najetí myší se nad textem ukáže jeho klíč. U textů menu, patičky, lišty cookies a nabídky jazyka panel upozorní, že jsou společné pro všechny stránky. Kliknutím text vyberete - odkazy se v editoru neotevírají, ostatní tlačítka (například rozbalení otázky) fungují jako na webu, takže upravíte i skrytou odpověď. Vpravo se ukáže panel s klíčem, českou předlohou, uloženou verzí a polem pro úpravu.",
                   "active": false
                 },
                 {

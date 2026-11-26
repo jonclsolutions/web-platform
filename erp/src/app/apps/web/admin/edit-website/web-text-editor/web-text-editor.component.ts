@@ -39,6 +39,9 @@ export const WEB_EDITOR_PAGES: VisualEditorPage[] = [
   { path: TEXT_EDITOR_BANNERS_PATH, labelKey: 'editor_page_banners' },
 ];
 
+/** Texts shown on every page of the website: the menu, the footer, the cookie bar, the language offer. */
+export const WEB_EDITOR_SHARED_KEYS = ['navigation.', 'footer.', 'cookie_consent.', 'language_suggestion.'];
+
 /** Details of the website reached by a click in the preview (the page list names them). */
 export const WEB_EDITOR_DETAIL_PAGES: VisualEditorDetailPage[] = [
   { pattern: /^\/jobs\/[^/]+$/, labelKey: 'pt_page_web_job_detail' },
@@ -52,7 +55,7 @@ export const WEB_EDITOR_DETAIL_PAGES: VisualEditorDetailPage[] = [
   selector: 'app-web-text-editor',
   standalone: true,
   imports: [VisualTextEditorViewComponent],
-  template: `<app-visual-text-editor-view [e]="this" [pages]="pages" [detailPages]="detailPages" backRoute="/admin/web/edit-website" />`,
+  template: `<app-visual-text-editor-view [e]="this" [pages]="pages" [detailPages]="detailPages" [sharedKeyPrefixes]="sharedKeyPrefixes" backRoute="/admin/web/edit-website" />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WebTextEditorComponent extends BaseTranslationEditorComponent implements LeaveConfirmable {
@@ -66,6 +69,7 @@ export class WebTextEditorComponent extends BaseTranslationEditorComponent imple
   /** Pages offered in the editor. */
   readonly pages = WEB_EDITOR_PAGES;
   readonly detailPages = WEB_EDITOR_DETAIL_PAGES;
+  readonly sharedKeyPrefixes = WEB_EDITOR_SHARED_KEYS;
 
   @ViewChild(VisualTextEditorViewComponent) private view?: VisualTextEditorViewComponent;
 

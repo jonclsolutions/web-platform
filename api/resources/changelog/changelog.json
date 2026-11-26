@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů přímo na stránkách: u textů menu, patičky, lišty cookies a nabídky jazyka panel upozorní, že jde o společný text – je na všech stránkách webu a změna se projeví všude."
+        },
+        {
             "type": "fixed",
             "area": "web",
             "part": "admin",

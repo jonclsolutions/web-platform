@@ -379,6 +379,21 @@
 .te-hidden-key { color: var(--text); font-family: var(--ff-mono); font-size: 0.72rem; overflow-wrap: anywhere; }
 .te-hidden-where { color: var(--text-dim); font-size: 0.72rem; }
 
+/* Note of a shared text (menu, footer…): an edit changes every page. */
+.te-shared {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--color-indigo-50, #eef2ff);
+  color: var(--color-indigo-700, #4338ca);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.te-shared svg { flex-shrink: 0; margin-top: 2px; }
+
 /* Quiet "Uloženo" by the save button (instead of a window over the bar). */
 .te-saved {
   display: inline-flex;

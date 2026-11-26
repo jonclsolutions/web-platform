@@ -524,6 +524,28 @@ describe('WebTextEditorComponent', () => {
   }));
 
   /**
+   * @description A text of a shared part of the website (menu, footer, cookie bar, language
+   *   offer) carries a note that an edit changes every page; a text of one page does not.
+   * @input select navigation.home; select faq.title
+   * @output .te-shared with editor_shared_note; then none
+   */
+  it('warns that a shared text changes every page', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    fromPage({ type: 'select', key: 'navigation.home' });
+    flush();
+    fixture.detectChanges();
+    expect(el.querySelector('.te-shared')!.textContent).toContain('editor_shared_note');
+    fromPage({ type: 'select', key: 'faq.title' });
+    flush();
+    fixture.detectChanges();
+    expect(el.querySelector('.te-shared')).toBeNull();
+    expect(view.isShared('cookie_consent.title')).toBeTrue();
+    expect(view.isShared('footer_extra.x')).toBeFalse();
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description On a phone there is no editor - a notice with the way back.
    * @input phone
    * @output no frame; the notice

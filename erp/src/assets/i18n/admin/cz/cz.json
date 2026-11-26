@@ -1497,6 +1497,7 @@
     "editor_saved_label": "{lang} – uložená verze",
     "editor_edit_label": "{lang} – úprava",
     "editor_missing": "Text v tomto jazyce chybí.",
+    "editor_shared_note": "Společný text – je na všech stránkách webu, změna se projeví všude.",
     "editor_saved_notice": "Uloženo",
     "editor_readonly_note": "Máte oprávnění jen ke čtení – text tady nejde změnit.",
     "editor_page_title_loading": "Načítá se…",
