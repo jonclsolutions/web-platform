@@ -151,14 +151,25 @@
    the row then stays only measured - `.rbb--measure`). */
 .rbb-select--on { display: block; }
 
-.rbb--measure {
+.rbb-box { display: contents; }
+
+/* A hidden row still counts for the scrolling of the page - the zero-size clipping box keeps
+   the measured row out of it (no sideways scroll on a narrower screen). */
+.rbb-box--measure {
+  display: block;
   position: absolute;
   top: 0;
   left: 0;
-  width: max-content;
-  max-width: none;
+  width: 0;
+  height: 0;
+  overflow: hidden;
   visibility: hidden;
   pointer-events: none;
+}
+
+.rbb--measure {
+  width: max-content;
+  max-width: none;
 }
 
 @media (max-width: 640px) {

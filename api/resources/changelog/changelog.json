@@ -4,6 +4,12 @@
             "type": "fixed",
             "area": "web",
             "part": "admin",
+            "text": "Website texts: on narrower (not phone) screens the page could be scrolled sideways - the hidden, measured row of the part tabs widened it. The row is now measured inside a zero-size clipping box."
+        },
+        {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
             "text": "Website texts: the Languages window stays open under Add language, Upload JSON and the delete confirmation - a cancelled delete or a closed form comes back to the list instead of closing it."
         },
         {

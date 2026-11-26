@@ -180,7 +180,8 @@ describe('RowButtonBuilderComponent', () => {
    *   comes back once the place is wide enough; without `phoneSelect` never.
    * @input kind tabs, items a–e, phoneSelect; the place 120 px → measure(); 2000 px → measure();
    *   phoneSelect false at 120 px → measure()
-   * @output collapsed true, .rbb-select--on, .rbb--measure; collapsed false, no classes;
+   * @output collapsed true, .rbb-select--on, .rbb--measure, the host not wider than 120 px;
+   *   collapsed false, no classes;
    *   collapsed false
    */
   it('replaces a row of tabs that does not fit with the drop-down', () => {
@@ -194,6 +195,9 @@ describe('RowButtonBuilderComponent', () => {
     expect(component.collapsed).toBeTrue();
     expect(el.querySelector('.rbb-select')!.classList).toContain('rbb-select--on');
     expect(el.querySelector('.rbb')!.classList).toContain('rbb--measure');
+    // The measured row (wider than its place) does not widen the page - nothing to scroll sideways.
+    expect(el.querySelector('.rbb')!.scrollWidth).toBeGreaterThan(120);
+    expect(el.scrollWidth).toBeLessThanOrEqual(120);
 
     el.style.width = '2000px';
     component.measure();

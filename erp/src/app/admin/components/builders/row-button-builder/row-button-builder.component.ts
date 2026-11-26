@@ -110,7 +110,7 @@ export class RowButtonBuilderComponent implements AfterViewInit, OnChanges, OnDe
 
   /**
    * @description Compares the whole width of the row (measured also while it is hidden -
-   *   `.rbb--measure` keeps its natural width) with its place; changes `collapsed` only when the
+   *   `.rbb--measure` keeps its natural width inside a zero-size clipping box) with its place; changes `collapsed` only when the
    *   answer changes. Not for the phone (there the CSS shows the drop-down anyway).
    */
   measure(): void {
@@ -146,7 +146,7 @@ export class RowButtonBuilderComponent implements AfterViewInit, OnChanges, OnDe
 
   /** @returns The row of the buttons (tabs). */
   private row(): HTMLElement | null {
-    return this.host.nativeElement.querySelector<HTMLElement>(':scope > .rbb');
+    return this.host.nativeElement.querySelector<HTMLElement>(':scope > .rbb-box > .rbb');
   }
 
   /** @description The active button (the trigger of the drop-down shows it). */

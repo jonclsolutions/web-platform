@@ -68,6 +68,10 @@
       }
     </div>
   }
+  <!-- The box of the row: no box of its own (display: contents); while the drop-down replaces the
+       row it is a zero-size clipping box, so the measured row (natural width) never widens the
+       page - nothing to scroll sideways. -->
+  <div class="rbb-box" [class.rbb-box--measure]="collapsed">
   <div class="rbb" [class.rbb--sm]="size === 'sm'" [class.rbb--stretch]="stretch" [class.rbb--has-select]="phoneSelect && kind === 'tabs'" [class.rbb--measure]="collapsed"
        [attr.role]="kind === 'tabs' ? 'tablist' : 'group'" [attr.aria-label]="ariaLabel || null">
     @for (item of visibleItems; track item.value) {
@@ -79,5 +83,6 @@
         <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }"></ng-container>
       </button>
     }
+  </div>
   </div>
 }
