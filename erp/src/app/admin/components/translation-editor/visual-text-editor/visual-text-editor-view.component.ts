@@ -26,9 +26,13 @@
  *   tab, so the Back button always means leaving the editor, never another page / language in
  *   the frame. The language switcher of the page switches the editor (`language` message); a page
  *   still showing another language than the editor is loaded again once.
- * @note Security: the frame shows the own website (same origin, path checked) in a sandbox
- *   without forms, pop-ups and navigation of the admin; messages are accepted only from the
- *   window of the frame and the own origin.
+ * @note Security: the frame shows only the own website (same origin, path checked) and messages
+ *   are accepted only from the window of the frame and the own origin. The sandbox (no forms,
+ *   pop-ups or navigation of the admin) guards against mistakes, it is no security boundary: with
+ *   `allow-scripts allow-same-origin` a page of the same origin could lift it. What keeps the
+ *   admin safe is that the frame runs only the own code - the website in editor mode loads no
+ *   third-party scripts (no analytics, no captcha) - and the CSP of the site (frame-src 'self',
+ *   frame-ancestors 'self').
  */
 
 import {
@@ -90,6 +94,12 @@ export const PAGE_TITLE_WAIT_MS = 3000;
 
 /** Time the quiet "Uloženo" stays by the save button (ms). */
 export const SAVED_NOTICE_MS = 3000;
+
+/**
+ * Delay of the preview while typing (ms): the page shows all its texts again for every drafts
+ * message - one after a short pause of the keys, not one per key.
+ */
+export const DRAFTS_DELAY_MS = 120;
 
 /** Sections of the content and the tab of the admin that edits them. */
 const CONTENT_SECTIONS: TextEditorContentSection[] = ['faq', 'jobs', 'references', 'knowledge_base'];
@@ -163,6 +173,9 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   titleMissing = false;
   private titleTimer: ReturnType<typeof setTimeout> | null = null;
   private savedTimer: ReturnType<typeof setTimeout> | null = null;
+  private draftsTimer: ReturnType<typeof setTimeout> | null = null;
+  /** The texts missing in the language as last sent to the page (JSON) - sent again only when changed. */
+  private missingSent = '';
   /** Preview of the page (the last choice is remembered). */
   device: VisualEditorDevice = readDevice();
   /** Width of the phone preview (template). */
@@ -242,6 +255,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     this.e.saveAlert = true;
     if (this.titleTimer) clearTimeout(this.titleTimer);
     if (this.savedTimer) clearTimeout(this.savedTimer);
+    if (this.draftsTimer) clearTimeout(this.draftsTimer);
     window.removeEventListener('message', this.onMessage);
     this.phone?.removeEventListener('change', this.onPhoneChange);
   }
@@ -554,7 +568,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   edit(path: string, value: string): void {
     if (!this.e.canEditTexts) return;
     this.e.updateValue(path, value);
-    this.postDrafts();
+    this.scheduleDrafts();
     this.fitField();
   }
 
@@ -681,9 +695,32 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     return missing;
   }
 
-  /** @description Sends the edits and the missing texts to the page. */
+  /** @description Sends the edits to the page after a short pause of the typing (DRAFTS_DELAY_MS). */
+  private scheduleDrafts(): void {
+    if (this.draftsTimer) clearTimeout(this.draftsTimer);
+    this.draftsTimer = setTimeout(() => {
+      this.draftsTimer = null;
+      this.postDrafts();
+    }, DRAFTS_DELAY_MS);
+  }
+
+  /**
+   * @description Sends the edits to the page now (a waiting one included), with the texts missing
+   *   in the language when they differ from the ones the page has.
+   */
   private postDrafts(): void {
-    this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: this.e.currentLang, values: this.drafts(), missing: this.missingTexts() });
+    if (this.draftsTimer) {
+      clearTimeout(this.draftsTimer);
+      this.draftsTimer = null;
+    }
+    const missing = this.missingTexts();
+    const serialized = JSON.stringify(missing);
+    const changed = serialized !== this.missingSent;
+    this.missingSent = serialized;
+    this.post({
+      channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: this.e.currentLang, values: this.drafts(),
+      ...(changed ? { missing } : {}),
+    });
   }
 
   /**
@@ -706,15 +743,22 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     const message = event.data as TextEditorFromFrame;
     this.zone.run(() => {
       switch (message.type) {
-        case 'ready':
+        case 'ready': {
           this.frameLoading = false;
           this.frameReady = true;
+          if (this.draftsTimer) {
+            clearTimeout(this.draftsTimer);
+            this.draftsTimer = null;
+          }
+          const missing = this.missingTexts();
+          this.missingSent = JSON.stringify(missing);
           this.post({
             channel: TEXT_EDITOR_CHANNEL, type: 'init', lang: this.e.currentLang, drafts: this.drafts(),
-            missing: this.missingTexts(), selected: this.selectedKey, contentLabels: this.contentLabels(),
+            missing, selected: this.selectedKey, contentLabels: this.contentLabels(),
             missingLabel: this.e.t('editor_missing_label'),
           });
           break;
+        }
         case 'scan':
           this.framePath = safeFramePath(message.path);
           if (message.title !== this.pageTitle) {

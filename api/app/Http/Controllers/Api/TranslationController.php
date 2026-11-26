@@ -384,6 +384,9 @@ class TranslationController extends Controller
         $mergedCurrent = [];
         foreach ($incoming as $lang) {
             $code = $lang['code'];
+            // the URL of the icon is derived from its path when read (withIconUrls) - one sent by
+            // the admin names its own host (a local copy wrote http://127.0.0.1:8000/… into the seed)
+            unset($lang['iconUrl']);
             $lang['icon_path'] = $currentModuleMeta->get($code)['icon_path'] ?? null;
             $lang['isBuiltIn'] = $currentModuleMeta->get($code)['isBuiltIn'] ?? false;
             $lang['module']    = $module;

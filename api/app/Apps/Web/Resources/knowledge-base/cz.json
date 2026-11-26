@@ -643,6 +643,10 @@
                 {
                   "title": "Co uvidí návštěvník",
                   "text": "Místo chybějícího textu se na webu zobrazí „Cannot load text“. Před aktivací jazyka proto doplňte všechny texty."
+                },
+                {
+                  "title": "Jako CZ",
+                  "text": "U jiného jazyka než čeština: kolik textů je stejných jako v češtině - nejspíš ještě nepřeložené (název nebo číslo může být stejné schválně). Kliknutím zobrazíte jen je; filtr Chybí se tím vypne."
                 }
               ]
             },

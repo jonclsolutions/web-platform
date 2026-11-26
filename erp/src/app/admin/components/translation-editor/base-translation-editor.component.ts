@@ -364,6 +364,14 @@ export abstract class BaseTranslationEditorComponent
    * search, kept on a language switch, turned off by the toggle again.
    */
   onlyMissing: boolean = false;
+  /**
+   * The list shows only the texts identical with Czech ("Jako CZ" toggle) - in another language
+   * such a text is often not translated yet (a name or a number may be the same on purpose).
+   * Never together with `onlyMissing`; off for Czech itself.
+   */
+  onlySameAsCz = false;
+  /** Czech texts by key (built with the flat list) - what "Jako CZ" compares with. */
+  private czValues = new Map<string, string>();
 
   /** @returns Count of keys currently marked as missing in the active language. */
   get missingCount(): number { return this.filteredKeys.filter(k => k.missing).length; }
@@ -373,6 +381,18 @@ export abstract class BaseTranslationEditorComponent
   get langFilled(): number   { return this.flattenedKeys.filter(k => !k.missing && k.value?.trim()).length; }
   /** @returns Missing texts of the active language (not narrowed by the search / the missing filter). */
   get langMissing(): number  { return this.flattenedKeys.filter(k => k.missing).length; }
+  /** @returns Texts of the active language identical with Czech (0 for Czech itself). */
+  get langSameAsCz(): number { return this.currentLang === 'cz' ? 0 : this.flattenedKeys.filter(k => this.isSameAsCz(k)).length; }
+
+  /**
+   * @param key Text of the list.
+   * @returns Whether it is filled and the same as its Czech text (another language than Czech).
+   */
+  isSameAsCz(key: FlatKey): boolean {
+    if (this.currentLang === 'cz' || key.missing) return false;
+    const cz = this.czValues.get(key.path)?.trim();
+    return !!cz && String(key.value ?? '').trim() === cz;
+  }
   /** @returns Total number of keys currently filtered. */
   get totalCount(): number   { return this.filteredKeys.length; }
   /** @returns Count of translated keys currently filtered. */
@@ -582,6 +602,7 @@ export abstract class BaseTranslationEditorComponent
     this.savedValues = new Map();
     const czFlat  = this.flattenToMap(this.czTranslations);
     const curFlat = this.flattenToMap(this.translations);
+    this.czValues = new Map([...czFlat].map(([path, value]) => [path, typeof value === 'string' ? value : String(value)]));
 
     for (const [path] of czFlat.entries()) {
       const rawVal = curFlat.get(path) ?? '';
@@ -651,8 +672,10 @@ export abstract class BaseTranslationEditorComponent
     const q = this.searchQuery.toLowerCase().trim();
     // the readable path counts too ("nadpis" finds the headings)
     const withLabels = !!q && this.hasKeyLabels;
+    if (this.currentLang === 'cz') this.onlySameAsCz = false;
     this.filteredKeys = this.flattenedKeys.filter(k =>
       (!this.onlyMissing || k.missing) &&
+      (!this.onlySameAsCz || this.isSameAsCz(k)) &&
       (!q || k.path.toLowerCase().includes(q) || String(k.value || '').toLowerCase().includes(q) || (withLabels && this.keyLabel(k.path).toLowerCase().includes(q)))
     );
     this.cd.markForCheck();
@@ -662,12 +685,25 @@ export abstract class BaseTranslationEditorComponent
   filterMissing(): void {
     this.searchQuery = '';
     this.onlyMissing = true;
+    this.onlySameAsCz = false;
     this.applyFilter();
   }
 
   /** @description The "Chybí" toggle of the search row: only the missing texts on / off (the search stays). */
   toggleMissing(): void {
     this.onlyMissing = !this.onlyMissing;
+    if (this.onlyMissing) this.onlySameAsCz = false;
+    this.applyFilter();
+    setTimeout(() => this.resizeAllTextareas(), 10);
+  }
+
+  /**
+   * @description The "Jako CZ" toggle of the search row: only the texts identical with Czech on /
+   *   off (the search stays; the missing filter goes off).
+   */
+  toggleSameAsCz(): void {
+    this.onlySameAsCz = !this.onlySameAsCz;
+    if (this.onlySameAsCz) this.onlyMissing = false;
     this.applyFilter();
     setTimeout(() => this.resizeAllTextareas(), 10);
   }

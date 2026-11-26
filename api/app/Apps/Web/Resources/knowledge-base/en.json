@@ -643,6 +643,10 @@
                 {
                   "title": "What the visitor sees",
                   "text": "Instead of a missing text the website shows “Cannot load text”. So fill in all texts before activating a language."
+                },
+                {
+                  "title": "Same as CZ",
+                  "text": "For a language other than Czech: how many texts are the same as in Czech - probably not translated yet (a name or a number may be the same on purpose). A click lists only them; the Missing filter goes off."
                 }
               ]
             },

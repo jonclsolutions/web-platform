@@ -324,8 +324,9 @@ class TranslationTest extends TestCase
      *   uploaded with the list; invalid lists are refused.
      * @input File: web cz (built-in, icon), shop en. POST shop [{en}, {de}] + icon for de; POST web
      *        [{cz isBuiltIn false}] ; invalid lists (no code, '../x', duplicate, not JSON); code 'tur'.
-     * @output shop [en, de] with de icon stored; web cz still built-in with its icon; log; 422s;
-     *         'tur' refused with the readable message of the code.
+     * @output shop [en, de] with de icon stored; web cz still built-in with its icon; no iconUrl
+     *         stored (sent by the client with its host); log; 422s; 'tur' refused with the
+     *         readable message of the code.
      */
     public function test_save_languages(): void
     {
@@ -340,7 +341,7 @@ class TranslationTest extends TestCase
             'languages' => json_encode([['code' => 'en', 'name' => 'English', 'active' => true], ['code' => 'de', 'name' => 'Deutsch', 'active' => false]]),
             'icon' => $this->fakeImage('de.png'), 'target_code' => 'de',
         ], ['Accept' => 'application/json'])->assertNoContent();
-        $this->postJson('/api/languages/web', ['languages' => json_encode([['code' => 'cz', 'name' => 'Česky', 'isBuiltIn' => false]])])->assertNoContent();
+        $this->postJson('/api/languages/web', ['languages' => json_encode([['code' => 'cz', 'name' => 'Česky', 'isBuiltIn' => false, 'iconUrl' => 'http://127.0.0.1:8000/storage/x.png']])])->assertNoContent();
 
         $meta = collect(json_decode(File::get($this->file('languages.json')), true));
         $de = $meta->firstWhere('code', 'de');
@@ -348,6 +349,7 @@ class TranslationTest extends TestCase
         Storage::disk('public')->assertExists($de['icon_path']);
         $this->assertSame(['Česky', true, 'translation_images/web/cz.png'], [$meta->firstWhere('code', 'cz')['name'], $meta->firstWhere('code', 'cz')['isBuiltIn'], $meta->firstWhere('code', 'cz')['icon_path']]);
         $this->assertSame(3, $meta->count());
+        $this->assertFalse($meta->contains(fn ($lang) => array_key_exists('iconUrl', $lang)));
         $this->assertTrue(ShopLog::where('module', 'Languages:shop')->exists());
 
         $this->post('/api/languages/shop', ['languages' => json_encode([['code' => 'en', 'name' => 'English']]), 'icon' => $this->fakeImage('x.png'), 'target_code' => 'xx'], ['Accept' => 'application/json'])->assertNoContent();

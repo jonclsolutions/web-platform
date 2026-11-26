@@ -158,6 +158,35 @@ describe('BaseTranslationEditorComponent', () => {
   }));
 
   /**
+   * @description "Jako CZ": in another language the texts identical with Czech (filled) are
+   *   counted and can be listed alone; never together with the missing filter; nothing for
+   *   Czech itself (the filter goes off there).
+   * @input cz {home: {title: 'Domů', sub: 'Pod', more: 'Více'}}; en {home: {title: 'Domů', sub: '',
+   *   more: 'More'}}; toggleSameAsCz(); toggleMissing(); toggleSameAsCz(); loadLang('cz')
+   * @output en: 1 same (title) - list [title]; the missing toggle turns it off (list [sub]); on
+   *   again turns missing off; cz: 0, filter off, the whole list
+   */
+  it('lists the texts the same as in Czech', fakeAsync(() => {
+    shared.cz = { home: { title: 'Domů', sub: 'Pod', more: 'Více' } } as any;
+    shared.en = { home: { title: 'Domů', sub: '', more: 'More' } } as any;
+    component.ngOnInit();
+    component.loadLang('en');
+    expect(component.langSameAsCz).toBe(1);
+    component.toggleSameAsCz();
+    expect(component.filteredKeys.map(k => k.path)).toEqual(['home.title']);
+    component.toggleMissing();
+    expect(component.onlySameAsCz).toBeFalse();
+    expect(component.filteredKeys.map(k => k.path)).toEqual(['home.sub']);
+    component.toggleSameAsCz();
+    expect(component.onlyMissing).toBeFalse();
+    component.loadLang('cz');
+    expect(component.langSameAsCz).toBe(0);
+    expect(component.onlySameAsCz).toBeFalse();
+    expect(component.filteredKeys.length).toBe(3);
+    flush();
+  }));
+
+  /**
    * @description Readable path of a key: parts named by the module and by the common words, other
    *   parts put together from their words (numbers kept), list indexes as #n; unknown words stay.
    * @input labels {home: 'Hlavní stránka', story_heading_2: 'Nadpis příběhu 2'}, words {hero: 'Úvod',

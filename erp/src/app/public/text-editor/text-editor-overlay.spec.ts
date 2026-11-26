@@ -7,10 +7,12 @@
  * @description Unit tests of the overlay of the visual text editor on a real DOM: finding marked
  *   texts (also split into word spans), the report of the page (visible / attribute / hidden
  *   texts), selecting by a click instead of following a link, content clicks, blocking of
- *   leaving the editor, drawing of the selection and the hover label, cleanup.
+ *   leaving the editor, drawing of the selection and the hover label, cleanup; measuring once
+ *   per change, an unchanged layer kept, no work while the page is hidden.
  * @dependencies TextEditorOverlay, text-editor-markers
  */
 
+import { discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { TextEditorEntry, TextEditorOverlay, TextEditorOverlayHost } from './text-editor-overlay';
 import { markText } from './text-editor-markers';
 
@@ -378,4 +380,42 @@ describe('TextEditorOverlay', () => {
     clickOn(document.getElementById('missing-content')!);
     expect(host.onContent).toHaveBeenCalledWith('jobs');
   });
+
+  /**
+   * @description Cost of the overlay: the pointer moving within one text measures nothing again
+   *   and leaves the drawn layer as it is; the interval rebuilds nothing while the page is the
+   *   same and does nothing while the page cannot be seen; a scroll measures again.
+   * @input mousemove twice over the heading (measure spied); the interval with the same page; the
+   *   interval with the page hidden; a scroll
+   * @output no measure on the moves; the same box elements after the interval; no measure while
+   *   hidden; one after the scroll
+   */
+  it('measures once per change and keeps an unchanged layer', fakeAsync(() => {
+    // started again inside the fake clock (its interval)
+    overlay.stop();
+    overlay = new TextEditorOverlay(document, host);
+    overlay.start();
+    const measure = spyOn(overlay as any, 'measure').and.callThrough();
+    const heading = document.querySelectorAll('#heading span')[1];
+    window.dispatchEvent(new MouseEvent('mousemove', center(heading)));
+    window.dispatchEvent(new MouseEvent('mousemove', { clientX: center(heading).clientX + 1, clientY: center(heading).clientY }));
+    expect(measure).not.toHaveBeenCalled();
+    const first = layer().querySelector('.b.h');
+    expect(first).not.toBeNull();
+
+    tick(200);
+    expect(measure).toHaveBeenCalledTimes(1);
+    expect(layer().querySelector('.b.h')).toBe(first);
+
+    const hidden = spyOnProperty(Document.prototype, 'visibilityState', 'get').and.returnValue('hidden');
+    tick(400);
+    expect(measure).toHaveBeenCalledTimes(1);
+    hidden.and.callThrough();
+
+    window.dispatchEvent(new Event('scroll'));
+    tick(20);
+    expect(measure).toHaveBeenCalledTimes(2);
+    overlay.stop();
+    discardPeriodicTasks();
+  }));
 });

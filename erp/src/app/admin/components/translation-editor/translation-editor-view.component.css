@@ -125,7 +125,8 @@
  * @description The statistics of the whole language as one quiet line next to the language tabs
  *   (on a phone under them); the search and the missing filter share one row - the toggle is a
  *   pill with the count, orange while texts are missing, filled while the filter is on.
- * @usage .ew-stats-line > span (> strong) + .ew-stats-line-sep; .ew-controls--compact .ew-missing-toggle(.is-on) > .ew-missing-toggle-count
+ * @usage .ew-stats-line > span (> strong) + .ew-stats-line-sep; .ew-controls--compact .ew-missing-toggle(.is-on) > .ew-missing-toggle-count;
+ *   .ew-missing-toggle.ew-same-toggle - the neutral pill "Jako CZ" (texts the same as in Czech)
  */
 .ew-stats-line {
   display: flex;
@@ -202,6 +203,23 @@
 
 .ew-missing-toggle.is-on .ew-missing-toggle-count {
   background: rgba(255, 255, 255, 0.22);
+  color: var(--color-white);
+}
+
+/* "Jako CZ": the same pill, neutral - information, not a problem */
+.ew-same-toggle {
+  border-color: var(--border-mid);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.ew-same-toggle:hover { background: var(--border); }
+
+.ew-same-toggle:focus-visible { outline-color: var(--color-zinc-900); }
+
+.ew-same-toggle.is-on {
+  background: var(--color-zinc-900);
+  border-color: var(--color-zinc-900);
   color: var(--color-white);
 }
 

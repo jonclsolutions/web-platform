@@ -101,7 +101,9 @@
 
     <div class="te-main">
       <div class="te-stage" [class.te-stage--mobile]="device === 'mobile'" [style.--te-mobile-width.px]="mobileWidth">
-        <!-- The own website in editor mode: no forms, pop-ups or navigation of the admin (sandbox). -->
+        <!-- The own website in editor mode. The sandbox (no forms, pop-ups or navigation of the admin)
+             guards against mistakes - no security boundary for a page of the same origin; the frame
+             runs only the own code (see the header of the component). -->
         <iframe #frame class="te-frame" name="jsw-text-editor-frame" sandbox="allow-scripts allow-same-origin"
                 [title]="e.t('editor_frame_title')"></iframe>
         @if (frameLoading) {

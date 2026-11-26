@@ -5,7 +5,6 @@
         "name": "Čeština",
         "active": true,
         "isBuiltIn": true,
-        "iconUrl": "http:\/\/127.0.0.1:8000\/storage\/translation_images\/shop\/czech-republic-default.png",
         "icon_path": "translation_images\/shop\/czech-republic-default.png"
     },
     {
@@ -14,7 +13,6 @@
         "name": "Čeština",
         "active": true,
         "isBuiltIn": true,
-        "iconUrl": "http:\/\/127.0.0.1:8000\/storage\/translation_images\/web\/czech-republic-default.png",
         "icon_path": "translation_images\/web\/czech-republic-default.png"
     },
     {
@@ -23,25 +21,22 @@
         "active": true,
         "isBuiltIn": false,
         "module": "web",
-        "iconUrl": null,
         "icon_path": null
     },
     {
         "code": "pl",
-        "name": "Polish",
+        "name": "Polski",
         "active": true,
         "isBuiltIn": false,
         "module": "web",
-        "iconUrl": null,
         "icon_path": null
     },
     {
         "code": "fr",
-        "name": "Frankish",
+        "name": "Français",
         "active": true,
         "isBuiltIn": false,
         "module": "web",
-        "iconUrl": null,
         "icon_path": null
     },
     {
@@ -50,7 +45,6 @@
         "active": true,
         "isBuiltIn": false,
         "module": "web",
-        "iconUrl": null,
         "icon_path": null
     }
 ]

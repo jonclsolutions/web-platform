@@ -18,7 +18,7 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { WEB_EDITOR_PAGES, WebTextEditorComponent } from './web-text-editor.component';
-import { DEVICE_STORAGE_KEY, VisualTextEditorViewComponent } from '../../../../../admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component';
+import { DEVICE_STORAGE_KEY, DRAFTS_DELAY_MS, VisualTextEditorViewComponent } from '../../../../../admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component';
 import { TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME } from '../../../../../public/text-editor/text-editor-protocol';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
 
@@ -137,10 +137,11 @@ describe('WebTextEditorComponent', () => {
   }));
 
   /**
-   * @description Editing a text: the translation changes, the page gets the drafts at once, the
-   *   panel keeps the saved version; saving hands the drafts over (commit).
-   * @input select faq.title; type 'Dotazy'; save
-   * @output drafts {faq.title: 'Dotazy'}; saved version 'Časté dotazy'; save label with 1;
+   * @description Editing a text: the translation changes, the page gets the drafts after a short
+   *   pause of the typing (one message, without the unchanged missing texts), the panel keeps the
+   *   saved version; saving hands the drafts over (commit).
+   * @input select faq.title; type 'Dotaz', 'Dotazy'; DRAFTS_DELAY_MS; save
+   * @output one drafts {faq.title: 'Dotazy'} without missing; saved version 'Časté dotazy'; save label with 1;
    *   POST save_translations/web with the change; commit {cz, faq.title: 'Dotazy'} sent, then the
    *   drafts (none left); not dirty
    */
@@ -150,10 +151,15 @@ describe('WebTextEditorComponent', () => {
     fromPage({ type: 'select', key: 'faq.title' });
     flush();
     const field = el.querySelector('.te-value') as HTMLTextAreaElement;
+    field.value = 'Dotaz';
+    field.dispatchEvent(new Event('input'));
     field.value = 'Dotazy';
     field.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    expect(lastSent()).toEqual({ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: 'cz', values: { 'faq.title': 'Dotazy' }, missing: {} });
+    sent.length = 0;
+    tick(DRAFTS_DELAY_MS);
+    // one message after the pause of the typing; the missing texts are the same - not sent again
+    expect(sent).toEqual([{ channel: TEXT_EDITOR_CHANNEL, type: 'drafts', lang: 'cz', values: { 'faq.title': 'Dotazy' } }]);
     expect(view.savedValue('faq.title')).toBe('Časté dotazy');
     expect(component.changedPaths.size).toBe(1);
 

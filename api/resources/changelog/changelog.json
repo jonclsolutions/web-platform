@@ -1,6 +1,24 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Texty a jazyky: přepínač „Jako CZ“ u jiného jazyka než čeština ukáže počet textů stejných jako v češtině (nejspíš nepřeložených) a kliknutím je vypíše samotné. Je jen informativní – název nebo číslo může být stejné schválně."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů na stránkách: rychlejší náhled – texty se měří jen po změně stránky (ne při každém pohybu myši), rámečky se překreslí jen když se změní, na skryté záložce se nepracuje; náhled psaní se pošle po krátké pauze a chybějící texty jen když se změní."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Jazyky: seznam jazyků už neukládá adresu vlajky poslanou z prohlížeče (obsahovala adresu lokálního serveru) – adresa se skládá při čtení. Výchozí data: názvy jazyků Polski a Français."
+        },
+        {
             "type": "fixed",
             "area": "web",
             "part": "admin",

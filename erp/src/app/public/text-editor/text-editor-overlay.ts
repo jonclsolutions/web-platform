@@ -16,6 +16,9 @@
  * @dependencies text-editor-markers, language-url (path and language of the URL)
  * @note Rescans on changes of the page (MutationObserver, debounced), redraws on scroll / resize
  *   and in a short interval (animations move texts without changing the DOM).
+ * @note Cost: the texts are measured once per change (scroll, resize, scan, the interval) - the
+ *   pointer moving over the page uses that measure; the layer is rebuilt only when what it shows
+ *   changed; the interval does nothing while the page is not visible (another tab).
  */
 
 import { FoundMark, hasMarks, scanMarks, stripMarks } from './text-editor-markers';
@@ -72,9 +75,9 @@ const TEXT_ATTRIBUTES = ['placeholder', 'title', 'aria-label', 'alt', 'value', '
 const WATCHED_ATTRIBUTES = [...TEXT_ATTRIBUTES, 'hidden', 'open', 'aria-expanded'];
 /** Space between a text and its outline (px). */
 const OUTLINE_GAP = 3;
-/** Redraw interval for texts moved by animations (ms). */
 /** Smallest distance of a key label from the edge of the screen (px). */
 const LABEL_MARGIN = 2;
+/** Redraw interval for texts moved by animations (ms). */
 const REDRAW_INTERVAL_MS = 200;
 /** Delay of a rescan after a change of the page (ms). */
 const RESCAN_DELAY_MS = 80;
@@ -110,8 +113,16 @@ export class TextEditorOverlay {
   private rescanTimer: ReturnType<typeof setTimeout> | null = null;
   private redrawTimer: ReturnType<typeof setInterval> | null = null;
   private frame = 0;
+  /** The measured boxes may be out of date (scroll, resize, a change, the interval). */
+  private stale = true;
+  /** What the layer shows (to skip rebuilding the same outlines). */
+  private drawn = '';
 
-  private readonly onMove = (event: MouseEvent) => this.hover(this.hit(event.clientX, event.clientY));
+  /** The pointer moves: the text under it from the last measure (no measuring on every move). */
+  private readonly onMove = (event: MouseEvent) => {
+    this.ensureMeasured();
+    this.hover(this.textAt(event.clientX, event.clientY));
+  };
   private readonly onLeave = () => this.hover(null);
   private readonly onClick = (event: MouseEvent) => this.click(event);
   private readonly onAuxClick = (event: MouseEvent) => this.blockLeaving(event);
@@ -122,7 +133,10 @@ export class TextEditorOverlay {
   private readonly onFocusIn = (event: FocusEvent) => {
     if (this.isFormField(event.target)) (event.target as HTMLElement).blur();
   };
-  private readonly onViewportChange = () => this.scheduleRedraw();
+  private readonly onViewportChange = () => {
+    this.stale = true;
+    this.scheduleRedraw();
+  };
 
   constructor(private readonly doc: Document, private readonly host: TextEditorOverlayHost) {}
 
@@ -160,7 +174,7 @@ export class TextEditorOverlay {
     this.observer.observe(this.doc.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: WATCHED_ATTRIBUTES });
     // the browser title and the meta description arrive later (page titles) - report them too
     this.observer.observe(this.doc.head, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['content'] });
-    this.redrawTimer = setInterval(() => this.redraw(), REDRAW_INTERVAL_MS);
+    this.redrawTimer = setInterval(() => this.tick(), REDRAW_INTERVAL_MS);
     this.scan();
   }
 
@@ -188,6 +202,10 @@ export class TextEditorOverlay {
     this.root.remove();
     this.root = this.layer = this.globalStyle = null;
     this.items = [];
+    this.hovered = null;
+    this.drawn = '';
+    this.lastScan = '';
+    this.stale = true;
   }
 
   /**
@@ -197,6 +215,7 @@ export class TextEditorOverlay {
    */
   select(key: string | null, reveal: boolean): void {
     this.selectedKey = key;
+    this.stale = true;
     if (reveal && key) {
       this.measure();
       const item = this.items.find(i => i.entry.kind === 'text' && i.entry.key === key && this.isShown(i.rect));
@@ -230,6 +249,16 @@ export class TextEditorOverlay {
    */
   hit(x: number, y: number): OverlayItem | null {
     this.measure();
+    return this.textAt(x, y);
+  }
+
+  /**
+   * @description Marked text at a point by the last measure.
+   * @param x Client X.
+   * @param y Client Y.
+   * @returns The smallest text containing the point, null outside every text.
+   */
+  private textAt(x: number, y: number): OverlayItem | null {
     let best: OverlayItem | null = null;
     let bestArea = Infinity;
     for (const item of this.items) {
@@ -402,6 +431,22 @@ export class TextEditorOverlay {
         item.covered = this.isCovered(item, fixedOf);
       }
     }
+    this.stale = false;
+  }
+
+  /** @description Measures the texts when the last measure may be out of date. */
+  private ensureMeasured(): void {
+    if (this.stale) this.measure();
+  }
+
+  /**
+   * @description The interval: texts moved by animations are measured and drawn again - not while
+   *   the page cannot be seen (another tab, a minimised window).
+   */
+  private tick(): void {
+    if (this.doc.visibilityState === 'hidden') return;
+    this.stale = true;
+    this.redraw();
   }
 
   /**
@@ -481,29 +526,51 @@ export class TextEditorOverlay {
   private redraw(): void {
     const layer = this.layer;
     if (!layer) return;
-    this.measure();
+    this.ensureMeasured();
     const view = this.doc.defaultView!;
-    const parts: HTMLElement[] = [];
+    // what to draw first - the layer is rebuilt only when it differs from what it shows
+    const shapes: { box: string; style: string; label?: { className: string; text: string; style: string; below: number; hovered: boolean } }[] = [];
     for (const item of this.items) {
       const r = item.rect;
       if (!this.isShown(r) || item.covered || r!.bottom < -OUTLINE_GAP || r!.top > view.innerHeight + OUTLINE_GAP) continue;
       const selected = item.entry.kind === 'text' && item.entry.key === this.selectedKey;
       const hovered = item === this.hovered;
-      const box = this.doc.createElement('div');
       const missingText = item.entry.missing ? ' m' : '';
-      box.className = `b${item.entry.kind === 'content' ? ' c' : ''}${missingText}${hovered ? ' h' : ''}${selected ? ' s' : ''}`;
-      box.style.cssText = `left:${r!.left - OUTLINE_GAP}px;top:${r!.top - OUTLINE_GAP}px;width:${r!.width + 2 * OUTLINE_GAP}px;height:${r!.height + 2 * OUTLINE_GAP}px;`;
-      parts.push(box);
+      const shape: (typeof shapes)[number] = {
+        box: `b${item.entry.kind === 'content' ? ' c' : ''}${missingText}${hovered ? ' h' : ''}${selected ? ' s' : ''}`,
+        style: `left:${r!.left - OUTLINE_GAP}px;top:${r!.top - OUTLINE_GAP}px;width:${r!.width + 2 * OUTLINE_GAP}px;height:${r!.height + 2 * OUTLINE_GAP}px;`,
+      };
       if (hovered || selected) {
-        const label = this.doc.createElement('div');
-        label.className = `l${item.entry.kind === 'content' ? ' c' : ''}${missingText}`;
         const name = item.entry.kind === 'text' ? item.entry.key : this.host.contentLabel(item.entry.section);
-        label.textContent = item.entry.missing ? `${this.host.missingLabel()} · ${name}` : name;
         const above = r!.top - OUTLINE_GAP - 20;
-        label.style.cssText = `left:${r!.left - OUTLINE_GAP}px;top:${above >= 2 ? above : r!.bottom + OUTLINE_GAP + 2}px;`;
-        // the other place of the label (under its text) - used when it would cover another label
-        label.dataset['below'] = String(r!.bottom + OUTLINE_GAP + 2);
-        label.dataset['hovered'] = hovered && !selected ? '1' : '';
+        shape.label = {
+          className: `l${item.entry.kind === 'content' ? ' c' : ''}${missingText}`,
+          text: item.entry.missing ? `${this.host.missingLabel()} · ${name}` : name,
+          style: `left:${r!.left - OUTLINE_GAP}px;top:${above >= 2 ? above : r!.bottom + OUTLINE_GAP + 2}px;`,
+          // the other place of the label (under its text) - used when it would cover another label
+          below: r!.bottom + OUTLINE_GAP + 2,
+          hovered: hovered && !selected,
+        };
+      }
+      shapes.push(shape);
+    }
+    const drawing = JSON.stringify([shapes, this.doc.documentElement.clientWidth]);
+    if (drawing === this.drawn) return;
+    this.drawn = drawing;
+
+    const parts: HTMLElement[] = [];
+    for (const shape of shapes) {
+      const box = this.doc.createElement('div');
+      box.className = shape.box;
+      box.style.cssText = shape.style;
+      parts.push(box);
+      if (shape.label) {
+        const label = this.doc.createElement('div');
+        label.className = shape.label.className;
+        label.textContent = shape.label.text;
+        label.style.cssText = shape.label.style;
+        label.dataset['below'] = String(shape.label.below);
+        label.dataset['hovered'] = shape.label.hovered ? '1' : '';
         parts.push(label);
       }
     }
