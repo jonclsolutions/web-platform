@@ -18,6 +18,12 @@ namespace Tests\Integration;
 use App\Models\Core\CoreLog;
 use App\Apps\Shop\Models\ShopLog;
 use App\Apps\Web\Models\WebLog;
+use App\Apps\Web\Models\WebSiteSetting;
+use App\Apps\Web\Support\RawRequestEmailTemplate;
+use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
+use App\Apps\ProjectPortal\Support\SalesOrderEmailTemplate;
+use App\Apps\Shop\Models\ShopSiteSetting;
+use App\Apps\Shop\Support\ShopOrderEmailTemplate;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\File;
@@ -69,6 +75,35 @@ class TranslationTest extends TestCase
     private function file(string $relative): string
     {
         return $this->storage . '/app/public/translations/' . $relative;
+    }
+
+    /**
+     * @description Fills every text of the confirmation e-mails (inquiry, portal order, e-shop
+     *   order) in a language (the built-in texts) - a language is switched on only with them.
+     * @param string $lang Language code.
+     * @return void
+     */
+    private function completeEmails(string $lang): void
+    {
+        $templates = [
+            [WebSiteSetting::class, RawRequestEmailTemplate::class, ['is_web_active' => true]],
+            [ProjectPortalSetting::class, SalesOrderEmailTemplate::class, []],
+            [ShopSiteSetting::class, ShopOrderEmailTemplate::class, ['is_shop_active' => true]],
+        ];
+        foreach ($templates as [$model, $template, $attributes]) {
+            $settings = $model::query()->first() ?? new $model($attributes);
+            $labels = $settings->{$template::PREFIX . '_labels_i18n'} ?? [];
+            foreach ($template::DEFAULTS as $key => $text) {
+                if (in_array($key, $template::FLAT, true)) {
+                    $column = $template::PREFIX . "_{$key}_i18n";
+                    $settings->{$column} = array_merge($settings->{$column} ?? [], [$lang => $text]);
+                } else {
+                    $labels[$lang][$key] = $text;
+                }
+            }
+            $settings->{$template::PREFIX . '_labels_i18n'} = $labels;
+            $settings->save();
+        }
     }
 
     /**
@@ -268,13 +303,17 @@ class TranslationTest extends TestCase
 
     /**
      * @description A language other than Czech is switched on only complete: what it lacks per part
-     *   (texts, page titles, content of the applications) is listed for the window "Jazyky"; a
+     *   (texts, page titles, content of the applications - also the texts of the confirmation
+     *   e-mails of the inquiries and the portal orders) is listed for the window "Jazyky"; a
      *   switch-on of an incomplete language is refused (422 with the parts, nothing saved), of a
      *   complete one saved; switching off and keeping an active language as it is are free.
      * @input cz {a, b}; languages web cz, en (off), de (on, incomplete - an update added a text);
-     *   en with a only; GET completeness; switch en on; fill en; switch en on; de stays on, en off
-     * @output completeness en {texts: 1}, de {texts: 2}; 422 errors.incomplete {en: {texts: 1}}, en still
-     *   off; then 204, en on; de kept on (not a switch-on); 204 switching en off
+     *   en with a only; GET completeness; switch en on; fill en texts; switch en on; fill the en
+     *   e-mails; switch en on; de stays on, en off
+     * @output completeness en {texts: 1, inquiry_email: 12, portal_order_email: 14}, de {texts: 2};
+     *   422 errors.incomplete {en: {texts: 1, …}}, en still off; with the texts only 422
+     *   {inquiry_email, portal_order_email}; then 204, en on; de kept on (not a switch-on); 204
+     *   switching en off
      */
     public function test_a_language_is_switched_on_only_complete(): void
     {
@@ -297,6 +336,8 @@ class TranslationTest extends TestCase
 
         $completeness = $this->getJson('/api/languages/web/completeness')->assertOk()->json('data');
         $this->assertSame(1, $completeness['en']['texts']);
+        $this->assertSame([count(RawRequestEmailTemplate::DEFAULTS), count(SalesOrderEmailTemplate::DEFAULTS)],
+            [$completeness['en']['inquiry_email'], $completeness['en']['portal_order_email']]);
         $this->assertSame(2, $completeness['de']['texts']);
         $this->assertArrayNotHasKey('cz', $completeness);
 
@@ -304,6 +345,9 @@ class TranslationTest extends TestCase
         $this->assertFalse($active('en'));
 
         File::put($this->file('web/en.json'), json_encode(['a' => 'A en', 'b' => 'B en']));
+        $this->postJson('/api/languages/web', $list(true))->assertStatus(422)
+            ->assertJsonPath('errors.incomplete.en', ['inquiry_email' => 12, 'portal_order_email' => 14]);
+        $this->completeEmails('en');
         $this->postJson('/api/languages/web', $list(true))->assertNoContent();
         $this->assertTrue($active('en'));
         $this->assertTrue($active('de'));
@@ -434,6 +478,7 @@ class TranslationTest extends TestCase
     public function test_save_languages(): void
     {
         $this->signIn($this->userWith(self::EDITOR));
+        $this->completeEmails('en');  // en of the e-shop is switched on - its order e-mails complete
         Storage::disk('public')->put('translation_images/web/cz.png', 'png');
         $this->languages([
             ['code' => 'cz', 'name' => 'Čeština', 'module' => 'web', 'isBuiltIn' => true, 'icon_path' => 'translation_images/web/cz.png'],

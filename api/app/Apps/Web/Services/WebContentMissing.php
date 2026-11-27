@@ -62,6 +62,26 @@ final class WebContentMissing
     }
 
     /**
+     * @description Records missing a text per tab and per given language (the switched off
+     *   languages being prepared - the grey dot) - only the languages that miss something.
+     * @param string[] $codes Language codes.
+     * @return array<string, array<string, int>> Tab => (language => records), every tab present.
+     */
+    public static function byLanguage(array $codes): array
+    {
+        $result = ['faq' => [], 'jobs' => [], 'references' => [], 'knowledge_base' => []];
+        foreach (array_unique(array_map('strtolower', $codes)) as $code) {
+            foreach (self::counts([$code]) as $tab => $count) {
+                if ($count > 0) {
+                    $result[$tab][$code] = $count;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @description Records of the query missing a text in one of the languages.
      * @param Builder $query Records the visitors can see.
      * @param array<int, string> $fields Text columns (`{ lang: text }`).

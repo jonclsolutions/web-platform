@@ -18,6 +18,7 @@ import { of } from 'rxjs';
 
 import { SalesOrdersComponent } from './sales-orders.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
+import { AdminNotificationsService } from '../../../../core/services/admin-notifications.service';
 
 describe('SalesOrdersComponent', () => {
   let ctx: AdminTestContext;
@@ -123,20 +124,17 @@ describe('SalesOrdersComponent', () => {
   });
 
   /**
-   * @description While the order confirmation e-mail lacks texts, its item of the Actions menu
-   *   carries the orange dot; closing the editor asks again.
-   * @input getQuietly answers missing cz [label_ico]; ngOnInit; then no missing + editor closed.
-   * @output getQuietly('project-portal/sales_orders/email-template'); attention true; then none.
+   * @description The e-mail item of the Actions menu carries the dot of the attention kind
+   *   portal_order_email_missing (orange count / grey preparing).
+   * @input kind 1; then 0 + preparing de 14.
+   * @output tone 'attention'; then 'preparing'.
    */
   it('marks the e-mail item while the template lacks texts', () => {
-    const quietly = (ctx.dataHandler as any).getQuietly;
-    quietly.and.returnValue(of({ missing: { cz: ['label_ico'] } }));
-    component.ngOnInit();
-    expect(quietly).toHaveBeenCalledWith('project-portal/sales_orders/email-template');
-    expect(toolbar()['openEmailTemplateEditor'].attention).toBeTrue();
-    quietly.and.returnValue(of({ missing: {} }));
-    component.closeEmailTemplateEditor();
-    expect(toolbar()['openEmailTemplateEditor'].attention).toBeUndefined();
+    const notifications = TestBed.inject(AdminNotificationsService);
+    notifications.kinds.set([{ kind: 'portal_order_email_missing', module: 'project-portal', link: '/admin/project-portal/sales-orders', count: 1, attention: true }]);
+    expect(toolbar()['openEmailTemplateEditor'].attentionTone).toBe('attention');
+    notifications.kinds.set([{ kind: 'portal_order_email_missing', module: 'project-portal', link: '/admin/project-portal/sales-orders', count: 0, attention: true, preparing: { de: 14 } }]);
+    expect(toolbar()['openEmailTemplateEditor'].attentionTone).toBe('preparing');
   });
 
   /**

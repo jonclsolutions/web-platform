@@ -464,6 +464,7 @@
   "pt_language_label": "Jazyk názvů:",
   "pt_missing_lang_title": "Stránky bez názvu v tomto jazyce: {count}",
   "pt_missing_banner": "Chybějící názvy stránek v jazyce {lang}: {count}. Návštěvníci místo nich uvidí „Cannot load text“.",
+  "pt_missing_banner_inactive": "Jazyk {lang} je vypnutý – návštěvníci ho nevidí. Chybí názvy stránek: {count}; doplňte je, než jazyk zapnete.",
   "pt_saved_title": "Uloženo"
 },
 "settings": {
@@ -1459,6 +1460,8 @@
     "tab_translations": "Překlady",
     "tab_missing_texts_title": "Chybějící texty v zapnutých jazycích: {count}",
     "tab_missing_titles_title": "Chybějící názvy stránek v zapnutých jazycích: {count}",
+    "tab_preparing_title": "Vypnuté jazyky (návštěvníci je nevidí) – ještě chybí: {count}",
+    "missing_part_open_title": "Otevřít a doplnit",
     "tab_page_titles": "Názvy stránek",
     "tabs_label": "Části stránky",
     "tabs_others_waiting": "Jiná část má chybějící texty nebo neuložené změny",
@@ -1746,7 +1749,6 @@
     "add_language_title": "Přidat jazyk",
     "add_language_button": "Přidat jazyk",
     "add_language_unsaved_note": "Jazyk {lang} má neuložené úpravy – po přidání zůstane otevřený a úpravy se neztratí.",
-    "inactive_suffix": "neaktivní",
     "inactive_label": "Neaktivní",
     "deactivate_title": "Deaktivovat",
     "activate_title": "Aktivovat",
@@ -1805,7 +1807,6 @@
     "toggle_failed_error": "Změnu se nepodařilo uložit.",
     "activate_incomplete_note": "Zapnout půjde, až bude jazyk kompletní. Chybí: {parts}.",
     "active_incomplete_note": "Chybí: {parts} – návštěvníci místo nich vidí „Cannot load text“. Doplňte je co nejdřív.",
-    "show_missing_texts_button": "Zobrazit chybějící texty",
     "activate_incomplete_message": "Jazyk {lang} zatím nejde zapnout – není kompletní. Chybí: {parts}. Doplňte je a zapněte ho znovu.",
     "new_language_off_note": "Nový jazyk se vytvoří vypnutý. Zapnete ho v okně Jazyky, až budou doplněné všechny jeho texty, názvy stránek i obsah – návštěvníci tak nikdy neuvidí napůl přeložený jazyk.",
     "completeness_parts": {
@@ -1814,7 +1815,10 @@
       "faq": "FAQ",
       "jobs": "Pracovní pozice",
       "references": "Reference",
-      "knowledge_base": "Centrum nápovědy"
+      "knowledge_base": "Centrum nápovědy",
+      "inquiry_email": "E-mail poptávky",
+      "order_email": "E-maily objednávky",
+      "portal_order_email": "E-mail objednávky portálu"
     },
     "invalid_json_error": "Neplatný JSON soubor.",
     "json_uploaded_message": "JSON pro „{lang}\" byl úspěšně nahrán.",
@@ -1881,12 +1885,15 @@
   "primary_missing_button": "Doplnit češtinu",
   "save_blocked_title": "Nejdřív vyplňte všechna česká pole",
   "lang_fallback_hint": "ⓘ Prázdné pole jiného jazyka použije český text. Čeština (výchozí jazyk) musí být vyplněná celá.",
-  "attention_title": "Potvrzovací e-mail nemá vyplněné všechny texty"
+  "attention_title": "Potvrzovací e-mail nemá vyplněné všechny texty",
+  "attention_preparing_title": "Vypnutému jazyku chybí texty e-mailu – doplňte je, než ho zapnete",
+  "missing_hint_inactive": "Jazyk je vypnutý – zákazníci ho nevidí. Oranžově označená pole doplňte, než jazyk zapnete."
 },
   "notifications": {
     "kind_generic": "Nové záznamy",
     "kind_core_security_events": "Nové bezpečnostní události",
     "toast_message": "Nepřečtené: {count}. Kliknutím otevřete stránku.",
-    "attention_toast_message": "Vyžaduje vaši pozornost: {count}. Kliknutím otevřete stránku."
+    "attention_toast_message": "Vyžaduje vaši pozornost: {count}. Kliknutím otevřete stránku.",
+    "preparing_label": "vypnuté jazyky"
   }
 }

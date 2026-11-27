@@ -32,7 +32,7 @@
 }
 <!-- Empty fields of another language fall back to the Czech text - marked orange -->
 @if (currentLang !== primaryLang && missingCount(currentLang) > 0) {
-<p class="email-tpl-missing-hint">{{ shared('missing_hint') }}</p>
+<p class="email-tpl-missing-hint">{{ missingHint }}</p>
 }
 
 <div class="email-tpl-field">

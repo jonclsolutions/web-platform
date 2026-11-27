@@ -20,6 +20,7 @@ import { OrdersComponent } from './orders.component';
 import { PAYMENT_STATUS_VALUES, STATUS_VALUES } from './orders.config';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
+import { AdminNotificationsService } from '../../../../core/services/admin-notifications.service';
 
 describe('OrdersComponent', () => {
   let ctx: AdminTestContext;
@@ -119,24 +120,22 @@ describe('OrdersComponent', () => {
       expect(component.visibleToolbarButtons).toBe(component.visibleToolbarButtons);
     });
 
-    /**
-     * @description The e-mail item of the Actions menu carries the orange dot while the order
-     *   e-mails lack texts (the cached toolbar follows the change).
-     * @input all permissions; getQuietly answers missing en [subject]; ngOnInit; then no missing +
-     *   the editor closed.
-     * @output getQuietly('shop/settings/order-email-template'); attention true; then false.
+      /**
+     * @description The e-mail item of the Actions menu carries the dot of the attention kind
+     *   shop_order_email_missing (the cached toolbar follows the colour).
+     * @input all permissions; kind 4; then 0 + preparing en 34; then none.
+     * @output tone 'attention'; 'preparing'; no dot.
      */
     it('marks the e-mail item while the e-mails lack texts', () => {
       ctx.permissions.granted = 'all';
       ctx.i18n.translations$.next({});
-      const quietly = dh().getQuietly;
+      const notifications = TestBed.inject(AdminNotificationsService);
       const item = () => component.visibleToolbarButtons.find(b => b.action === 'openEmailTemplateEditor')!;
-      quietly.and.returnValue(of({ missing: { en: ['subject'] } }));
-      loadLookups();
-      expect(quietly).toHaveBeenCalledWith('shop/settings/order-email-template');
-      expect(item().attention).toBeTrue();
-      quietly.and.returnValue(of({ missing: {} }));
-      component.closeEmailTemplateEditor();
+      notifications.kinds.set([{ kind: 'shop_order_email_missing', module: 'shop', link: '/admin/shop/orders', count: 4, attention: true }]);
+      expect(item().attentionTone).toBe('attention');
+      notifications.kinds.set([{ kind: 'shop_order_email_missing', module: 'shop', link: '/admin/shop/orders', count: 0, attention: true, preparing: { en: 34 } }]);
+      expect(item().attentionTone).toBe('preparing');
+      notifications.kinds.set([]);
       expect(item().attention).toBeUndefined();
     });
 

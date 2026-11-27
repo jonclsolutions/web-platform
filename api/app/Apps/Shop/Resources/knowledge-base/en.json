@@ -807,7 +807,7 @@
             },
             {
               "type": "text",
-              "content": "The text is filled in for every language of the e-shop; Czech is the default language and must be filled in completely (otherwise the texts cannot be saved), an empty field of another language uses the Czech text - empty fields are marked orange, every language shows their number and while something is missing, an orange dot is shown at the Actions menu. The live preview shows a simplified e-mail with sample data. Saving requires the permission to edit orders."
+              "content": "The text is filled in for every language of the e-shop; Czech is the default language and must be filled in completely (otherwise the texts cannot be saved), an empty field of another language uses the Czech text - empty fields are marked orange, every language shows their number and while something is missing, a dot is shown at the Actions menu and in the menu - orange, grey when only a switched off language lacks texts. The live preview shows a simplified e-mail with sample data. Saving requires the permission to edit orders."
             }
           ]
         },
@@ -1463,7 +1463,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "The row of e-shop languages - adding a language (flag, code, name; a new language is switched off), switching on only a complete language (the Languages window says what is missing), switching off, deleting (deletes all texts of the language too, including page titles and the order e-mail). Czech is the default language. A switched off language is offered for editing in the Page titles tab and in the order e-mail in Orders too - its tab is dashed and greyer, so you complete it before you switch it on.",
+                "The row of e-shop languages - adding a language (flag, code, name; a new language is switched off), switching on only a complete language (the Languages window says what is missing - texts, page titles and the order e-mails; every item is a link to the place where it is filled in), switching off, deleting (deletes all texts of the language too, including page titles and the order e-mail). Czech is the default language. A switched off language is offered for editing in the Page titles tab and in the order e-mail in Orders too - its tab is dashed and greyer, so you complete it before you switch it on. What a switched off language lacks is shown by a grey dot in the menu and a grey number on the tab; orange means a text is missing in a switched on language.",
                 "The language is in the e-shop address too, for example /cs/shop/catalog in Czech and /en/shop/catalog in English - the same as on the website (manual Website texts, chapter 03). An active language gets its addresses by itself, nothing else is set.",
                 "The table with the readable path of a text (for example Checkout › Field labels › First name) and the exact key under it, search (by the readable path too), the statistics line and the Missing toggle.",
                 "Downloading and uploading JSON for a translator.",

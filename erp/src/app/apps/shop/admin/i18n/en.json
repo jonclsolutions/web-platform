@@ -1179,6 +1179,7 @@
     "kind_shop_orders": "New e-shop orders",
     "kind_shop_low_stock": "Products below the stock limit",
     "kind_shop_texts_missing": "Missing e-shop texts",
-    "kind_shop_page_titles_missing": "Missing e-shop page titles"
+    "kind_shop_page_titles_missing": "Missing e-shop page titles",
+    "kind_shop_order_email_missing": "Empty texts of the order e-mails"
   }
 }

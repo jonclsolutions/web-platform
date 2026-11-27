@@ -273,7 +273,7 @@ class ShopSiteSettingController extends Controller
         foreach (ShopOrderEmailTemplate::FIELDS as $field) {
             $template[$field] = (object) ($settings?->{$field} ?? []);
         }
-        // texts missing per active language of the e-shop (Czech always) - the orange dot of Actions
+        // texts missing per active language of the e-shop (Czech always) - shown in the editor
         $template['missing'] = (object) ShopOrderEmailTemplate::missingByLanguage($settings, TranslationController::activeLanguageCodes('shop'));
 
         return $template;

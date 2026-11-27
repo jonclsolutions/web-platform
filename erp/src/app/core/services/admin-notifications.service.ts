@@ -20,6 +20,9 @@
  *   module and the module switcher, so it never gets lost. Its label (tooltip + screen reader)
  *   names every kind behind it with its count, texts missing per language ("Chybějící texty
  *   webu: 123 (angličtina 120, čeština 3)").
+ * @note A switched off language being prepared (`preparing` of an attention kind: what it still
+ *   lacks - visitors do not see it, so it is not in the count) gives a GREY dot on the same
+ *   places, only when nothing is orange; the label says "vypnuté jazyky: polština 14".
  * @usage AdminLayoutComponent calls start() while a user is signed in and stop() otherwise.
  * @dependencies DataHandler (getQuietly / postQuietly), Router, AlertDialogService,
  *   AdminLocalizationService (section `notifications`, the admin locale for language names),
@@ -48,6 +51,11 @@ export interface NotificationKind {
   attention?: boolean;
   /** Split of an attention count per language (texts missing), e.g. { en: 120, cz: 3 }. */
   languages?: Record<string, number>;
+  /**
+   * The same missing in the switched off languages (being prepared - not part of `count`, a grey
+   * dot instead of the orange one), e.g. { pl: 14 }.
+   */
+  preparing?: Record<string, number>;
 }
 
 /**
@@ -59,6 +67,8 @@ export interface NavBadge {
   text: string | null;
   /** Orange dot: something needs attention (texts missing in a language …). */
   attention: boolean;
+  /** Grey dot: only a switched off language lacks something (shown when nothing is orange). */
+  preparing: boolean;
   /** Tooltip and screen-reader text, e.g. "Nové poptávky: 3 · Chybějící texty webu: 123 (angličtina 120)". */
   label: string;
 }
@@ -165,31 +175,57 @@ export class AdminNotificationsService {
 
   /**
    * @description Badge of a set of kinds: the red number of unread records and the orange dot
-   *   when something needs attention (both can show); null when there is nothing.
+   *   when something needs attention (both can show); the grey dot when only a switched off
+   *   language lacks something; null when there is nothing.
    * @param kinds Kinds behind the badge.
    */
   navBadge(kinds: NotificationKind[]): NavBadge | null {
-    const active = kinds.filter(k => k.count > 0);
+    const active = kinds.filter(k => k.count > 0 || AdminNotificationsService.preparingCount(k) > 0);
     if (!active.length) return null;
     const unread = active.filter(k => !k.attention).reduce((sum, k) => sum + k.count, 0);
+    const attention = active.some(k => k.attention && k.count > 0);
     return {
       text: this.badge(unread),
-      attention: active.some(k => k.attention),
+      attention,
+      preparing: !attention && active.some(k => AdminNotificationsService.preparingCount(k) > 0),
       label: active.map(k => this.kindLabel(k)).join(' · '),
     };
   }
 
   /**
-   * @description One kind in a badge label: its name and count, texts missing per language.
-   * @param kind Kind with a count.
-   * @returns e.g. "Nové poptávky: 3", "Chybějící texty webu: 123 (angličtina 120, čeština 3)".
+   * @description What the switched off languages of a kind still lack (the grey dot).
+   * @param kind Kind.
+   * @returns Sum of `preparing`, 0 without it.
+   */
+  static preparingCount(kind: NotificationKind): number {
+    return Object.values(kind.preparing ?? {}).reduce((sum, count) => sum + (count > 0 ? count : 0), 0);
+  }
+
+  /**
+   * @description One kind in a badge label: its name and count, texts missing per language, and
+   *   what the switched off languages lack.
+   * @param kind Kind with a count or `preparing`.
+   * @returns e.g. "Nové poptávky: 3", "Chybějící texty webu: 123 (angličtina 120, čeština 3)",
+   *   "Chybějící názvy stránek webu – vypnuté jazyky: polština 14" (no count when only the
+   *   switched off languages lack something).
    */
   kindLabel(kind: NotificationKind): string {
-    const languages = Object.entries(kind.languages ?? {})
+    const languages = this.languageList(kind.languages);
+    const preparing = this.languageList(kind.preparing);
+    const head = kind.count > 0 || !preparing.length ? `${this.kindTitle(kind)}: ${kind.count}` : this.kindTitle(kind);
+    return head + (languages.length ? ` (${languages.join(', ')})` : '')
+      + (preparing.length ? ` – ${this.i18n.getValue('notifications.preparing_label')}: ${preparing.join(', ')}` : '');
+  }
+
+  /**
+   * @param counts Language → count.
+   * @returns "angličtina 120" items, the biggest first (zeros left out).
+   */
+  private languageList(counts: Record<string, number> | undefined): string[] {
+    return Object.entries(counts ?? {})
       .filter(([, count]) => count > 0)
       .sort(([, a], [, b]) => b - a)
       .map(([code, count]) => `${this.languageName(code)} ${count}`);
-    return `${this.kindTitle(kind)}: ${kind.count}` + (languages.length ? ` (${languages.join(', ')})` : '');
   }
 
   /**

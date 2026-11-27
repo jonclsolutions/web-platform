@@ -15,7 +15,9 @@
  * (inquiries, orders, e-shop orders), which define PREFIX and DEFAULTS.
  * @note A template is saved only with every Czech text filled in (missingDefaults() → 422 in
  *   the controllers); the admin lists the texts missing per language (missingByLanguage() - the
- *   orange dot of the Actions menu).
+ *   `missing` of the template API; countsByLanguage() - the attention kinds behind the dots of the
+ *   menu tree and of the Actions menu); a language
+ *   is switched on only with its e-mail complete (missingIn() in AppManifest::contentMissing()).
  * @dependencies MissingTranslations::PRIMARY (the default language)
  */
 
@@ -134,6 +136,27 @@ abstract class I18nEmailTemplate
         }
 
         return $result;
+    }
+
+    /**
+     * @description Number of missing texts per given language (the attention kinds of the menu:
+     *   the active languages + Czech for the orange dot, the switched off ones for the grey one).
+     * @param object|null $settings Settings row (null = nothing stored yet).
+     * @param string[] $languages Language codes.
+     * @return array<string, int> Language → missing texts, only languages missing something.
+     */
+    public static function countsByLanguage(?object $settings, array $languages): array
+    {
+        $settings ??= new \stdClass();
+        $counts = [];
+        foreach (array_unique(array_map('strtolower', $languages)) as $lang) {
+            $count = count(static::missingIn($settings, $lang));
+            if ($count > 0) {
+                $counts[$lang] = $count;
+            }
+        }
+
+        return $counts;
     }
 
     /**

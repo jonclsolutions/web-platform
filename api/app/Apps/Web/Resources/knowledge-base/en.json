@@ -323,7 +323,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "The text is filled in separately for every language of the website. Czech is the default language: it must be filled in completely, otherwise the e-mail cannot be saved (the window says so and offers Fill in Czech). An empty field of another language uses the Czech text. Empty fields are marked orange, every language shows their number and while something is missing, an orange dot is shown at the Actions menu.",
+                "The text is filled in separately for every language of the website. Czech is the default language: it must be filled in completely, otherwise the e-mail cannot be saved (the window says so and offers Fill in Czech). An empty field of another language uses the Czech text. Empty fields are marked orange, every language shows their number and while something is missing, a dot is shown at the Actions menu and in the menu - orange, grey when only a switched off language lacks texts.",
                 "The Live preview at the bottom shows how the e-mail looks; the summary in the preview is filled with sample data.",
                 "Save stores the template, Cancel closes the editor without saving."
               ]
@@ -541,7 +541,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see a switched off language, its texts stay. Only a complete language can be switched on: while it lacks something (texts, page titles, FAQ, positions, references, help center), Activate is disabled and what is missing is written under the language, with the button Show the missing texts. When something is missing in a switched on language after an update of the application, the window shows it there too. A switched off language is offered for editing in the other tabs too (Page titles, FAQ, Job positions, References, Help center) - its tab is dashed and greyer, so you complete it before you switch it on.",
+                "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see a switched off language, its texts stay. Only a complete language can be switched on: while it lacks something (texts, page titles, FAQ, positions, references, help center, the confirmation e-mail of the inquiries and of the portal orders), Activate is disabled and what is missing is written under the language. Every item (e.g. FAQ 32) is a link - it opens exactly that place in that language, an e-mail directly in its editor. When something is missing in a switched on language after an update of the application, the window shows it there too. A switched off language is offered for editing in the other tabs too (Page titles, FAQ, Job positions, References, Help center) - its tab is dashed and greyer, so you complete it before you switch it on. What a switched off language still lacks is shown by a grey dot (in the menu, at the application in the switcher) and a grey number on the tab; orange means something is missing in a switched on language and visitors see it.",
                 "Delete deletes the language (after a confirmation; Cancel keeps you in the Languages window). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
                 "Download JSON and Upload JSON are at every language in the Languages window (see chapter 06).",
                 "When the open language has unsaved edits, adding a language does not throw them away - the open language stays open and the new one is in the row of languages."
@@ -706,7 +706,7 @@
                 },
                 {
                   "title": "Switched off language",
-                  "text": "The top bar offers every language, a switched off one dashed with a dot. When it is open, a notice says visitors do not see it; Switch the language on turns it on only when it is complete - otherwise the notice says what is missing. Manage languages opens the same window as on the Translations tab (adding, uploading and downloading the JSON, deleting)."
+                  "text": "The top bar offers every language, a switched off one dashed and greyer; the number at a language is its missing texts - grey for a switched off language, orange for a switched on one. When it is open, a notice says visitors do not see it; Switch the language on turns it on only when it is complete - otherwise the notice says what is missing. Manage languages opens the same window as on the Translations tab (adding, uploading and downloading the JSON, deleting)."
                 },
                 {
                   "title": "Other texts of the page",

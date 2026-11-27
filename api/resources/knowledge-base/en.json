@@ -1779,7 +1779,7 @@
               "ordered": false,
               "items": [
                 "The choice applies only in this browser - set it separately in another browser or on another device.",
-                "The red numbers of unread records and the orange dots of work waiting for you are always shown in the menu, even when the notices are off.",
+                "The red numbers of unread records, the orange dots of work waiting for you and the grey dots of languages you are still preparing (a switched off language that lacks something) are always shown in the menu, even when the notices are off.",
                 "A notice holds only the number and the kind of records, never names or e-mails."
               ]
             }

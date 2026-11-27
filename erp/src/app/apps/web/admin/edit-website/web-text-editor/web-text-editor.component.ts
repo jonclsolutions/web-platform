@@ -66,6 +66,8 @@ export class WebTextEditorComponent extends BaseTranslationEditorComponent imple
   protected override readonly LANGUAGES_CACHE_KEY = 'edit-website:languages';
   protected override readonly TRANSLATIONS_CACHE_PREFIX = 'edit-website:translations:';
   protected override readonly UPDATE_PERMISSION = 'web-edit-website-update';
+  /** The texts page with the tabs (page titles, FAQ …) - a missing part opens there. */
+  protected override readonly TEXTS_PAGE_URL = '/admin/web/edit-website';
 
   /** Pages offered in the editor. */
   readonly pages = WEB_EDITOR_PAGES;

@@ -8,7 +8,8 @@
  * @created 2026
  * @description What a language of a translation module still lacks: its texts (against Czech),
  *   the titles of the pages of the area and the content of the applications using the
- *   languages of the module (FAQ, positions… - AppManifest::contentMissing()). A language other
+ *   languages of the module (FAQ, positions…, the texts of the confirmation e-mails -
+ *   AppManifest::contentMissing()). A language other
  *   than Czech may be switched on only when it lacks nothing (TranslationController::saveLanguages):
  *   a visitor never gets a half translated language - a text missing later (after an update of
  *   the application) shows 'Cannot load text' and the admin is told (orange dot).

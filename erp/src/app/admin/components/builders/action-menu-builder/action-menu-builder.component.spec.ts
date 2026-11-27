@@ -204,7 +204,7 @@ describe('ActionMenuBuilderComponent', () => {
    *   with attention does not mark the trigger.
    * @input configs: hidden item with attention; then Export with attention + title 'Texts missing'.
    * @output no trigger dot / title; then trigger dot + title 'Texts missing'; open: Export with a
-   *   dot and title, Import without.
+   *   dot and title, Import without; an item with attentionTone 'preparing' only: both dots grey.
    */
   it('marks an item that needs attention and the trigger', fakeAsync(() => {
     const trigger = () => fixture.nativeElement.querySelector('.action-menu-trigger') as HTMLButtonElement;
@@ -226,5 +226,13 @@ describe('ActionMenuBuilderComponent', () => {
     tick();
     expect(items().map(item => [!!item.querySelector('.action-menu-dot'), item.getAttribute('title')]))
       .toEqual([[true, 'Texts missing'], [false, null]]);
+    expect(trigger().querySelector('.action-menu-dot--preparing')).toBeNull();
+
+    // only a language being prepared: the dot of the item and of the trigger is grey
+    fixture.componentRef.setInput('configs', [{ action: 'export', label: 'Export', attention: true, attentionTone: 'preparing', attentionTitle: 'Being prepared' }]);
+    fixture.detectChanges();
+    expect(trigger().querySelector('.action-menu-dot--preparing')).not.toBeNull();
+    expect(trigger().getAttribute('title')).toBe('Being prepared');
+    expect(items()[0].querySelector('.action-menu-dot--preparing')).not.toBeNull();
   }));
 });

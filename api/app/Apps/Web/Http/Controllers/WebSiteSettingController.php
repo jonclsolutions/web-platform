@@ -123,7 +123,7 @@ class WebSiteSettingController extends Controller
      * @description Returns only the editable fields of the WebRawRequestCommission
      * confirmation email template (subject/title/intro/outro/labels, each as an i18n object keyed
      * by language code) and `missing` (language → keys of the empty texts, the active web
-     * languages + Czech - the orange dot of the Actions menu of Inquiries). Returns DIRECTLY the
+     * languages + Czech; the dot of the Actions menu comes from the attention kind of the notifications). Returns DIRECTLY the
      * object (not wrapped in `{data: ...}`) - consistent with how `DataHandler.get<T>()` on the
      * frontend does NOT wrap the response, unlike `put()`.
      */
@@ -140,7 +140,7 @@ class WebSiteSettingController extends Controller
             'raw_request_email_intro_i18n'   => $settings->raw_request_email_intro_i18n,
             'raw_request_email_outro_i18n'   => $settings->raw_request_email_outro_i18n,
             'raw_request_email_labels_i18n'  => $settings->raw_request_email_labels_i18n,
-            // texts missing per active language (Czech always) - the orange dot of the Actions menu
+            // texts missing per active language (Czech always) - shown with the template
             'missing' => (object) RawRequestEmailTemplate::missingByLanguage($settings, TranslationController::activeLanguageCodes('web')),
         ]);
     }

@@ -49,6 +49,8 @@ export const PROJECT_PORTAL_APP: AppManifest = {
     },
   ],
   maintenance: { endpoint: 'project-portal/maintenance', permission: 'project-portal-set-maintenance-mode', activeField: 'is_portal_active', messageField: 'portal_maintenance_message' },
+  // the order confirmation e-mail opened in the language (?email-template=)
+  missingPartLinks: { portal_order_email: '/admin/project-portal/sales-orders?email-template={lang}' },
   adminRoutes: PROJECT_PORTAL_ADMIN_ROUTES,
   publicRoutes: PROJECT_PORTAL_PUBLIC_ROUTES,
 };

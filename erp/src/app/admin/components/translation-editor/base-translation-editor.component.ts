@@ -46,6 +46,8 @@ import { RowButton, RowButtonItems } from '../builders/row-button-builder/row-bu
 import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 import { announceTexts } from '../../../shared/utils/texts-broadcast';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { APPS } from '../../../apps/apps.registry';
+import type { FocusLangRequest } from './focus-lang';
 
 /** @description Translation section of the texts shared by every translation editor. */
 export const TRANSLATION_EDITOR_SECTION = 'translation-editor';
@@ -125,12 +127,22 @@ export abstract class BaseTranslationEditorComponent
   protected abstract readonly TRANSLATIONS_CACHE_PREFIX: string;
   /** Permission required for any mutating action on the page. */
   protected abstract readonly UPDATE_PERMISSION: string;
+  /**
+   * Address of the texts page of the module when this editor is not it (the visual text editor):
+   * a part of what a language lacks that is a tab there opens it (`?tab=<part>&lang=<code>`);
+   * null = this is the texts page (its tabs open in place).
+   */
+  protected readonly TEXTS_PAGE_URL: string | null = null;
 
   private resourceCache = inject(ResourceCacheService);
   /** Orange numbers of the tabs (texts missing in an active language) - AdminNotificationsService. */
   private readonly notifications = inject(AdminNotificationsService);
   /** "Přepsat?" when texts were saved meanwhile elsewhere. */
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly navigator = inject(Core.Router);
+
+  /** Language asked for in a tab (window Jazyky → a part of what it lacks) - FocusLangRequest. */
+  focusLang: FocusLangRequest | null = null;
   override apiEndpoint = 'save_translations';
 
   /** Extra page tabs of the application (after the texts and the page titles). */
@@ -243,7 +255,8 @@ export abstract class BaseTranslationEditorComponent
    * @description Page tabs as row buttons: icon, label, dot for unsaved edits and the orange
    *   number of what is missing in an active language (the attention kind of the tab - the
    *   texts: `<module>_texts_missing`, the page titles: `<module>_page_titles_missing`; the same
-   *   numbers as behind the orange dot in the menu).
+   *   numbers as behind the orange dot in the menu); without any, the grey number of what the
+   *   switched off languages being prepared still lack (`preparing` - the grey dot of the menu).
    */
   get tabItems(): RowButton[] {
     const kinds: Record<string, string> = {
@@ -251,13 +264,17 @@ export abstract class BaseTranslationEditorComponent
       page_titles: `${this.MODULE}_page_titles_missing`,
     };
     return this.tabButtons.update(this.tabs.map(tab => {
-      const kind = kinds[tab.key] ?? tab.attentionKind;
-      const missing = kind ? this.notifications.kinds().find(k => k.kind === kind)?.count ?? 0 : 0;
+      const key = kinds[tab.key] ?? tab.attentionKind;
+      const kind = key ? this.notifications.kinds().find(k => k.kind === key) : undefined;
+      const missing = kind?.count ?? 0;
+      const preparing = kind ? AdminNotificationsService.preparingCount(kind) : 0;
       const titleKey = tab.key === 'page_titles' ? 'tab_missing_titles_title' : 'tab_missing_texts_title';
       return {
         value: tab.key, label: this.t(tab.labelKey), icon: tab.icon, dot: this.isTabDirty(tab.key),
-        count: missing > 0 ? missing : null, countTone: 'attention' as const,
-        title: missing > 0 ? this.t(titleKey).replace('{count}', String(missing)) : undefined,
+        count: missing > 0 ? missing : preparing > 0 ? preparing : null,
+        countTone: missing > 0 ? 'attention' as const : 'neutral' as const,
+        title: missing > 0 ? this.t(titleKey).replace('{count}', String(missing))
+          : preparing > 0 ? this.t('tab_preparing_title').replace('{count}', String(preparing)) : undefined,
       };
     }));
   }
@@ -482,6 +499,57 @@ export abstract class BaseTranslationEditorComponent
     return Object.entries(parts)
       .filter(([, count]) => count > 0)
       .map(([part, count]) => ({ part, count, label: this.partName(part) }));
+  }
+
+  /**
+   * @description Opens where a part of what a language lacks is filled in (a click in the window
+   *   Jazyky): the texts → the list of its missing texts; a tab of this page (page titles, FAQ …)
+   *   → the tab in that language; a part of another page (an e-mail - `missingPartLinks` of the
+   *   application) → that page with its editor in the language.
+   * @param code Language code.
+   * @param part Part of completeness (`texts`, `page_titles`, `faq`, `inquiry_email` …).
+   */
+  openMissingPart(code: string, part: string): void {
+    if (part === 'texts') {
+      // the visual editor lists the missing texts of the open language itself
+      if (!this.TEXTS_PAGE_URL) this.showMissingIn(code);
+      return;
+    }
+    if (!this.TEXTS_PAGE_URL && this.tabs.some(tab => tab.key === part)) {
+      this.switchTab(part);
+      this.focusLang = { code, seq: (this.focusLang?.seq ?? 0) + 1 };
+      this.cd.markForCheck();
+      return;
+    }
+    const link = APPS.map(app => app.missingPartLinks?.[part]).find(Boolean);
+    if (link) {
+      this.navigator.navigateByUrl(link.replace('{lang}', encodeURIComponent(code)));
+    } else if (this.TEXTS_PAGE_URL) {
+      this.navigator.navigateByUrl(`${this.TEXTS_PAGE_URL}?tab=${encodeURIComponent(part)}&lang=${encodeURIComponent(code)}`);
+    }
+  }
+
+  /**
+   * @param part Part of what a language lacks.
+   * @returns Whether it can be opened (texts, a tab, a linked page) - otherwise plain text (the
+   *   texts in the visual editor: their list is beside it).
+   */
+  canOpenMissingPart(part: string): boolean {
+    if (part === 'texts') return !this.TEXTS_PAGE_URL;
+    return !!this.TEXTS_PAGE_URL || this.tabs.some(tab => tab.key === part) || APPS.some(app => !!app.missingPartLinks?.[part]);
+  }
+
+  /**
+   * @description The tab and the language named in the address (`?tab=faq&lang=pl` - a part of
+   *   what a language lacks clicked in the visual editor): opens the tab in that language.
+   * @param params Query parameters of the page.
+   */
+  protected openTabOfUrl(params: { get(name: string): string | null }): void {
+    const tab = params.get('tab');
+    if (!tab || !this.tabs.some(t => t.key === tab)) return;
+    this.switchTab(tab);
+    const lang = params.get('lang');
+    if (lang) this.focusLang = { code: lang, seq: (this.focusLang?.seq ?? 0) + 1 };
   }
 
   /**
@@ -798,6 +866,19 @@ export abstract class BaseTranslationEditorComponent
       .filter(([, count]) => count > 0)
       .sort(([, a], [, b]) => b - a)
       .map(([code, count]) => ({ code, count, name: this.languages.find(l => l.code === code)?.name ?? code.toUpperCase() }));
+  }
+
+  /**
+   * @description Number on a language tab of the texts: the texts it misses - an active language
+   *   orange (visitors see 'Cannot load text'), a switched off one grey (being prepared); the
+   *   numbers of `<module>_texts_missing` (`languages` / `preparing`), like the menu.
+   * @param lang Language.
+   * @returns Count and tone, null when it lacks nothing (or nothing is known).
+   */
+  langTabMissing(lang: LangMeta): { count: number; tone: 'attention' | 'neutral' } | null {
+    const kind = this.notifications.kinds().find(k => k.kind === `${this.MODULE}_texts_missing`);
+    const count = (lang.active ? kind?.languages : kind?.preparing)?.[lang.code] ?? 0;
+    return count > 0 ? { count, tone: lang.active ? 'attention' : 'neutral' } : null;
   }
 
   /** @returns All texts missing in the active languages (sum of missingLanguages). */
@@ -1123,6 +1204,9 @@ export abstract class BaseTranslationEditorComponent
           this.cd.markForCheck();
           this.loadLanguages(true);
           announceTexts({ kind: 'languages', module: this.MODULE });
+          // the dots follow at once (a language switched on / off / added / deleted changes
+          // what is orange and what is grey) - not only at the next poll
+          this.notifications.refresh();
 
           if (this.isDirty) {
             // unsaved edits of the open language are never thrown away: it stays open, the new
@@ -1197,6 +1281,9 @@ export abstract class BaseTranslationEditorComponent
           this.langToDelete = null;
           this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${code}`);
           announceTexts({ kind: 'languages', module: this.MODULE });
+          // the dots follow at once (a language switched on / off / added / deleted changes
+          // what is orange and what is grey) - not only at the next poll
+          this.notifications.refresh();
 
           if (this.currentLang === code) {
             this.currentLang  = 'cz';
@@ -1241,6 +1328,9 @@ export abstract class BaseTranslationEditorComponent
         next: () => {
           this.resourceCache.invalidate(this.LANGUAGES_CACHE_KEY);
           announceTexts({ kind: 'languages', module: this.MODULE });
+          // the dots follow at once (a language switched on / off / added / deleted changes
+          // what is orange and what is grey) - not only at the next poll
+          this.notifications.refresh();
         },
         error: (err) => {
           lang.active = !lang.active;

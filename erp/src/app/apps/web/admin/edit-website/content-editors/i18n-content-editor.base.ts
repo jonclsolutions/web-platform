@@ -23,6 +23,7 @@
  * - DataHandler (GET / PUT, languages), ResourceCacheService (languages, 10 minutes),
  *   PermissionService (web-edit-website-update), AdminLocalizationService (section
  *   `web-content-editor`, redrawn on a switch of the admin language), AlertDialogService,
+ *   AdminNotificationsService (asked again after a save - the numbers and dots follow at once),
  *   row-button helpers (the language tabs of the editors - RowButtonBuilderComponent).
  */
 
@@ -35,8 +36,10 @@ import { ResourceCacheService } from '../../../../../core/services/resource-cach
 import { PermissionService } from '../../../../../core/auth/services/permission.service';
 import { AdminLocalizationService } from '../../../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../../../core/services/alert-dialog.service';
+import { AdminNotificationsService } from '../../../../../core/services/admin-notifications.service';
 import { CheckedText, ContentLang, I18nText } from './content-editor.model';
 import { RowButton, RowButtonItems, languageRowButtons } from '../../../../../admin/components/builders/row-button-builder/row-button';
+import type { FocusLangRequest } from '../../../../../admin/components/translation-editor/focus-lang';
 
 /** @description Languages when the module has none (or they cannot be loaded). */
 const FALLBACK_LANGUAGES: ContentLang[] = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }];
@@ -62,7 +65,28 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
     const current = new Set((this.host ?? []).map(l => l.code));
     const removed = previous.filter(code => !current.has(code));
     if (removed.length && !this.loading) this.forgetLanguages(removed);
+    this.applyFocusLang();
     this.cd.markForCheck();
+  }
+
+  /** Language asked for by the texts page (window Jazyky → a part); applied once it is offered. */
+  private focusCode: string | null = null;
+
+  /**
+   * Show this language (a click on a part of what a language lacks in the window Jazyky) - as
+   * soon as the editor offers it.
+   */
+  @Input() set focusLang(request: FocusLangRequest | null | undefined) {
+    this.focusCode = request?.code ?? null;
+    this.applyFocusLang();
+  }
+
+  /** @description Switches to the asked language when it is offered (otherwise it stays pending). */
+  private applyFocusLang(): void {
+    if (this.focusCode && this.languages.some(l => l.code === this.focusCode)) {
+      this.switchLang(this.focusCode);
+      this.focusCode = null;
+    }
   }
 
   /** API endpoint of the content (GET + PUT). */
@@ -96,6 +120,8 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
   private readonly resourceCache = inject(ResourceCacheService);
   private readonly permissionService = inject(PermissionService);
   private readonly alertDialog = inject(AlertDialogService);
+  /** Asked again after a save - the numbers of the tab and the dots of the menu follow at once. */
+  private readonly notifications = inject(AdminNotificationsService);
   protected readonly cd = inject(ChangeDetectorRef);
   public readonly i18n = inject(AdminLocalizationService);
   private readonly destroyRef = inject(DestroyRef);
@@ -177,6 +203,7 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
       next: ({ langs, rows }) => {
         this.loadedLanguages = langs;
         if (!this.languages.some(l => l.code === this.lang)) this.lang = this.languages[0].code;
+        this.applyFocusLang();
         this.setEntries(Array.isArray(rows) ? rows : []);
         this.loading = false;
         this.cd.markForCheck();
@@ -311,7 +338,21 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
   /** "In English 3 texts are missing - ..." warning of the edited language ('' = none missing). */
   get missingWarning(): string {
     const count = this.missingCount(this.lang);
-    return count ? (this.strings?.missing_warning ?? '').replace('{lang}', this.langName).replace('{count}', String(count)) : '';
+    const key = this.langInactive ? 'missing_warning_inactive' : 'missing_warning';
+    return count ? (this.strings?.[key] ?? '').replace('{lang}', this.langName).replace('{count}', String(count)) : '';
+  }
+
+  /**
+   * @description The edited language is switched off: visitors do not see it, so its missing
+   *   texts are "fill in before switching it on", not "visitors see 'Cannot load text'".
+   */
+  get langInactive(): boolean {
+    return this.languages.find(l => l.code === this.lang)?.active === false;
+  }
+
+  /** @description Note under an empty field of the edited language (switched on / off). */
+  get missingFieldText(): string {
+    return (this.langInactive ? this.strings?.missing_field_inactive : this.strings?.missing_field) ?? '';
   }
 
   private isMissingIn(text: I18nText, code: string, optional: boolean): boolean {
@@ -376,6 +417,7 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
           if (index < open.length) entry.open = open[index];
         });
         this.saving = false;
+        this.notifications.refresh();
         this.alertDialog.open(this.strings.saved_title, this.strings.saved_message, 'success');
         this.cd.markForCheck();
       },

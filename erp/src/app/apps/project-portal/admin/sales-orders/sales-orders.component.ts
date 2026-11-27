@@ -11,7 +11,7 @@
  * - Config.create* factory functions: Domain-specific, i18n-aware definitions for UI
  *   columns, form fields, and toolbar actions.
  * - EmailTemplateEditorComponent: modal editor of the order confirmation e-mail (sent in the
- *   language of the page, VT-15); EmailTemplateStatusService: the orange dot of the Actions menu
+ *   language of the page, VT-15); EmailTemplateStatusService: the dot (orange / grey) of the Actions menu
  *   while the e-mail lacks texts.
  * @note `createProject(item)` navigates to the projects page with the `order_id` query parameter
  * (it opens the project of the order or the create form with the order prefilled).
@@ -27,7 +27,8 @@ import { ActionMenuBuilderComponent } from '../../../../admin/components/builder
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
-import { EmailTemplateStatusService, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
+import { EMAIL_TEMPLATE_QUERY, EmailTemplateStatusService, EmailTemplateTitles, EmailTemplateTone, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
+import { ActivatedRoute } from '@angular/router';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 
 /**
@@ -92,9 +93,10 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
   showEmailTemplateModal = false;
   /** Rows of the summary table of the order e-mail with the preview sample values. */
   emailTemplateRows: EmailTemplateRow[] = [];
-  /** The confirmation e-mail lacks texts - orange dot on the Actions menu and its item. */
-  emailTemplateAttention = false;
   private readonly emailTemplateStatus = inject(EmailTemplateStatusService);
+  /** Language the editor opens in (`?email-template=<lang>` - the window Jazyky), null = Czech. */
+  emailTemplateLang: string | null = null;
+  private readonly emailTemplateRoute = inject(ActivatedRoute);
 
   /**
    * @description Opens the template editor of the order confirmation with its summary rows and
@@ -121,20 +123,40 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
   /** @description Closes the template editor (and asks again whether texts are missing). */
   closeEmailTemplateEditor(): void {
     this.showEmailTemplateModal = false;
-    this.loadEmailTemplateStatus();
+    this.emailTemplateLang = null;
+    this.emailTemplateStatus.refresh();
     this.cd.markForCheck();
   }
 
   /**
-   * @description Asks the template API whether the confirmation e-mail lacks texts (the orange
-   *   dot of the Actions menu) - only with the permission to edit it.
+   * @description `?email-template=<lang>` (a missing e-mail of a language clicked in the window
+   *   Jazyky): opens the editor in that language - with the permission to edit it - and removes
+   *   the parameter from the address (a reload does not open it again).
    */
-  private loadEmailTemplateStatus(): void {
+  private openEmailTemplateOfUrl(): void {
+    const lang = this.emailTemplateRoute.snapshot?.queryParamMap?.get(EMAIL_TEMPLATE_QUERY);
+    if (!lang) return;
+    this.router.navigate([], { relativeTo: this.emailTemplateRoute, queryParams: { [EMAIL_TEMPLATE_QUERY]: null }, queryParamsHandling: 'merge', replaceUrl: true });
     if (!this.permissionService.hasPermission('project-portal-sales-orders-update')) return;
-    this.emailTemplateStatus.needsAttention('project-portal/sales_orders/email-template').subscribe(attention => {
-      this.emailTemplateAttention = attention;
-      this.cd.markForCheck();
-    });
+    this.emailTemplateLang = lang;
+    this.openEmailTemplateEditor();
+  }
+
+  /**
+   * @description Colour of the dot of the e-mail item of the Actions menu - the attention kind of
+   *   the notifications (the same as the side menu): orange = texts missing in Czech or an active
+   *   language, grey = only a switched off language being prepared.
+   */
+  get emailTemplateTone(): EmailTemplateTone {
+    return this.emailTemplateStatus.toneOf('portal_order_email_missing');
+  }
+
+  /** @description Tooltips of the dot of the e-mail item. */
+  private get emailTemplateTitles(): EmailTemplateTitles {
+    return {
+      attention: this.i18n.getValue('email-template-editor.attention_title'),
+      preparing: this.i18n.getValue('email-template-editor.attention_preparing_title'),
+    };
   }
 
   get toolbarButtons(): Core.Button[] {
@@ -165,7 +187,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
           break;
       }
 
-      return withEmailTemplateAttention(updatedBtn, this.emailTemplateAttention, this.i18n.getValue('email-template-editor.attention_title'));
+      return withEmailTemplateAttention(updatedBtn, this.emailTemplateTone, this.emailTemplateTitles);
     });
   }
 
@@ -185,7 +207,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     this.initWithAuthCheck(this.router);
     // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
     this.watchRecordParam();
-    this.loadEmailTemplateStatus();
+    this.openEmailTemplateOfUrl();
   }
 
   override refreshData(): void {

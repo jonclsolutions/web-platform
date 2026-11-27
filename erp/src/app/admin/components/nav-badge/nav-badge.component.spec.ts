@@ -37,13 +37,16 @@ describe('NavBadgeComponent', () => {
 
   /**
    * @description Unread only: the red number; attention only: the orange dot; both: number and
-   *   dot side by side; the label is the role="img" text and the tooltip.
-   * @input { text '3' }, { text null, attention }, { text '99+', attention } with labels
-   * @output .nb-count '3' without dot; .nb-dot without number; '99+' + dot; aria-label = title = label
+   *   dot side by side; only a switched off language being prepared: the grey dot; the label is
+   *   the role="img" text and the tooltip.
+   * @input { text '3' }, { text null, attention }, { text '99+', attention }, { text null,
+   *   preparing } with labels
+   * @output .nb-count '3' without dot; .nb-dot without number; '99+' + dot; a grey dot
+   *   (.nb-dot--preparing) only; aria-label = title = label
    */
   it('shows the number, the dot or both with the label', () => {
-    const set = (text: string | null, attention: boolean, label: string) => {
-      fixture.componentRef.setInput('badge', { text, attention, label });
+    const set = (text: string | null, attention: boolean, label: string, preparing = false) => {
+      fixture.componentRef.setInput('badge', { text, attention, preparing, label });
       fixture.detectChanges();
     };
     set('3', false, 'Nové poptávky: 3');
@@ -60,6 +63,12 @@ describe('NavBadgeComponent', () => {
     set('99+', true, 'x');
     expect(host.querySelector('.nb-count')!.textContent!.trim()).toBe('99+');
     expect(host.querySelector('.nb-dot')).not.toBeNull();
+    expect(host.querySelector('.nb-dot--preparing')).toBeNull();
     expect(host.classList).not.toContain('nb-empty');
+
+    set(null, false, 'Chybějící názvy stránek webu – vypnuté jazyky: polština 14', true);
+    expect(host.querySelector('.nb-count')).toBeNull();
+    expect(host.querySelectorAll('.nb-dot').length).toBe(1);
+    expect(host.querySelector('.nb-dot--preparing')).not.toBeNull();
   });
 });

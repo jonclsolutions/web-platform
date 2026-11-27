@@ -411,6 +411,8 @@
     "missing_badge_title": "Počet chybějících překladů",
     "missing_field": "Chybí překlad – na webu se zobrazí „Cannot load text“.",
     "missing_warning": "Chybějící překlady ({lang}): {count}. Na webu se místo nich zobrazí „Cannot load text“.",
+    "missing_warning_inactive": "Jazyk {lang} je vypnutý – návštěvníci ho nevidí. Chybějící překlady: {count}; doplňte je, než jazyk zapnete.",
+    "missing_field_inactive": "Chybí překlad – doplňte ho, než jazyk zapnete.",
     "optional_label": "nepovinné",
     "move_up": "Posunout výš",
     "move_down": "Posunout níž",
@@ -476,6 +478,7 @@
     "kind_web_faq_missing": "Chybějící překlady FAQ",
     "kind_web_jobs_missing": "Chybějící překlady kariéry",
     "kind_web_references_missing": "Chybějící překlady referencí",
-    "kind_web_kb_missing": "Chybějící překlady znalostní báze"
+    "kind_web_kb_missing": "Chybějící překlady znalostní báze",
+    "kind_web_inquiry_email_missing": "Nevyplněné texty e-mailu poptávky"
   }
 }

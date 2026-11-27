@@ -190,7 +190,13 @@
   background: var(--accent);
 }
 
-.ew-lang-tab--inactive { opacity: 0.55; }
+/* A switched off language (being prepared, visitors do not see it): dashed and quieter, like the
+   muted tabs of the other editors (.rbb-btn--muted) - no orange, orange means a problem. */
+.ew-lang-tab--inactive:not(.ew-lang-tab--active) {
+  border-style: dashed;
+  color: var(--text-muted);
+}
+.ew-lang-tab--inactive:not(.ew-lang-tab--active) .ew-lang-icon-sm { opacity: 0.6; }
 
 .ew-lang-tab--add {
   color: var(--text-dim);
@@ -212,12 +218,21 @@
   font-size: 0.82rem;
 }
 
-.ew-lang-tab-inactive-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--warn);
-  flex-shrink: 0;
+/* Texts a language misses: grey (switched off, being prepared), orange (an active language). */
+.ew-lang-tab-count {
+  min-width: 18px;
+  padding: 1px 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--color-zinc-600);
+  background: var(--color-zinc-200);
+  border-radius: 999px;
+}
+.ew-lang-tab-count--attention {
+  color: var(--color-amber-800, #92400e);
+  background: var(--color-amber-100);
 }
 
 .ew-lang-tab-actions {

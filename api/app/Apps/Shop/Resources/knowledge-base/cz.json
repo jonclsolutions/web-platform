@@ -807,7 +807,7 @@
             },
             {
               "type": "text",
-              "content": "Text se vyplňuje pro každý jazyk e-shopu; čeština je výchozí jazyk a musí být vyplněná celá (jinak texty nejde uložit), prázdné pole jiného jazyka použije český text - nevyplněná pole jsou oranžově označená, u každého jazyka je jejich počet a dokud něco chybí, svítí oranžová tečka u nabídky Akce. Živý náhled ukazuje zjednodušený e-mail s ukázkovými daty. Uložení vyžaduje oprávnění upravit objednávky."
+              "content": "Text se vyplňuje pro každý jazyk e-shopu; čeština je výchozí jazyk a musí být vyplněná celá (jinak texty nejde uložit), prázdné pole jiného jazyka použije český text - nevyplněná pole jsou oranžově označená, u každého jazyka je jejich počet a dokud něco chybí, svítí tečka u nabídky Akce i v menu - oranžová, šedá, když chybí jen vypnutému jazyku. Živý náhled ukazuje zjednodušený e-mail s ukázkovými daty. Uložení vyžaduje oprávnění upravit objednávky."
             }
           ]
         },
@@ -1463,7 +1463,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název; nový jazyk je vypnutý), zapnutí jen kompletního jazyka (okno Jazyky napíše, co chybí), vypnutí, smazání (smaže i všechny texty jazyka včetně názvů stránek a e-mailu objednávky). Čeština je výchozí jazyk. Vypnutý jazyk nabízí k úpravě i záložka Názvy stránek a e-mail objednávky v Objednávkách - jeho záložka je čárkovaná a šedší, takže ho celý doplníte dřív, než ho zapnete.",
+                "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název; nový jazyk je vypnutý), zapnutí jen kompletního jazyka (okno Jazyky napíše, co chybí - texty, názvy stránek i e-maily objednávky; každá položka je odkaz na místo, kde se doplní), vypnutí, smazání (smaže i všechny texty jazyka včetně názvů stránek a e-mailu objednávky). Čeština je výchozí jazyk. Vypnutý jazyk nabízí k úpravě i záložka Názvy stránek a e-mail objednávky v Objednávkách - jeho záložka je čárkovaná a šedší, takže ho celý doplníte dřív, než ho zapnete. Co vypnutému jazyku chybí, ukazuje šedá tečka v menu a šedé číslo na záložce; oranžová znamená chybějící text v zapnutém jazyce.",
                 "Jazyk je i v adrese e-shopu, například /cs/shop/catalog česky a /en/shop/catalog anglicky - stejně jako u webu (nápověda Texty webu, kapitola 03). Aktivní jazyk má e-shop v adrese sám, nic dalšího se nenastavuje.",
                 "Tabulka s čitelnou cestou textu (například Pokladna › Popisky polí › Jméno) a pod ní přesným klíčem, hledání (i podle čitelné cesty), řádek se statistikou a přepínač Chybí.",
                 "Stažení a nahrání JSON pro překladatele.",

@@ -36,7 +36,8 @@
 
       <div class="te-langs" role="group" [attr.aria-label]="e.t('editor_languages_label')">
         @for (lang of e.languages; track lang.code) {
-          <!-- A switched off language: dashed with a dot (visitors do not see it). -->
+          <!-- A switched off language: dashed (visitors do not see it); the number of its missing
+               texts grey, of an active language orange - like every other language tab. -->
           <button type="button" class="te-lang" [class.te-lang--on]="lang.code === e.currentLang" [class.te-lang--off]="!lang.active"
                   [attr.aria-pressed]="lang.code === e.currentLang"
                   [title]="lang.active ? lang.name : lang.name + ' – ' + e.t('inactive_label')" (click)="switchLang(lang.code)">
@@ -44,8 +45,10 @@
               <img [src]="lang.iconUrl" class="te-lang-flag" alt="">
             }
             {{ lang.code.toUpperCase() }}
+            @if (e.langTabMissing(lang); as missing) {
+              <span class="te-lang-count" [class.te-lang-count--attention]="missing.tone === 'attention'">{{ missing.count }}</span>
+            }
             @if (!lang.active) {
-              <span class="te-lang-dot" aria-hidden="true"></span>
               <span class="te-sr">({{ e.t('inactive_label') }})</span>
             }
           </button>
@@ -94,9 +97,11 @@
       <div class="te-inactive" role="status">
         <span>{{ e.t('editor_inactive_message').replace('{lang}', lang.name) }}</span>
         @if (e.canUpdate) {
-          <!-- Switched on only complete: until then the notice says what is missing. -->
-          @if (e.missingSummary(lang.code); as missing) {
-            <span class="te-inactive-missing">{{ e.t('activate_incomplete_note').replace('{parts}', missing) }}</span>
+          <!-- Switched on only complete: until then the notice says what is missing - every part a
+               link to where it is filled in (the texts are listed in the panel beside). -->
+          @if (e.missingSummary(lang.code)) {
+            @let note = activateNote;
+            <span class="te-inactive-missing">{{ note[0] }}@for (item of e.missingPartsOf(lang.code); track item.part; let last = $last) {@if (e.canOpenMissingPart(item.part)) {<button type="button" class="te-missing-part" [title]="e.t('missing_part_open_title')" (click)="e.openMissingPart(lang.code, item.part)">{{ item.label }} {{ item.count }}</button>} @else {<span>{{ item.label }} {{ item.count }}</span>}@if (!last) {<span aria-hidden="true"> · </span>}}{{ note[1] }}</span>
           }
           <button type="button" class="te-btn te-btn--ghost te-inactive-btn" (click)="activateLang()"
                   [disabled]="!e.canActivate(lang)">{{ e.t('editor_activate_button') }}</button>

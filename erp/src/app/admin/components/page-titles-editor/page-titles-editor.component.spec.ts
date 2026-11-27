@@ -246,4 +246,40 @@ describe('PageTitlesEditorComponent', () => {
     component.save();
     expect(notifications.refresh).toHaveBeenCalled();
   });
+
+  /**
+   * @description The texts page asks for a language (window Jazyky → "Názvy stránek 14"): the
+   *   editor shows it once its languages are loaded.
+   * @input focusLang {de, 1} set before the load.
+   * @output lang 'de' after the load.
+   */
+  it('shows the language asked for by the texts page', () => {
+    (ctx.dataHandler as any).get.and.callFake((url: string) => {
+      if (url === 'languages/web') return of(web);
+      if (url === 'web/page-titles') return of(rows());
+      return of({});
+    });
+    fixture = TestBed.createComponent(PageTitlesEditorComponent);
+    component = fixture.componentInstance;
+    Object.entries({ area: 'web', endpoint: 'web/page-titles', updatePermission: 'web-edit-website-update', labelSection: 'edit-website' })
+      .forEach(([key, value]) => fixture.componentRef.setInput(key, value));
+    fixture.componentRef.setInput('focusLang', { code: 'de', seq: 1 });
+    fixture.detectChanges();
+    expect(component.lang).toBe('de');
+  });
+
+  /**
+   * @description In a switched off language the banner of the missing titles says "fill them in
+   *   before switching it on" (visitors do not see it).
+   * @input languages cz, en, de (off); stub strings of both banners; lang en, then de.
+   * @output 'on 1 en'; 'off 2 Deutsch'.
+   */
+  it('words the banner of a switched off language', () => {
+    create();
+    ctx.i18n.getMergedSection.and.returnValue({ pt_missing_banner: 'on {count} {lang}', pt_missing_banner_inactive: 'off {count} {lang}' });
+    component.switchLang('en');
+    expect(component.missingBanner).toBe('on 1 English');
+    component.switchLang('de');
+    expect(component.missingBanner).toBe('off 2 Deutsch');
+  });
 });

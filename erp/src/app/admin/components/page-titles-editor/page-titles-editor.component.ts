@@ -36,6 +36,7 @@ import { StickyBarDirective } from '../../../shared/directives/sticky-bar.direct
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DataHandler } from '../../../core/services/data-handler.service';
+import type { FocusLangRequest } from '../translation-editor/focus-lang';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -68,6 +69,26 @@ export class PageTitlesEditorComponent implements OnInit {
   @Input({ required: true }) labelSection!: string;
   /** Favicon of the preview; undefined = the logo of the public site configuration. */
   @Input() logoSrc: string | null | undefined = undefined;
+
+  /** Language asked for by the texts page (window Jazyky → a part); applied once it is offered. */
+  private focusCode: string | null = null;
+
+  /**
+   * Show this language (a click on a part of what a language lacks in the window Jazyky) - as
+   * soon as the editor offers it.
+   */
+  @Input() set focusLang(request: FocusLangRequest | null | undefined) {
+    this.focusCode = request?.code ?? null;
+    this.applyFocusLang();
+  }
+
+  /** @description Switches to the asked language when it is offered (otherwise it stays pending). */
+  private applyFocusLang(): void {
+    if (this.focusCode && this.languages.some(l => l.code === this.focusCode)) {
+      this.switchLang(this.focusCode);
+      this.focusCode = null;
+    }
+  }
 
   /** Whether there are unsaved changes (for a dot on the host page's tab). */
   @Output() dirtyChange = new EventEmitter<boolean>();
@@ -128,6 +149,7 @@ export class PageTitlesEditorComponent implements OnInit {
       next: ({ langs, data, logo }) => {
         this.languages = langs.length ? langs : FALLBACK_LANGUAGES;
         if (!this.languages.find(l => l.code === this.lang)) this.lang = this.languages[0].code;
+        this.applyFocusLang();
         this.publicLogo = logo;
         this.setRows(Array.isArray(data) ? data : []);
         this.loading = false;
@@ -276,12 +298,16 @@ export class PageTitlesEditorComponent implements OnInit {
     return !(row.title_i18n?.[code] ?? '').trim();
   }
 
-  /** @description Banner of the edited language: how many titles are missing ('' when none). */
+  /**
+   * @description Banner of the edited language: how many titles are missing ('' when none) - in
+   *   a switched off language "fill them in before switching it on" (visitors do not see it).
+   */
   get missingBanner(): string {
     const count = this.missingCount(this.lang);
     if (!count) return '';
-    const name = this.languages.find(l => l.code === this.lang)?.name ?? this.lang.toUpperCase();
-    return (this.strings?.pt_missing_banner ?? '').replace('{count}', String(count)).replace('{lang}', name);
+    const lang = this.languages.find(l => l.code === this.lang);
+    const key = lang?.active === false ? 'pt_missing_banner_inactive' : 'pt_missing_banner';
+    return (this.strings?.[key] ?? '').replace('{count}', String(count)).replace('{lang}', lang?.name ?? this.lang.toUpperCase());
   }
 
   /**

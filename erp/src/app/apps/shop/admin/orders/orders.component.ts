@@ -19,7 +19,7 @@
  * - EmailTemplateEditorComponent: texts of the order e-mails - confirmation, payment reminder and
  *   cancellation of an unpaid order (toolbar "Edit order e-mails", API
  *   shop/settings/order-email-template, languages of the e-shop); EmailTemplateStatusService: the
- *   orange dot of the Actions menu while the e-mails lack texts.
+ *   dot (orange / grey) of the Actions menu while the e-mails lack texts.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
@@ -37,7 +37,8 @@ import { GraphBuilderComponent } from '../../../../admin/components/builders/gra
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
-import { EmailTemplateStatusService, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
+import { EMAIL_TEMPLATE_QUERY, EmailTemplateStatusService, EmailTemplateTitles, EmailTemplateTone, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
+import { ActivatedRoute } from '@angular/router';
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 import { RecordActionsComponent } from '../../../../admin/components/record-actions/record-actions.component';
 import { DELIVERY_COUNTRIES, countryName, countryOptions } from '../../shared/delivery-countries';
@@ -116,7 +117,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   toolbarButtons: Core.Button[] = [];
 
   /** Cache of `visibleToolbarButtons` (stable array for the OnPush action menu). */
-  private visibleToolbarCache: { source: Core.Button[]; trash: boolean; attention: boolean; buttons: Core.Button[] } | null = null;
+  private visibleToolbarCache: { source: Core.Button[]; trash: boolean; tone: EmailTemplateTone; buttons: Core.Button[] } | null = null;
 
   /**
    * @description Toolbar of the page as shown: adding a record is hidden while the trash is
@@ -125,12 +126,12 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
    */
   get visibleToolbarButtons(): Core.Button[] {
     const cache = this.visibleToolbarCache;
-    const attention = this.emailTemplateAttention;
-    if (cache?.source === this.toolbarButtons && cache.trash === this.showTrashTable && cache.attention === attention) return cache.buttons;
-    const title = this.i18n.getValue('email-template-editor.attention_title');
+    const tone = this.emailTemplateTone;
+    if (cache?.source === this.toolbarButtons && cache.trash === this.showTrashTable && cache.tone === tone) return cache.buttons;
+    const titles = this.emailTemplateTitles;
     const buttons = this.toolbarButtons.map(btn => withEmailTemplateAttention(
-      btn.action === 'handleCreateFormOpened' && this.showTrashTable ? { ...btn, showIf: false } : btn, attention, title));
-    this.visibleToolbarCache = { source: this.toolbarButtons, trash: this.showTrashTable, attention, buttons };
+      btn.action === 'handleCreateFormOpened' && this.showTrashTable ? { ...btn, showIf: false } : btn, tone, titles));
+    this.visibleToolbarCache = { source: this.toolbarButtons, trash: this.showTrashTable, tone, buttons };
     return buttons;
   }
 
@@ -193,7 +194,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.loadDependencies();
     // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
     this.watchRecordParam();
-    this.loadEmailTemplateStatus();
+    this.openEmailTemplateOfUrl();
   }
 
   /**
@@ -346,9 +347,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   showEmailTemplateModal = false;
   /** Labels of the order confirmation e-mail with the preview sample values. */
   emailTemplateRows: EmailTemplateRow[] = [];
-  /** The confirmation e-mail lacks texts - orange dot on the Actions menu and its item. */
-  emailTemplateAttention = false;
   private readonly emailTemplateStatus = inject(EmailTemplateStatusService);
+  /** Language the editor opens in (`?email-template=<lang>` - the window Jazyky), null = Czech. */
+  emailTemplateLang: string | null = null;
+  private readonly emailTemplateRoute = inject(ActivatedRoute);
 
   /**
    * @description Opens the template editor of the order confirmation e-mail with its labels and
@@ -397,20 +399,40 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   /** @description Closes the template editor (and asks again whether texts are missing). */
   closeEmailTemplateEditor(): void {
     this.showEmailTemplateModal = false;
-    this.loadEmailTemplateStatus();
+    this.emailTemplateLang = null;
+    this.emailTemplateStatus.refresh();
     this.cd.markForCheck();
   }
 
   /**
-   * @description Asks the template API whether the confirmation e-mail lacks texts (the orange
-   *   dot of the Actions menu) - only with the permission to edit it.
+   * @description `?email-template=<lang>` (a missing e-mail of a language clicked in the window
+   *   Jazyky): opens the editor in that language - with the permission to edit it - and removes
+   *   the parameter from the address (a reload does not open it again).
    */
-  private loadEmailTemplateStatus(): void {
+  private openEmailTemplateOfUrl(): void {
+    const lang = this.emailTemplateRoute.snapshot?.queryParamMap?.get(EMAIL_TEMPLATE_QUERY);
+    if (!lang) return;
+    this.router.navigate([], { relativeTo: this.emailTemplateRoute, queryParams: { [EMAIL_TEMPLATE_QUERY]: null }, queryParamsHandling: 'merge', replaceUrl: true });
     if (!this.permissionService.hasPermission('shop-orders-update')) return;
-    this.emailTemplateStatus.needsAttention('shop/settings/order-email-template').subscribe(attention => {
-      this.emailTemplateAttention = attention;
-      this.cd.markForCheck();
-    });
+    this.emailTemplateLang = lang;
+    this.openEmailTemplateEditor();
+  }
+
+  /**
+   * @description Colour of the dot of the e-mail item of the Actions menu - the attention kind of
+   *   the notifications (the same as the side menu): orange = texts missing in Czech or an active
+   *   language, grey = only a switched off language being prepared.
+   */
+  get emailTemplateTone(): EmailTemplateTone {
+    return this.emailTemplateStatus.toneOf('shop_order_email_missing');
+  }
+
+  /** @description Tooltips of the dot of the e-mail item. */
+  private get emailTemplateTitles(): EmailTemplateTitles {
+    return {
+      attention: this.i18n.getValue('email-template-editor.attention_title'),
+      preparing: this.i18n.getValue('email-template-editor.attention_preparing_title'),
+    };
   }
 
   // ── Unpaid bank transfers (modal, B-04): days to the payment reminder / the cancellation ──

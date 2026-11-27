@@ -25,6 +25,11 @@ export interface Button {
   attention?: boolean;
   /** Tooltip / screen reader text of the attention dot. */
   attentionTitle?: string;
+  /**
+   * Colour of the attention dot: 'attention' (default, orange - a problem visitors / customers
+   * see) or 'preparing' (grey - only a switched off language being prepared lacks something).
+   */
+  attentionTone?: 'attention' | 'preparing';
   toggleStates?: {     
     activeLabel: string;
     activeIcon: string;

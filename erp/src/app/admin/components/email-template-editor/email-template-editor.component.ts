@@ -103,6 +103,8 @@ export class EmailTemplateEditorComponent implements OnInit {
   @Input() subjectSuffix = '';
   /** Languages offered (`languages/web` - the web; `languages/shop` - the e-shop). */
   @Input() languagesEndpoint = 'languages/web';
+  /** Language shown first (e.g. from the window Jazyky - `?email-template=pl`); Czech otherwise. */
+  @Input() initialLang: string | null = null;
   /** The modal was closed (saved or cancelled). */
   @Output() closed = new EventEmitter<void>();
 
@@ -156,6 +158,12 @@ export class EmailTemplateEditorComponent implements OnInit {
     return texts.filter(text => !this.isFilled(text)).length;
   }
 
+  /** @description Hint of the empty fields of the shown language (switched off: fill in before switching on). */
+  get missingHint(): string {
+    const inactive = this.languages.find(l => l.code === this.currentLang)?.active === false;
+    return this.shared(inactive ? 'missing_hint_inactive' : 'missing_hint');
+  }
+
   /** @description Empty Czech fields - while there are any, the template cannot be saved. */
   get primaryMissing(): number {
     return this.missingCount(this.primaryLang);
@@ -176,6 +184,7 @@ export class EmailTemplateEditorComponent implements OnInit {
    * a language are prepared whichever answer comes first (the inputs bind to nested properties).
    */
   ngOnInit(): void {
+    if (this.initialLang) this.currentLang = this.initialLang;
     this.dataHandler.get<EmailTemplateLang[]>(this.languagesEndpoint).subscribe({
       next: (res) => {
         // the switched off languages too: the e-mail is prepared before the language is switched on

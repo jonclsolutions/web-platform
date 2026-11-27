@@ -140,6 +140,8 @@
   flex-shrink: 0;
 }
 .action-menu-item .action-menu-dot { margin-left: auto; }
+/* Only a switched off language being prepared lacks something - grey (like the menu). */
+.action-menu-dot.action-menu-dot--preparing { background: var(--color-zinc-400, #a1a1aa); }
 
 /* Text of the dot for screen readers only. */
 .action-menu-sr {

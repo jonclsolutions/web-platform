@@ -5,14 +5,15 @@
     @author: JS
     @created: 2026
     @description: Look of the navigation badge: red pill with the number of unread records,
-        orange dot of things needing attention, side by side. --nb-size (default 18px) sets the
+        orange dot of things needing attention (or the grey dot of a switched off language being
+        prepared), side by side. --nb-size (default 18px) sets the
         height of the number; the dot is about half of it.
     @dependencies: colour tokens (--color-rose-600, --color-amber-600, --color-white)
 */
 
 /*
     @module: Navigation badge
-    @usage: <app-nav-badge> > .nb-count + .nb-dot
+    @usage: <app-nav-badge> > .nb-count + .nb-dot[.nb-dot--preparing]
 */
 :host {
   display: inline-flex;
@@ -44,4 +45,9 @@
   height: calc(var(--nb-size, 18px) * 0.5);
   border-radius: 50%;
   background: var(--color-amber-600);
+}
+
+/* Only a switched off language lacks something (being prepared) - grey, quieter than orange. */
+.nb-dot.nb-dot--preparing {
+  background: var(--color-zinc-400, #a1a1aa);
 }

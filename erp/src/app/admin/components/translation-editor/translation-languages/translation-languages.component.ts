@@ -76,13 +76,26 @@ export class TranslationLanguagesComponent {
   }
 
   /**
-   * @description Opens a language with only its missing texts (the window closes) - what it lacks
-   *   for its switch-on.
-   * @param lang Language.
+   * @description Opens where a part of what a language lacks is filled in (the window closes):
+   *   the missing texts, a tab of the page in that language, or the page of an e-mail.
+   * @param lang The language.
+   * @param part Part (`texts`, `page_titles`, `faq`, `inquiry_email` …).
    */
-  showMissing(lang: LangMeta): void {
+  openPart(lang: LangMeta, part: string): void {
     this.closeManage();
-    this.e.showMissingIn(lang.code);
+    this.e.openMissingPart(lang.code, part);
+  }
+
+  /**
+   * @description The note of an incomplete language split around `{parts}` - the parts between
+   *   are buttons.
+   * @param lang The language.
+   * @returns [text before the parts, text after them].
+   */
+  noteAround(lang: LangMeta): [string, string] {
+    const note = lang.active ? this.e.t('active_incomplete_note') : this.e.t('activate_incomplete_note');
+    const at = note.indexOf('{parts}');
+    return at < 0 ? [note + ' ', ''] : [note.slice(0, at), note.slice(at + '{parts}'.length)];
   }
 
   /**

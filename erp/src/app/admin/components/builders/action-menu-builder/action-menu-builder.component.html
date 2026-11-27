@@ -37,7 +37,7 @@
     <span class="btn-label">{{ triggerLabel }}</span>
     <!-- An item needs attention (e.g. the e-mail lacks texts) - seen without opening the menu -->
     @if (attentionTitle; as hint) {
-      <span class="action-menu-dot" aria-hidden="true"></span>
+      <span class="action-menu-dot" [class.action-menu-dot--preparing]="attentionPreparing" aria-hidden="true"></span>
       <span class="action-menu-sr">{{ hint }}</span>
     }
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -63,7 +63,7 @@
             @if (btn.icon) { <span class="btn-icon">{{ btn.icon }}</span> }
             <span class="btn-label">{{ btn.label }}</span>
             @if (btn.attention) {
-              <span class="action-menu-dot" aria-hidden="true"></span>
+              <span class="action-menu-dot" [class.action-menu-dot--preparing]="btn.attentionTone === 'preparing'" aria-hidden="true"></span>
               @if (btn.attentionTitle) { <span class="action-menu-sr">{{ btn.attentionTitle }}</span> }
             }
           </button>

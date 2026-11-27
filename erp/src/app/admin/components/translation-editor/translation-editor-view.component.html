@@ -144,7 +144,7 @@
           [class.ew-lang-tab--active]="e.currentLang === lang.code"
           [class.ew-lang-tab--inactive]="!lang.active"
           (click)="e.loadLang(lang.code)"
-          [title]="lang.name + (lang.active ? '' : ' (' + e.t('inactive_suffix') + ')')">
+          [title]="lang.name + (lang.active ? '' : ' – ' + e.i18n.getValue('shared.inactive_language_title'))">
           <!-- `compactActions`: the flag when there is one, else only the code (no letter stand-in
                next to the same code). -->
           @if (lang.iconUrl) {
@@ -154,8 +154,10 @@
           }
           <span class="ew-lang-tab-code">{{ lang.code | uppercase }}</span>
           <span class="ew-lang-tab-name">{{ lang.name }}</span>
-          @if (!lang.active) {
-            <span class="ew-lang-tab-inactive-dot" [title]="e.t('inactive_label')"></span>
+          <!-- Texts it misses: orange in an active language, grey in a switched off one (the tab
+               itself is dashed - visitors do not see it, it is being prepared). -->
+          @if (e.langTabMissing(lang); as missing) {
+            <span class="ew-lang-tab-count" [class.ew-lang-tab-count--attention]="missing.tone === 'attention'">{{ missing.count }}</span>
           }
 
           <!-- `compactActions`: the tab only switches the language - managing it is in "Spravovat jazyky". -->
@@ -341,6 +343,7 @@
       [endpoint]="e.module + '/page-titles'"
       [updatePermission]="e.updatePermission"
       [labelSection]="e.section"
+      [focusLang]="e.focusLang"
       (dirtyChange)="e.setTabDirty('page_titles', $event)">
     </app-page-titles-editor>
   </div>

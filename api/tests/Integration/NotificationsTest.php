@@ -29,6 +29,13 @@ use App\Apps\Web\Models\WebKbSection;
 use App\Apps\Web\Models\WebRawRequestCommission;
 use App\Apps\Web\Models\WebReference;
 use App\Apps\Web\Models\WebReferenceFeature;
+use App\Apps\Web\Models\WebSiteSetting;
+use App\Apps\Web\Support\RawRequestEmailTemplate;
+use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
+use App\Apps\ProjectPortal\Support\SalesOrderEmailTemplate;
+use App\Apps\Shop\Models\ShopSiteSetting;
+use App\Apps\Shop\Support\ShopOrderEmailTemplate;
+use App\Console\Commands\SyncTranslationsCommand;
 use App\Models\Core\CoreNotificationMark;
 use App\Models\Core\CoreSecurityEvent;
 use Illuminate\Support\Carbon;
@@ -45,7 +52,7 @@ class NotificationsTest extends TestCase
     use ShopFixtures;
 
     /** @description Every kind of the sysadmin, in menu order (applications, then the core). */
-    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'web_page_titles_missing', 'web_faq_missing', 'web_jobs_missing', 'web_references_missing', 'web_kb_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'shop_page_titles_missing', 'portal_orders', 'portal_leads_overdue', 'core_security_events'];
+    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'web_page_titles_missing', 'web_faq_missing', 'web_jobs_missing', 'web_references_missing', 'web_kb_missing', 'web_inquiry_email_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'shop_page_titles_missing', 'shop_order_email_missing', 'portal_orders', 'portal_leads_overdue', 'portal_order_email_missing', 'core_security_events'];
 
     /**
      * @description Freezes the clock.
@@ -95,13 +102,28 @@ class NotificationsTest extends TestCase
      *   orders of both applications and security events (not a repeated occurrence of a known
      *   one), low-stock products that changed, leads that became overdue (not those overdue
      *   before, nor closed ones). The answer has only numbers and links.
-     * @input old records; GET; +5 min: new records, stock of a low product changed; +2 days: GET.
+     * @input own storage: the base texts of the repository, Czech only (web, e-shop); complete
+     *   Czech e-mails; old records; GET; +5 min: new records, stock of a low product changed;
+     *   +2 days: GET.
      * @output first GET all 0 and 7 marks stored (the texts kinds are attention kinds - no mark); then inquiries 1, job applications 2, shop
      *   orders 1, low stock 1, portal orders 1, overdue leads 1, security events 1; links of the
      *   admin pages; no e-mail in the answer.
      */
     public function test_records_after_the_first_look_are_unread(): void
     {
+        $storage = sys_get_temp_dir() . '/rpsw-notifications-' . uniqid();
+        File::copyDirectory(SyncTranslationsCommand::defaultSeed(), $storage . '/app/public/translations');
+        File::put($storage . '/app/public/translations/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'cz', 'module' => 'shop', 'active' => true, 'isBuiltIn' => true],
+        ]));
+        $this->app->useStoragePath($storage);
+        $this->beforeApplicationDestroyed(fn () => File::deleteDirectory($storage));
+        foreach ([[new WebSiteSetting(['is_web_active' => true]), RawRequestEmailTemplate::class], [new ProjectPortalSetting(), SalesOrderEmailTemplate::class],
+            [new ShopSiteSetting(['is_shop_active' => true]), ShopOrderEmailTemplate::class]] as [$settings, $template]) {
+            $template::completeDefaults($settings);
+            $settings->save();
+        }
         $this->inquiry();
         $mug = $this->product(['name' => 'Mug', 'stock_quantity' => 2, 'stock_warning_level' => 5]);
         $this->product(['name' => 'Cup', 'stock_quantity' => 1, 'stock_warning_level' => 5]);
@@ -129,11 +151,12 @@ class NotificationsTest extends TestCase
         $response = $this->getJson('/api/core/notifications')->assertOk();
         $this->assertSame([
             'web_inquiries' => 1, 'web_job_applications' => 2, 'web_texts_missing' => 0, 'web_page_titles_missing' => 0, 'web_faq_missing' => 0,
-            'web_jobs_missing' => 0, 'web_references_missing' => 0, 'web_kb_missing' => 0, 'shop_orders' => 1,
-            'shop_low_stock' => 1, 'shop_texts_missing' => 0, 'shop_page_titles_missing' => 0, 'portal_orders' => 1, 'portal_leads_overdue' => 1, 'core_security_events' => 1,
+            'web_jobs_missing' => 0, 'web_references_missing' => 0, 'web_kb_missing' => 0, 'web_inquiry_email_missing' => 0, 'shop_orders' => 1,
+            'shop_low_stock' => 1, 'shop_texts_missing' => 0, 'shop_page_titles_missing' => 0, 'shop_order_email_missing' => 0,
+            'portal_orders' => 1, 'portal_leads_overdue' => 1, 'portal_order_email_missing' => 0, 'core_security_events' => 1,
         ], collect($response->json('data.kinds'))->pluck('count', 'kind')->all());
         $this->assertSame(['kind' => 'web_inquiries', 'module' => 'web', 'link' => '/admin/web/user-request', 'count' => 1], $response->json('data.kinds.0'));
-        $this->assertSame('/admin/project-portal/sales-leads', $response->json('data.kinds.13.link'));
+        $this->assertSame('/admin/project-portal/sales-leads', collect($response->json('data.kinds'))->firstWhere('kind', 'portal_leads_overdue')['link']);
         $this->assertStringNotContainsString('@x.cz', $response->getContent());
     }
 
@@ -144,10 +167,11 @@ class NotificationsTest extends TestCase
      *   mark, it drops when the texts are filled; only admins who may edit the texts get it.
      * @input Temporary storage: web cz {a, g.b, g.c: ''}, de (active) {a, g.b: ''}, sk inactive;
      *   shop cz complete. Editor (view + update) and viewer (view only).
-     * @output web_texts_missing 3 with attention and the split per language (cz 1, de 2),
-     *   shop_texts_missing 0 without a split; after seen still 3, no mark; after de filled 1 (cz 1);
-     *   viewer has no texts kind. Page titles (web home {cz, de ''}, about {cz}; inactive sk not
-     *   counted): web_page_titles_missing 2 split de 2 (attention); shop 0.
+     * @output web_texts_missing 3 with attention and the split per language (cz 1, de 2), the
+     *   switched off sk only as `preparing` (sk 3 - no file); shop_texts_missing 0 without a split;
+     *   after seen still 3, no mark; after de filled 1 (cz 1); viewer has no texts kind. Page
+     *   titles (web home {cz, de ''}, about {cz}; switched off sk not counted, preparing 2):
+     *   web_page_titles_missing 2 split de 2 (attention); shop 0.
      */
     public function test_missing_texts_are_an_attention_kind(): void
     {
@@ -173,11 +197,11 @@ class NotificationsTest extends TestCase
             $editor = $this->signIn($this->userWith(['view-web', 'web-edit-website-view', 'web-edit-website-update', 'view-eshop', 'shop-edit-eshop-view', 'shop-edit-eshop-update']));
             $kinds = collect($this->getJson('/api/core/notifications')->assertOk()->json('data.kinds'))->keyBy('kind');
             $this->assertSame(['kind' => 'web_texts_missing', 'module' => 'web', 'link' => '/admin/web/edit-website', 'count' => 3, 'attention' => true,
-                'languages' => ['cz' => 1, 'de' => 2]], $kinds['web_texts_missing']);
+                'languages' => ['cz' => 1, 'de' => 2], 'preparing' => ['sk' => 3]], $kinds['web_texts_missing']);
             $this->assertSame(0, $kinds['shop_texts_missing']['count']);
             $this->assertArrayNotHasKey('languages', $kinds['shop_texts_missing']);
             $this->assertSame(['kind' => 'web_page_titles_missing', 'module' => 'web', 'link' => '/admin/web/edit-website', 'count' => 2,
-                'attention' => true, 'languages' => ['de' => 2]], $kinds['web_page_titles_missing']);
+                'attention' => true, 'languages' => ['de' => 2], 'preparing' => ['sk' => 2]], $kinds['web_page_titles_missing']);
             $this->assertSame(0, $kinds['shop_page_titles_missing']['count']);
 
             $this->assertSame(3, $this->counts('/api/core/notifications/seen', ['kinds' => ['web_texts_missing']])['web_texts_missing']);
@@ -192,6 +216,45 @@ class NotificationsTest extends TestCase
         } finally {
             File::deleteDirectory($storage);
         }
+    }
+
+    /**
+     * @description The confirmation e-mails lacking texts are attention kinds of their pages: the
+     *   inquiry e-mail (Inquiries), the e-shop order e-mails (Orders) - Czech and the active
+     *   languages counted (orange), the switched off ones only as `preparing` (grey); only for the
+     *   admins who may edit the e-mail.
+     * @input Own storage: web cz + en active, sk off; shop cz; Czech inquiry e-mail complete, e-shop
+     *   e-mail empty; editor of the inquiries and the orders; then a viewer of the inquiries.
+     * @output web_inquiry_email_missing 12 {en: 12} preparing {sk: 12}, link /admin/web/user-request;
+     *   shop_order_email_missing 34 {cz: 34}, link /admin/shop/orders; the viewer gets neither.
+     */
+    public function test_confirmation_emails_lacking_texts_are_attention_kinds(): void
+    {
+        $storage = sys_get_temp_dir() . '/rpsw-notification-emails-' . uniqid();
+        File::makeDirectory($storage . '/app/public/translations', 0755, true);
+        File::put($storage . '/app/public/translations/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'en', 'module' => 'web', 'active' => true],
+            ['code' => 'sk', 'module' => 'web', 'active' => false],
+            ['code' => 'cz', 'module' => 'shop', 'active' => true, 'isBuiltIn' => true],
+        ]));
+        $this->app->useStoragePath($storage);
+        $this->beforeApplicationDestroyed(fn () => File::deleteDirectory($storage));
+        $web = new WebSiteSetting(['is_web_active' => true]);
+        RawRequestEmailTemplate::completeDefaults($web);
+        $web->save();
+        $emailKeys = count(RawRequestEmailTemplate::DEFAULTS);
+
+        $this->signIn($this->userWith(['view-web', 'web-user-requests-view', 'web-user-requests-update', 'view-eshop', 'shop-orders-view', 'shop-orders-update']));
+        $kinds = collect($this->getJson('/api/core/notifications')->assertOk()->json('data.kinds'))->keyBy('kind');
+        $this->assertSame(['kind' => 'web_inquiry_email_missing', 'module' => 'web', 'link' => '/admin/web/user-request', 'count' => $emailKeys,
+            'attention' => true, 'languages' => ['en' => $emailKeys], 'preparing' => ['sk' => $emailKeys]], $kinds['web_inquiry_email_missing']);
+        $shopKeys = count(ShopOrderEmailTemplate::DEFAULTS);
+        $this->assertSame(['kind' => 'shop_order_email_missing', 'module' => 'shop', 'link' => '/admin/shop/orders', 'count' => $shopKeys,
+            'attention' => true, 'languages' => ['cz' => $shopKeys]], $kinds['shop_order_email_missing']);
+
+        $this->signIn($this->userWith(['view-web', 'web-user-requests-view']));
+        $this->assertArrayNotHasKey('web_inquiry_email_missing', $this->counts());
     }
 
     /**

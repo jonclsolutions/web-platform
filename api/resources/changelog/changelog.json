@@ -1,6 +1,36 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Tečky a čísla chybějících textů se obnoví hned po zapnutí, vypnutí, přidání nebo smazání jazyka a po uložení FAQ, pozic, referencí a nápovědy – dřív až při další kontrole (do minuty)."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Jazyky a e-maily sjednocené: tečka v Akce u Poptávek a Objednávek odpovídá menu (oranžová / šedá), upozornění ve vypnutém jazyce píší „doplňte, než jazyk zapnete“ místo „návštěvníci vidí Cannot load text“ a ve vizuálním editoru jsou chybějící položky odkazy."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Záložky jazyků v Překladech a ve vizuálním editoru: vypnutý jazyk už nemá oranžovou tečku (vypadala jako chyba), je čárkovaný a šedší. Číslo u jazyka ukazuje chybějící texty – šedě u vypnutého, oranžově u zapnutého."
+        },
+        {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Šedá tečka (menu, výběr aplikací, záložky) ukazuje, co ještě chybí vypnutým jazykům, které připravujete; oranžová zůstává pro chybějící texty v zapnutých jazycích. V okně Jazyky je každá chybějící položka odkaz přímo na místo, kde se doplní."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Jazyk jde zapnout, jen když má kompletní i potvrzovací e-maily (poptávky, objednávky webu i e-shopu). Chybějící texty e-mailů ukazuje i oranžová tečka u Poptávek a Objednávek v menu."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",

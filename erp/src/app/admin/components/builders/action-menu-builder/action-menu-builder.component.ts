@@ -9,7 +9,8 @@
  * `ButtonBuilderComponent` - no new configuration layer. The main action of the page
  * (`primaryAction`, 2026-11) is a button of its own next to the menu ("+ Přidat"; on a phone a
  * round green "+") and is not repeated in the menu. An item with `attention` gets an orange
- * dot, and so does the trigger (the problem is seen without opening the menu).
+ * dot (grey with `attentionTone: 'preparing'`), and so does the trigger (seen without opening
+ * the menu; orange wins).
  */
 import {
   Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef,
@@ -71,12 +72,26 @@ export class ActionMenuBuilderComponent {
   }
 
   /**
+   * @description The shown item whose dot the trigger carries: an orange one first, else a grey
+   *   one (`attentionTone: 'preparing'`); null when no item needs attention.
+   */
+  private get attentionItem(): Button | null {
+    const items = this.menuConfigs.filter(btn => btn.attention && btn.showIf !== false);
+    return items.find(btn => btn.attentionTone !== 'preparing') ?? items[0] ?? null;
+  }
+
+  /**
    * @description Tooltip of the trigger when a shown item needs attention (`attention`), else
-   *   null - the trigger then carries the orange dot so the user sees it without opening the menu.
+   *   null - the trigger then carries the dot so the user sees it without opening the menu.
    */
   get attentionTitle(): string | null {
-    const item = this.menuConfigs.find(btn => btn.attention && btn.showIf !== false);
+    const item = this.attentionItem;
     return item ? (item.attentionTitle || item.label) : null;
+  }
+
+  /** @description The dot of the trigger is grey: only items of languages being prepared. */
+  get attentionPreparing(): boolean {
+    return this.attentionItem?.attentionTone === 'preparing';
   }
 
   isOpen = false;

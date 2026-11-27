@@ -111,6 +111,18 @@ final class ShopApp extends AppManifest
     }
 
     /**
+     * @description See AppManifest::contentMissing() - the empty texts of the order e-mails
+     *   (`order_email` - confirmation, payment reminder, cancellation; the customer would get
+     *   Czech in their place).
+     */
+    public function contentMissing(string $code): array
+    {
+        $count = count(ShopOrderEmailTemplate::missingIn(ShopSiteSetting::query()->first() ?? new \stdClass(), strtolower($code)));
+
+        return $count > 0 ? ['order_email' => $count] : [];
+    }
+
+    /**
      * @description See AppManifest::sitemapPaths() - the catalogue, every product on sale and the
      *   legal pages of the storefront (routes of erp/src/app/apps/shop/public/shop-public.routes.ts).
      *   The cart and the checkout are no content for search engines.

@@ -6,7 +6,7 @@
     @created: 2026
     @description: Texts of the website: the shared translation editor page with the panels of
         the FAQ, the open positions, the references and the knowledge base (extra tabs, created
-        on their first open).
+        on their first open; `focusLang` - the language asked for in the window Jazyky).
 -->
 
 <!-- `compactActions`: JSON download / upload in the "⋯ Akce" menu, the save bar alone (pilot). -->
@@ -14,25 +14,25 @@
 <app-translation-editor-view [e]="this" [compactActions]="true" editorRoute="/admin/web/edit-website/editor">
   @if (isTabOpened('faq')) {
     <div class="ew-titles-wrap" [style.display]="activeTab === 'faq' ? null : 'none'">
-      <app-faq-editor [hostLanguages]="languages" (dirtyChange)="setTabDirty('faq', $event)"></app-faq-editor>
+      <app-faq-editor [hostLanguages]="languages" [focusLang]="focusLang" (dirtyChange)="setTabDirty('faq', $event)"></app-faq-editor>
     </div>
   }
 
   @if (isTabOpened('jobs')) {
     <div class="ew-titles-wrap" [style.display]="activeTab === 'jobs' ? null : 'none'">
-      <app-jobs-editor [hostLanguages]="languages" (dirtyChange)="setTabDirty('jobs', $event)"></app-jobs-editor>
+      <app-jobs-editor [hostLanguages]="languages" [focusLang]="focusLang" (dirtyChange)="setTabDirty('jobs', $event)"></app-jobs-editor>
     </div>
   }
 
   @if (isTabOpened('references')) {
     <div class="ew-titles-wrap" [style.display]="activeTab === 'references' ? null : 'none'">
-      <app-references-editor [hostLanguages]="languages" (dirtyChange)="setTabDirty('references', $event)"></app-references-editor>
+      <app-references-editor [hostLanguages]="languages" [focusLang]="focusLang" (dirtyChange)="setTabDirty('references', $event)"></app-references-editor>
     </div>
   }
 
   @if (isTabOpened('knowledge_base')) {
     <div class="ew-titles-wrap" [style.display]="activeTab === 'knowledge_base' ? null : 'none'">
-      <app-knowledge-base-editor [hostLanguages]="languages" (dirtyChange)="setTabDirty('knowledge_base', $event)"></app-knowledge-base-editor>
+      <app-knowledge-base-editor [hostLanguages]="languages" [focusLang]="focusLang" (dirtyChange)="setTabDirty('knowledge_base', $event)"></app-knowledge-base-editor>
     </div>
   }
 </app-translation-editor-view>

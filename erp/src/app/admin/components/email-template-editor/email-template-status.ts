@@ -4,64 +4,73 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Whether a confirmation e-mail template lacks texts - the orange dot of the
- *   "Actions" menu (and of its item "Edit confirmation e-mail") on the pages that host
- *   EmailTemplateEditorComponent (Inquiries, Web orders, E-shop orders). The template API lists
- *   the texts missing per active language (`missing`: language → keys, Czech always checked);
- *   any of them = the customer would not get the whole e-mail in his language.
- * @usage `this.emailTemplateStatus.needsAttention('web/settings/raw-request-email-template')
- *   .subscribe(on => { this.emailTemplateAttention = on; this.cd.markForCheck(); })` in ngOnInit
- *   and after the editor closes; then `withEmailTemplateAttention(button, on, title)` in the
- *   toolbar config.
- * @dependencies DataHandler (getQuietly - a failure is no dot, never an error dialog).
+ * @description Whether a confirmation e-mail template lacks texts - the dot of the "Actions" menu
+ *   (and of its item "Edit confirmation e-mail") on the pages that host EmailTemplateEditorComponent
+ *   (Inquiries, Web orders, E-shop orders). It reads the same attention kind of the notifications
+ *   as the side menu (`web_inquiry_email_missing`, `shop_order_email_missing`,
+ *   `portal_order_email_missing`), so the page and the menu always agree: orange = texts missing in
+ *   Czech or an active language (the customer would get Czech / nothing), grey = only a switched
+ *   off language being prepared lacks texts.
+ * @usage `withEmailTemplateAttention(button, this.emailTemplateStatus.toneOf(KIND), titles)` in the
+ *   toolbar config; `this.emailTemplateStatus.refresh()` after the editor closes.
+ *   EMAIL_TEMPLATE_QUERY: the address that opens the editor of a page in a language.
+ * @dependencies AdminNotificationsService (the kinds of `core/notifications`).
  */
 
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { DataHandler } from '../../../core/services/data-handler.service';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 import { Button } from '../../../shared/interfaces/button';
 
 /** Action of the toolbar button that opens the e-mail template editor. */
 export const EMAIL_TEMPLATE_ACTION = 'openEmailTemplateEditor';
 
 /**
- * @description Whether an answer of a template API lists missing texts.
- * @param stored Answer of the GET endpoint (`{ …, missing: { lang: string[] } }`).
- * @returns true when a language has at least one missing text.
+ * Query parameter that opens the editor of the page in a language (`?email-template=pl`) - the
+ * link of the window Jazyky to a language's missing e-mail texts (missingPartLinks).
  */
-export function emailTemplateHasMissing(stored: unknown): boolean {
-  const missing = (stored as { missing?: unknown } | null)?.missing;
-  if (!missing || typeof missing !== 'object' || Array.isArray(missing)) return false;
-  return Object.values(missing as Record<string, unknown>).some(keys => Array.isArray(keys) && keys.length > 0);
+export const EMAIL_TEMPLATE_QUERY = 'email-template';
+
+/** Colour of the dot: orange (a problem now), grey (a language being prepared), none. */
+export type EmailTemplateTone = 'attention' | 'preparing' | null;
+
+/** Tooltips of the dot by its colour. */
+export interface EmailTemplateTitles {
+  attention: string;
+  preparing: string;
 }
 
 /**
- * @description The toolbar button of the e-mail editor with the attention dot (other buttons
- *   unchanged).
+ * @description The toolbar button of the e-mail editor with the dot (other buttons unchanged).
  * @param button A toolbar button.
- * @param attention The template lacks texts.
- * @param title Tooltip of the dot.
- * @returns The same button, or a copy with `attention` / `attentionTitle`.
+ * @param tone Colour of the dot (null = none).
+ * @param titles Tooltip per colour.
+ * @returns The same button, or a copy with `attention`, `attentionTone` and `attentionTitle`.
  */
-export function withEmailTemplateAttention(button: Button, attention: boolean, title: string): Button {
-  if (button.action !== EMAIL_TEMPLATE_ACTION || !attention) return button;
-  return { ...button, attention: true, attentionTitle: title };
+export function withEmailTemplateAttention(button: Button, tone: EmailTemplateTone, titles: EmailTemplateTitles): Button {
+  if (button.action !== EMAIL_TEMPLATE_ACTION || !tone) return button;
+  return { ...button, attention: true, attentionTone: tone, attentionTitle: titles[tone] };
 }
 
 @Injectable({ providedIn: 'root' })
 export class EmailTemplateStatusService {
-  private readonly dataHandler = inject(DataHandler);
+  private readonly notifications = inject(AdminNotificationsService);
 
   /**
-   * @description Asks the template API whether texts are missing.
-   * @param endpoint GET endpoint of the template.
-   * @returns true = missing texts; false also on an error (no dot rather than a false alarm).
+   * @description Colour of the dot of a template - from its attention kind of the notifications
+   *   (a signal: a template reading it is redrawn when the counts change).
+   * @param kind Attention kind of the e-mail, e.g. 'web_inquiry_email_missing'.
+   * @returns 'attention' (count > 0), 'preparing' (only `preparing`), null (nothing / no kind -
+   *   e.g. without the permission to edit the e-mail).
    */
-  needsAttention(endpoint: string): Observable<boolean> {
-    return this.dataHandler.getQuietly<unknown>(endpoint).pipe(
-      map(emailTemplateHasMissing),
-      catchError(() => of(false))
-    );
+  toneOf(kind: string): EmailTemplateTone {
+    const entry = this.notifications.kinds().find(k => k.kind === kind);
+    if (!entry) return null;
+    if (entry.count > 0) return 'attention';
+    return AdminNotificationsService.preparingCount(entry) > 0 ? 'preparing' : null;
+  }
+
+  /** @description Asks for the counts again (the e-mail was just edited). */
+  refresh(): void {
+    this.notifications.refresh();
   }
 }

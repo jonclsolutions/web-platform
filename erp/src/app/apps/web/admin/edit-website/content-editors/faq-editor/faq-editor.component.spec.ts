@@ -17,6 +17,7 @@ import { of, throwError } from 'rxjs';
 
 import { FaqEditorComponent } from './faq-editor.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../../testing/admin-test-helpers';
+import { AdminNotificationsService } from '../../../../../../core/services/admin-notifications.service';
 
 describe('FaqEditorComponent', () => {
   let ctx: AdminTestContext;
@@ -114,7 +115,7 @@ describe('FaqEditorComponent', () => {
    *   ids (null for new entries) and texts only.
    * @input addCategory; addItem to it; move it up; move Q2? to Ceny; remove Q1?; save.
    * @output PUT web/faq { categories: [new (1 empty question), Obecné (no questions), Ceny (Q2?)] };
-   *   success dialog; the API answer becomes the saved state (not dirty).
+   *   success dialog; notifications asked again; the API answer becomes the saved state (not dirty).
    */
   it('edits the structure and saves the whole FAQ', () => {
     create();
@@ -131,7 +132,9 @@ describe('FaqEditorComponent', () => {
     expect(component.isDirty).toBeTrue();
 
     (ctx.dataHandler as any).put.and.returnValue(of(rows()));
+    const refresh = spyOn(TestBed.inject(AdminNotificationsService), 'refresh');
     component.save();
+    expect(refresh).toHaveBeenCalled();  // the numbers of the tab and the dots follow at once
     const [url, body] = (ctx.dataHandler as any).put.calls.mostRecent().args;
     expect(url).toBe('web/faq');
     expect(body).toEqual({ categories: [
@@ -243,5 +246,48 @@ describe('FaqEditorComponent', () => {
     fixture.detectChanges();
     expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
     expect(component.langItems[1].muted).toBeTrue();
+  });
+
+  /**
+   * @description The texts page asks for a language (window Jazyky → "FAQ 32"): the editor shows
+   *   it once it offers it; a language it does not offer is left pending until it comes.
+   * @input host cz + en; focusLang {en, 1}; focusLang {sk, 2} (not offered); host gets sk.
+   * @output lang 'en'; still 'en'; then 'sk'.
+   */
+  it('shows the language asked for by the texts page', () => {
+    (ctx.dataHandler as any).get.and.callFake((url: string) => of(url === 'languages/web' ? languages : rows()));
+    fixture = TestBed.createComponent(FaqEditorComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('hostLanguages', languages.slice(0, 2));
+    fixture.componentRef.setInput('focusLang', { code: 'en', seq: 1 });
+    fixture.detectChanges();
+    expect(component.lang).toBe('en');
+    fixture.componentRef.setInput('focusLang', { code: 'sk', seq: 2 });
+    fixture.detectChanges();
+    expect(component.lang).toBe('en');
+    fixture.componentRef.setInput('hostLanguages', [...languages.slice(0, 2), { code: 'sk', name: 'Slovenčina', active: false }]);
+    fixture.detectChanges();
+    expect(component.lang).toBe('sk');
+  });
+
+  /**
+   * @description In a switched off language the warning and the note of an empty field say "fill
+   *   in before switching it on" (visitors do not see it), not "the website shows 'Cannot load text'".
+   * @input host cz + de (switched off); lang de.
+   * @output langInactive; missingWarning from missing_warning_inactive; missingFieldText
+   *   missing_field_inactive; in cz the usual ones.
+   */
+  it('words the missing texts of a switched off language', () => {
+    (ctx.dataHandler as any).get.and.callFake((url: string) => of(url === 'languages/web' ? languages : rows()));
+    fixture = TestBed.createComponent(FaqEditorComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('hostLanguages', [languages[0], { code: 'de', name: 'Deutsch', active: false }]);
+    fixture.detectChanges();
+    expect(component.langInactive).toBeFalse();
+    expect(component.missingFieldText).toBe(component.strings.missing_field);
+    component.switchLang('de');
+    expect(component.langInactive).toBeTrue();
+    expect(component.missingFieldText).toBe(component.strings.missing_field_inactive);
+    expect(component.missingWarning).toContain(String(component.strings.missing_warning_inactive).slice(0, 5));
   });
 });

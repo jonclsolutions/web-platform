@@ -22,6 +22,7 @@ import { Location } from '@angular/common';
 import { UserRequestComponent } from './user-request.component';
 import { USER_REQUEST_PRIORITY_VALUES, USER_REQUEST_STATUS_VALUES, USER_REQUEST_THEMA_VALUES } from './user-request.config';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
+import { AdminNotificationsService } from '../../../../core/services/admin-notifications.service';
 
 describe('UserRequestComponent', () => {
   let ctx: AdminTestContext;
@@ -233,30 +234,52 @@ describe('UserRequestComponent', () => {
   }));
 
   /**
-   * @description While the confirmation e-mail lacks texts (the API lists them in `missing`), the
-   *   item of the Actions menu carries the orange dot; closing the editor asks again; without the
-   *   permission to edit it nothing is asked.
-   * @input getQuietly answers missing cz [title]; ngOnInit; then answers no missing + close the
-   *   editor; then granted [] and ngOnInit.
-   * @output getQuietly(template endpoint); editor button attention + title
-   *   'email-template-editor.attention_title'; then no attention; then no new request.
+   * @description The e-mail item of the Actions menu carries the dot of the attention kind of the
+   *   notifications (the same as the side menu): orange while Czech or an active language lacks
+   *   texts, grey when only a switched off one does; closing the editor asks the counts again.
+   * @input kind web_inquiry_email_missing 2; then 0 + preparing pl 12; then none; close the editor.
+   * @output attention true, tone 'attention', title attention_title; tone 'preparing', title
+   *   attention_preparing_title; no dot; notifications refresh called.
    */
   it('marks the e-mail item while the template lacks texts', () => {
-    const quietly = (ctx.dataHandler as any).getQuietly;
-    quietly.and.returnValue(of({ missing: { cz: ['title'] } }));
-    component.ngOnInit();
-    expect(quietly).toHaveBeenCalledWith('web/settings/raw-request-email-template');
-    expect([toolbar()['openEmailTemplateEditor'].attention, toolbar()['openEmailTemplateEditor'].attentionTitle])
-      .toEqual([true, 'email-template-editor.attention_title']);
+    const notifications = TestBed.inject(AdminNotificationsService);
+    const set = (count: number, preparing?: Record<string, number>) => notifications.kinds.set([
+      { kind: 'web_inquiry_email_missing', module: 'web', link: '/admin/web/user-request', count, attention: true, preparing },
+    ]);
+    const item = () => toolbar()['openEmailTemplateEditor'];
+    set(2);
+    expect([item().attention, item().attentionTone, item().attentionTitle]).toEqual([true, 'attention', 'email-template-editor.attention_title']);
+    set(0, { pl: 12 });
+    expect([item().attentionTone, item().attentionTitle]).toEqual(['preparing', 'email-template-editor.attention_preparing_title']);
+    notifications.kinds.set([]);
+    expect(item().attention).toBeUndefined();
 
-    quietly.and.returnValue(of({ missing: {} }));
+    const refresh = spyOn(notifications, 'refresh');
     component.closeEmailTemplateEditor();
-    expect(toolbar()['openEmailTemplateEditor'].attention).toBeUndefined();
+    expect(refresh).toHaveBeenCalled();
+  });
 
-    quietly.calls.reset();
+  /**
+   * @description `?email-template=<lang>` (window Jazyky → the e-mail of a language) opens the
+   *   editor in that language and removes the parameter; without the edit permission it is only
+   *   removed.
+   * @input query email-template=pl; ngOnInit; then granted [] and ngOnInit.
+   * @output modal open, emailTemplateLang 'pl', navigate([], { queryParams: { 'email-template':
+   *   null }, merge, replaceUrl }); then no modal.
+   */
+  it('opens the e-mail editor of a language from the address', () => {
+    const route = TestBed.inject(ActivatedRoute) as any;
+    route.snapshot = { queryParamMap: convertToParamMap({ 'email-template': 'pl' }) };
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    component.ngOnInit();
+    expect([component.showEmailTemplateModal, component.emailTemplateLang]).toEqual([true, 'pl']);
+    expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { 'email-template': null }, queryParamsHandling: 'merge', replaceUrl: true }));
+
+    component.closeEmailTemplateEditor();
+    expect(component.emailTemplateLang).toBeNull();
     ctx.permissions.granted = new Set();
     component.ngOnInit();
-    expect(quietly).not.toHaveBeenCalled();
+    expect(component.showEmailTemplateModal).toBeFalse();
   });
 
   describe('record popup (clickable rows)', () => {

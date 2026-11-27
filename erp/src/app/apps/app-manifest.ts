@@ -69,4 +69,10 @@ export interface AppManifest {
   adminI18n?: boolean;
   /** Maintenance switch of its public part (none = the application cannot be switched off). */
   maintenance?: AppMaintenance;
+  /**
+   * Admin pages of the parts of what a language lacks that live outside the texts page
+   * (`AppManifest::contentMissing()` of the API, e.g. the confirmation e-mail): part → address,
+   * `{lang}` = the language. A click on the part in the window Jazyky opens it.
+   */
+  missingPartLinks?: Record<string, string>;
 }

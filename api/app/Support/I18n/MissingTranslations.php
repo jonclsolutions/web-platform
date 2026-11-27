@@ -47,12 +47,14 @@ final class MissingTranslations
     }
 
     /**
-     * @description Texts missing per active language of a module - only the languages that miss
-     *   something (a complete language is left out).
+     * @description Texts missing per active language of a module (or per given language) - only
+     *   the languages that miss something (a complete language is left out).
      * @param string $module Translation module (application id).
+     * @param string[]|null $codes Languages to check; null = the active ones (the switched off
+     *   ones being prepared: TranslationController::inactiveLanguageCodes()).
      * @return array<string, int> Language code => missing texts, e.g. ['en' => 120, 'cz' => 3].
      */
-    public static function byLanguage(string $module): array
+    public static function byLanguage(string $module, ?array $codes = null): array
     {
         $primary = self::read($module, self::PRIMARY);
         if ($primary === null) {
@@ -61,7 +63,7 @@ final class MissingTranslations
         $keys = array_keys(self::flatten($primary));
         $missing = [];
 
-        foreach (TranslationController::activeLanguageCodes($module) as $code) {
+        foreach ($codes ?? TranslationController::activeLanguageCodes($module) as $code) {
             $count = self::countMissing($keys, strtolower($code) === self::PRIMARY ? $primary : (self::read($module, $code) ?? []));
             if ($count > 0) {
                 $missing[$code] = $count;

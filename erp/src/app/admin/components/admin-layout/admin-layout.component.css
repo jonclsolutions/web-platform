@@ -813,9 +813,10 @@
       sidebar (right edge; in the collapsed desktop sidebar on the corner of the icon), at the
       title of a collapsed menu section, at the modules of the switcher and on its button. The
       dot of the menu button tells on mobile that the closed menu hides some (red when unread,
-      orange when only something needs attention).
+      orange when only something needs attention, grey when only a switched off language being
+      prepared lacks something).
     @usage: <app-nav-badge class="nav-badge--item | nav-badge--end | nav-badge--group" [badge]>,
-      <span class="unread-dot [unread-dot--attention]" aria-hidden="true"></span> inside .menu-toggle-btn
+      <span class="unread-dot [unread-dot--attention | unread-dot--preparing]" aria-hidden="true"></span> inside .menu-toggle-btn
 */
 .nav-badge--item,
 .nav-badge--end,
@@ -836,6 +837,8 @@
 
 /* Only things needing attention (no unread records): orange - after the base colour above. */
 .unread-dot.unread-dot--attention { background: var(--warning); }
+/* Only a switched off language being prepared lacks something: grey. */
+.unread-dot.unread-dot--preparing { background: var(--color-zinc-400, #a1a1aa); }
 
 .menu-toggle-btn { position: relative; }
 

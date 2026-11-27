@@ -70,6 +70,8 @@ export const SHOP_APP: AppManifest = {
     },
   ],
   maintenance: { endpoint: 'shop/settings', permission: 'shop-set-maintenance-mode', activeField: 'is_shop_active', messageField: 'maintenance_message' },
+  // the order confirmation e-mail opened in the language (?email-template=)
+  missingPartLinks: { order_email: '/admin/shop/orders?email-template={lang}' },
   adminRoutes: SHOP_ADMIN_ROUTES,
   publicArea: SHOP_PUBLIC_AREA,
   publicRoutes: SHOP_PUBLIC_ROUTES,

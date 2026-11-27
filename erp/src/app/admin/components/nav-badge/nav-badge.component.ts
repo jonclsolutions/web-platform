@@ -6,7 +6,7 @@
  * @created 2026
  * @description Badge of the admin navigation (AdminNotificationsService.navBadge()): the red
  *   number of unread records and / or the orange dot of things needing attention (texts missing
- *   in a language …). Its label is the tooltip and the screen-reader text - it names every kind
+ *   in a language …), else the grey dot of a switched off language being prepared. Its label is the tooltip and the screen-reader text - it names every kind
  *   behind the badge with its count ("Chybějící texty webu: 123 (angličtina 120)").
  * @dependencies NavBadge (admin-notifications.service).
  * @usage `<app-nav-badge [badge]="itemBadge(item)" class="nav-badge--item" />` - the class of the
@@ -29,6 +29,8 @@ import { NavBadge } from '../../../core/services/admin-notifications.service';
       }
       @if (b.attention) {
         <span class="nb-dot"></span>
+      } @else if (b.preparing) {
+        <span class="nb-dot nb-dot--preparing"></span>
       }
     }
   `,

@@ -283,4 +283,38 @@ describe('EmailTemplateEditorComponent', () => {
     expect(body.sales_order_email_subject_i18n).toEqual({ cz: 'Předmět', en: 'Thank you' });
     expect(body.sales_order_email_labels_i18n).toEqual({ cz: complete().sales_order_email_labels_i18n.cz, en: { greeting: 'Hello' } });
   });
+
+  /**
+   * @description The editor opens in the language it is given (window Jazyky → the e-mail of a
+   *   language); a language not offered falls back to the first one.
+   * @input initialLang 'en' (offered); then 'sk' (not offered).
+   * @output currentLang 'en'; then 'cz'.
+   */
+  it('opens in the given language', () => {
+    ctx = createAdminTestContext();
+    dh().get.and.callFake((url: string) => url === 'languages/web' ? of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]) : of(stored));
+    TestBed.configureTestingModule({ imports: [EmailTemplateEditorComponent], providers: ctx.providers });
+    for (const [lang, expected] of [['en', 'en'], ['sk', 'cz']]) {
+      fixture = TestBed.createComponent(EmailTemplateEditorComponent);
+      component = fixture.componentInstance;
+      Object.assign(component, { endpoint: 'x', fieldPrefix: 'sales_order_email', i18nSection: 'sales-orders', initialLang: lang });
+      fixture.detectChanges();
+      expect(component.currentLang).toBe(expected);
+      fixture.destroy();
+    }
+  });
+
+  /**
+   * @description The hint of the empty fields of a switched off language says "fill in before
+   *   switching it on" (customers do not see the language).
+   * @input languages cz, en (on), de (off); switch to en, then de.
+   * @output missingHint missing_hint; then missing_hint_inactive.
+   */
+  it('words the hint of a switched off language', () => {
+    create(of([{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }]), of(stored));
+    component.switchLang('en');
+    expect(component.missingHint).toBe('email-template-editor.missing_hint');
+    component.switchLang('de');
+    expect(component.missingHint).toBe('email-template-editor.missing_hint_inactive');
+  });
 });

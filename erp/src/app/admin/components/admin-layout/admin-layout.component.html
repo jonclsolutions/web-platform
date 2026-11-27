@@ -22,7 +22,8 @@
       </svg>
       <!-- Mobile: the closed menu hides the numbers of the module - a dot tells there are some. -->
       @if (!isMenuOpen && moduleDot; as dot) {
-        <span class="unread-dot" [class.unread-dot--attention]="!dot.text" aria-hidden="true"></span>
+        <span class="unread-dot" [class.unread-dot--attention]="!dot.text && dot.attention"
+              [class.unread-dot--preparing]="!dot.text && !dot.attention" aria-hidden="true"></span>
       }
     </button>
     

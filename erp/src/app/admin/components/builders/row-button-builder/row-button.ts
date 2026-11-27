@@ -77,7 +77,8 @@ export function languageRowButtons(
       label: options.showName && lang.name ? lang.name : lang.code.toUpperCase(),
       imageUrl: lang.iconUrl || undefined,
       count,
-      countTone: 'attention' as const,
+      // a switched off language being prepared: grey (visitors do not see it - not urgent)
+      countTone: lang.active === false ? 'neutral' as const : 'attention' as const,
       dot: options.dot?.(lang.code) ?? false,
       title: [options.title?.(lang.code), lang.active === false ? options.inactiveTitle : ''].filter(Boolean).join(' – ') || undefined,
       muted: lang.active === false,

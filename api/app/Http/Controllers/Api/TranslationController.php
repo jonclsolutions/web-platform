@@ -751,6 +751,21 @@ class TranslationController extends Controller
     }
 
     /**
+     * @description Codes of the switched off languages of a module (being prepared - visitors do
+     *   not see them; Czech, the built-in language, is never one of them).
+     * @param string $module Module (application id).
+     * @return string[] Codes as stored.
+     */
+    public static function inactiveLanguageCodes(string $module): array
+    {
+        return array_values(array_unique(array_map(
+            fn (array $lang) => (string) $lang['code'],
+            array_filter(self::moduleLanguages($module), fn (array $lang) => empty($lang['active'])
+                && empty($lang['isBuiltIn']) && strtolower((string) $lang['code']) !== MissingTranslations::PRIMARY)
+        )));
+    }
+
+    /**
      * Returns absolute directory path for module translations.
      */
     private function i18nDirectory(string $module): string

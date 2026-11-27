@@ -34,6 +34,8 @@ describe('AdminNotificationsService', () => {
   const TEXTS: Record<string, string> = {
     'notifications.kind_web_inquiries': 'Nové poptávky',
     'notifications.kind_web_texts_missing': 'Chybějící texty webu',
+    'notifications.kind_web_page_titles_missing': 'Chybějící názvy stránek webu',
+    'notifications.preparing_label': 'vypnuté jazyky',
     'notifications.kind_generic': 'Nové záznamy',
     'notifications.toast_message': 'Nepřečtené: {count}.',
     'notifications.attention_toast_message': 'Vyžaduje vaši pozornost: {count}. Kliknutím otevřete stránku.',
@@ -94,7 +96,7 @@ describe('AdminNotificationsService', () => {
     tick();
     expect(dataHandler.getQuietly).toHaveBeenCalledOnceWith('core/notifications');
     respond(kind('user-request', 2));
-    expect(service.badgeFor('/admin/web/user-request')).toEqual({ text: '2', attention: false, label: 'Nové záznamy: 2' });
+    expect(service.badgeFor('/admin/web/user-request')).toEqual({ text: '2', attention: false, preparing: false, label: 'Nové záznamy: 2' });
     expect(alert.open).not.toHaveBeenCalled();
     tick(NOTIFICATIONS_POLL_MS);
     expect(dataHandler.getQuietly).toHaveBeenCalledTimes(2);
@@ -171,6 +173,33 @@ describe('AdminNotificationsService', () => {
   }));
 
   /**
+   * @description A switched off language being prepared (`preparing` of an attention kind - not
+   *   in its count): a GREY dot on the page and the module, only while nothing is orange; the
+   *   label adds the switched off languages; never a notice (the count does not grow).
+   * @input url = text editor page; page titles 0 with preparing pl 14; then web texts 2 (cz 2).
+   * @output page / module: no number, no orange dot, preparing true, label 'Chybějící názvy
+   *   stránek webu – vypnuté jazyky: polština 14' (no count); with the texts: attention true,
+   *   preparing false; no notice for the preparing kind.
+   */
+  it('shows the languages being prepared in grey', fakeAsync(() => {
+    router.url = '/admin/web/edit-website';
+    service.start();
+    tick();
+    const titles = { ...kind('web_page_titles_missing', 0, '/admin/web/edit-website'), attention: true, preparing: { pl: 14 } };
+    respond(titles);
+    const label = 'Chybějící názvy stránek webu – vypnuté jazyky: polština 14';
+    expect(service.badgeFor('/admin/web/edit-website')).toEqual({ text: null, attention: false, preparing: true, label });
+    expect(service.moduleBadge('web')).toEqual({ text: null, attention: false, preparing: true, label });
+
+    tick(NOTIFICATIONS_POLL_MS);
+    alert.open.calls.reset();
+    respond(titles, { ...kind('web_texts_missing', 2, '/admin/web/edit-website'), attention: true, languages: { cz: 2 } });
+    expect(service.moduleBadge('web')).toEqual(jasmine.objectContaining({ attention: true, preparing: false }));
+    expect(alert.open.calls.allArgs().map(args => args[0])).toEqual(['Chybějící texty webu']);
+    service.stop();
+  }));
+
+  /**
    * @description Attention kinds (texts missing in a language): an orange dot without a number
    *   (also next to the red number of unread records - it never gets lost), the label names the
    *   kinds with counts and the languages; never marked as seen by opening the page; a grown
@@ -187,15 +216,15 @@ describe('AdminNotificationsService', () => {
     const texts = (count: number) => ({ ...kind('web_texts_missing', count, '/admin/web/edit-website'), attention: true, languages: { cz: 1, en: count - 1 } });
     respond(texts(3), kind('web_inquiries', 0, '/admin/web/user-request'));
     const missingLabel = 'Chybějící texty webu: 3 (angličtina 2, čeština 1)';
-    expect(service.badgeFor('/admin/web/edit-website')).toEqual({ text: null, attention: true, label: missingLabel });
-    expect(service.moduleBadge('web')).toEqual({ text: null, attention: true, label: missingLabel });
+    expect(service.badgeFor('/admin/web/edit-website')).toEqual({ text: null, attention: true, preparing: false, label: missingLabel });
+    expect(service.moduleBadge('web')).toEqual({ text: null, attention: true, preparing: false, label: missingLabel });
     service.markSeenLink('/admin/web/edit-website');
     expect(dataHandler.postQuietly).not.toHaveBeenCalled();
 
     tick(NOTIFICATIONS_POLL_MS);
     respond(texts(3), kind('web_inquiries', 2, '/admin/web/user-request'));
-    expect(service.moduleBadge('web')).toEqual({ text: '2', attention: true, label: `${missingLabel} · Nové poptávky: 2` });
-    expect(service.badgeForLinks(['/admin/web/user-request'])).toEqual({ text: '2', attention: false, label: 'Nové poptávky: 2' });
+    expect(service.moduleBadge('web')).toEqual({ text: '2', attention: true, preparing: false, label: `${missingLabel} · Nové poptávky: 2` });
+    expect(service.badgeForLinks(['/admin/web/user-request'])).toEqual({ text: '2', attention: false, preparing: false, label: 'Nové poptávky: 2' });
 
     tick(NOTIFICATIONS_POLL_MS);
     alert.open.calls.reset();

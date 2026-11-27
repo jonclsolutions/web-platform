@@ -365,6 +365,17 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     return lang && !lang.active && !lang.isBuiltIn ? lang : null;
   }
 
+  /**
+   * @description The note "switched on only complete" split around `{parts}` - the parts between
+   *   are links (to the texts page tab / the page of an e-mail).
+   * @returns [text before the parts, text after them].
+   */
+  get activateNote(): [string, string] {
+    const note = this.e.t('activate_incomplete_note');
+    const at = note.indexOf('{parts}');
+    return at < 0 ? [note + ' ', ''] : [note.slice(0, at), note.slice(at + '{parts}'.length)];
+  }
+
   /** @description Switches the open (switched off) language on - visitors see it at once. */
   activateLang(): void {
     const lang = this.inactiveLang;

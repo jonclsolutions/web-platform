@@ -464,6 +464,7 @@
   "pt_language_label": "Language of the titles:",
   "pt_missing_lang_title": "Pages without a title in this language: {count}",
   "pt_missing_banner": "Page titles missing in {lang}: {count}. Visitors see 'Cannot load text' instead.",
+  "pt_missing_banner_inactive": "The language {lang} is switched off – visitors do not see it. Page titles missing: {count}; fill them in before you switch it on.",
   "pt_saved_title": "Saved"
 },
 "settings": {
@@ -1459,6 +1460,8 @@
     "tab_translations": "Translations",
     "tab_missing_texts_title": "Texts missing in active languages: {count}",
     "tab_missing_titles_title": "Page titles missing in active languages: {count}",
+    "tab_preparing_title": "Switched off languages (visitors do not see them) – still missing: {count}",
+    "missing_part_open_title": "Open and fill in",
     "tab_page_titles": "Page titles",
     "tabs_label": "Page sections",
     "tabs_others_waiting": "Another part has missing texts or unsaved changes",
@@ -1746,7 +1749,6 @@
     "add_language_title": "Add language",
     "add_language_button": "Add language",
     "add_language_unsaved_note": "The language {lang} has unsaved edits – it stays open after adding, the edits are not lost.",
-    "inactive_suffix": "inactive",
     "inactive_label": "Inactive",
     "deactivate_title": "Deactivate",
     "activate_title": "Activate",
@@ -1805,7 +1807,6 @@
     "toggle_failed_error": "Change could not be saved.",
     "activate_incomplete_note": "It can be switched on once the language is complete. Missing: {parts}.",
     "active_incomplete_note": "Missing: {parts} – visitors see “Cannot load text” in their place. Fill them in soon.",
-    "show_missing_texts_button": "Show the missing texts",
     "activate_incomplete_message": "The language {lang} cannot be switched on yet – it is not complete. Missing: {parts}. Fill them in and switch it on again.",
     "new_language_off_note": "A new language is created switched off. Switch it on in the Languages window once all its texts, page titles and content are filled in – visitors never get a half translated language.",
     "completeness_parts": {
@@ -1814,7 +1815,10 @@
       "faq": "FAQ",
       "jobs": "Job positions",
       "references": "References",
-      "knowledge_base": "Help center"
+      "knowledge_base": "Help center",
+      "inquiry_email": "Inquiry e-mail",
+      "order_email": "Order e-mails",
+      "portal_order_email": "Portal order e-mail"
     },
     "invalid_json_error": "Invalid JSON file.",
     "json_uploaded_message": "JSON for \"{lang}\" successfully uploaded.",
@@ -1881,12 +1885,15 @@
   "primary_missing_button": "Fill in Czech",
   "save_blocked_title": "Fill in all Czech fields first",
   "lang_fallback_hint": "ⓘ An empty field of another language uses the Czech text. Czech (the default language) must be filled in completely.",
-  "attention_title": "The confirmation e-mail does not have all texts filled in"
+  "attention_title": "The confirmation e-mail does not have all texts filled in",
+  "attention_preparing_title": "A switched off language lacks texts of the e-mail – fill them in before you switch it on",
+  "missing_hint_inactive": "The language is switched off – customers do not see it. Fill in the fields marked orange before you switch it on."
 },
   "notifications": {
     "kind_generic": "New records",
     "kind_core_security_events": "New security events",
     "toast_message": "Unread: {count}. Click to open the page.",
-    "attention_toast_message": "Needs your attention: {count}. Click to open the page."
+    "attention_toast_message": "Needs your attention: {count}. Click to open the page.",
+    "preparing_label": "switched off languages"
   }
 }

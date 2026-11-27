@@ -7,15 +7,22 @@
  * @created 2026
  * @description Notifications of the project portal: new orders from the order form and open sales
  * leads that became overdue after the last look (no contact for
- * ProjectPortalAgendaSource::LEAD_FOLLOW_UP_DAYS days - the same rule as the calendar reminder).
+ * ProjectPortalAgendaSource::LEAD_FOLLOW_UP_DAYS days - the same rule as the calendar reminder);
+ * texts of the order confirmation e-mail missing in the active languages of the website (whose
+ * languages the portal follows) + Czech (portal_order_email_missing, attention, orange) with
+ * `preparing` of the switched off ones (grey dot).
  * Registered in ProjectPortalApp::notificationSources().
- * @dependencies SalesOrder, SalesLead, ProjectPortalAgendaSource (rule constants), NotificationContext
+ * @dependencies SalesOrder, SalesLead, ProjectPortalSetting, SalesOrderEmailTemplate,
+ *   ProjectPortalAgendaSource (rule constants), TranslationController, NotificationContext
  */
 
 namespace App\Apps\ProjectPortal\Services;
 
 use App\Apps\ProjectPortal\Models\SalesLead;
 use App\Apps\ProjectPortal\Models\SalesOrder;
+use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
+use App\Apps\ProjectPortal\Support\SalesOrderEmailTemplate;
+use App\Http\Controllers\Api\TranslationController;
 use App\Services\Notifications\NotificationContext;
 use App\Services\Notifications\NotificationSource;
 use Illuminate\Support\Carbon;
@@ -31,6 +38,12 @@ final class ProjectPortalNotificationSource implements NotificationSource
         }
         if ($context->can('project-portal-sales-leads-view')) {
             $kinds[] = $context->counted('portal_leads_overdue', '/admin/project-portal/sales-leads', fn (Carbon $since) => self::becameOverdue($since));
+        }
+        if ($context->can('project-portal-sales-orders-update')) {
+            $settings = ProjectPortalSetting::query()->first();
+            $email = SalesOrderEmailTemplate::countsByLanguage($settings, array_merge(['cz'], TranslationController::activeLanguageCodes('web')));
+            $kinds[] = $context->attention('portal_order_email_missing', '/admin/project-portal/sales-orders', array_sum($email), $email,
+                SalesOrderEmailTemplate::countsByLanguage($settings, TranslationController::inactiveLanguageCodes('web')));
         }
 
         return $kinds;

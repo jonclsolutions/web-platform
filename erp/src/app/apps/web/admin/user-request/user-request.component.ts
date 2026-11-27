@@ -14,7 +14,7 @@
  * - ActionMenuBuilderComponent: Dropdown ("Actions") rendering the `toolbarButtons` config.
  * - GraphBuilderComponent: Generic date-range analytics/report popup (charts + PDF export).
  * - EmailTemplateEditorComponent: modal editor of the confirmation e-mail template;
- *   EmailTemplateStatusService: the orange dot of the Actions menu while the e-mail lacks texts.
+ *   EmailTemplateStatusService: the dot (orange / grey) of the Actions menu while the e-mail lacks texts.
  * - USER_REQUEST Config: Domain-specific definitions for form fields, table columns, and button configurations.
  */
 
@@ -25,7 +25,8 @@ import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builder
 import { ActionMenuBuilderComponent } from '../../../../admin/components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
-import { EmailTemplateStatusService, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
+import { EMAIL_TEMPLATE_QUERY, EmailTemplateStatusService, EmailTemplateTitles, EmailTemplateTone, withEmailTemplateAttention } from '../../../../admin/components/email-template-editor/email-template-status';
+import { ActivatedRoute } from '@angular/router';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { BaseDataComponent } from '../../../../admin/components/base-data/base-data.component';
 import * as Config from './user-request.config';
@@ -62,9 +63,10 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   showEmailTemplateModal = false;
   /** Rows of the summary table of the inquiry e-mail with the preview sample values. */
   emailTemplateRows: EmailTemplateRow[] = [];
-  /** The confirmation e-mail lacks texts - orange dot on the Actions menu and its item. */
-  emailTemplateAttention = false;
   private readonly emailTemplateStatus = inject(EmailTemplateStatusService);
+  /** Language the editor opens in (`?email-template=<lang>` - the window Jazyky), null = Czech. */
+  emailTemplateLang: string | null = null;
+  private readonly emailTemplateRoute = inject(ActivatedRoute);
   /** Preview subject suffix - the real subject ends with ' – <topic>'. */
   emailTemplateSubjectSuffix = '';
 
@@ -140,7 +142,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
           break;
       }
 
-      return withEmailTemplateAttention(updatedBtn, this.emailTemplateAttention, this.i18n.getValue('email-template-editor.attention_title'));
+      return withEmailTemplateAttention(updatedBtn, this.emailTemplateTone, this.emailTemplateTitles);
     });
   }
 
@@ -166,7 +168,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     this.initWithAuthCheck(this.router);
     // Record popup of the clickable rows - also opens `?record=ID` of a link or a reload.
     this.watchRecordParam();
-    this.loadEmailTemplateStatus();
+    this.openEmailTemplateOfUrl();
   }
 
   override refreshData(): void {
@@ -223,20 +225,40 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   /** @description Closes the template editor (and asks again whether texts are missing). */
   closeEmailTemplateEditor(): void {
     this.showEmailTemplateModal = false;
-    this.loadEmailTemplateStatus();
+    this.emailTemplateLang = null;
+    this.emailTemplateStatus.refresh();
     this.cd.markForCheck();
   }
 
   /**
-   * @description Asks the template API whether the confirmation e-mail lacks texts (the orange
-   *   dot of the Actions menu) - only with the permission to edit it.
+   * @description `?email-template=<lang>` (a missing e-mail of a language clicked in the window
+   *   Jazyky): opens the editor in that language - with the permission to edit it - and removes
+   *   the parameter from the address (a reload does not open it again).
    */
-  private loadEmailTemplateStatus(): void {
+  private openEmailTemplateOfUrl(): void {
+    const lang = this.emailTemplateRoute.snapshot?.queryParamMap?.get(EMAIL_TEMPLATE_QUERY);
+    if (!lang) return;
+    this.router.navigate([], { relativeTo: this.emailTemplateRoute, queryParams: { [EMAIL_TEMPLATE_QUERY]: null }, queryParamsHandling: 'merge', replaceUrl: true });
     if (!this.permissionService.hasPermission('web-user-requests-update')) return;
-    this.emailTemplateStatus.needsAttention('web/settings/raw-request-email-template').subscribe(attention => {
-      this.emailTemplateAttention = attention;
-      this.cd.markForCheck();
-    });
+    this.emailTemplateLang = lang;
+    this.openEmailTemplateEditor();
+  }
+
+  /**
+   * @description Colour of the dot of the e-mail item of the Actions menu - the attention kind of
+   *   the notifications (the same as the side menu): orange = texts missing in Czech or an active
+   *   language, grey = only a switched off language being prepared.
+   */
+  get emailTemplateTone(): EmailTemplateTone {
+    return this.emailTemplateStatus.toneOf('web_inquiry_email_missing');
+  }
+
+  /** @description Tooltips of the dot of the e-mail item. */
+  private get emailTemplateTitles(): EmailTemplateTitles {
+    return {
+      attention: this.i18n.getValue('email-template-editor.attention_title'),
+      preparing: this.i18n.getValue('email-template-editor.attention_preparing_title'),
+    };
   }
 
 }

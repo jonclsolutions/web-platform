@@ -71,12 +71,9 @@ export class EditWebsiteComponent extends BaseTranslationEditorComponent impleme
     return this.view ? this.view.confirmLeave() : true;
   }
 
-  /** @description Loads the page and opens the tab named in the address (`?tab=`). */
+  /** @description Loads the page and opens the tab named in the address (`?tab=`, `&lang=`). */
   override ngOnInit(): void {
     super.ngOnInit();
-    const tab = this.route.snapshot.queryParamMap.get('tab');
-    if (tab && this.tabs.some(t => t.key === tab)) {
-      this.switchTab(tab);
-    }
+    this.openTabOfUrl(this.route.snapshot.queryParamMap);
   }
 }

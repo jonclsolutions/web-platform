@@ -18,6 +18,7 @@
  */
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, flush, flushMicrotasks } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 
@@ -452,9 +453,11 @@ describe('BaseTranslationEditorComponent', () => {
 
   /**
    * @description Delete: cancel clears the selection; a failure shows the API message (or the
-   *   fallback); without a selection nothing happens. Toggle success invalidates the cache.
+   *   fallback); without a selection nothing happens. Toggle success invalidates the cache and
+   *   asks the notifications again (the orange / grey dots follow the switch at once).
    * @input askDeleteLang(en) + cancelDelete(); delete failing with / without message; toggle ok.
-   * @output null; alerts 'In use' and 'test-editor.delete_language_failed_error'; languages reloaded.
+   * @output null; alerts 'In use' and 'test-editor.delete_language_failed_error'; notifications
+   *   refreshed; languages reloaded.
    */
   it('handles delete failures and a successful toggle', fakeAsync(() => {
     component.ngOnInit();
@@ -479,8 +482,10 @@ describe('BaseTranslationEditorComponent', () => {
     expect(component.langToDelete).toBeNull();
 
     (ctx.dataHandler as any).postQuietly.and.returnValue(of({ status: 'ok' }));
+    const refresh = spyOn(TestBed.inject(AdminNotificationsService), 'refresh');
     component.toggleLangActive(en);
     expect(en.active).toBeFalse();
+    expect(refresh).toHaveBeenCalled();
     get.calls.reset();
     component.ngOnInit();
     expect(get).toHaveBeenCalledWith('languages/test');
@@ -641,7 +646,8 @@ describe('BaseTranslationEditorComponent', () => {
    * @input kinds test_texts_missing 4, test_page_titles_missing 2, test_faq_missing 0; extra tab
    *   with attentionKind test_faq_missing; save of the texts.
    * @output translations tab count 4 (attention, title), page titles tab 2 (its own title), extra
-   *   tab no count; refresh() called.
+   *   tab no count; with only switched off languages lacking FAQ texts (preparing pl 3): the extra
+   *   tab grey 3 (neutral, tab_preparing_title); refresh() called.
    */
   it('shows missing texts on the page tabs', fakeAsync(() => {
     const notifications = TestBed.inject(AdminNotificationsService);
@@ -656,6 +662,9 @@ describe('BaseTranslationEditorComponent', () => {
     expect([texts.count, texts.countTone, texts.title]).toEqual([4, 'attention', 'test-editor.tab_missing_texts_title']);
     expect([titles.count, titles.title]).toEqual([2, 'test-editor.tab_missing_titles_title']);
     expect(faq.count).toBeNull();
+    notifications.kinds.update(kinds => kinds.map(k => (k.kind === 'test_faq_missing' ? { ...k, preparing: { pl: 3 } } : k)));
+    const grey = component.tabItems[2];
+    expect([grey.count, grey.countTone, grey.title]).toEqual([3, 'neutral', 'test-editor.tab_preparing_title']);
 
     component.ngOnInit();
     (ctx.dataHandler as any).postQuietly.and.returnValue(of({}));
@@ -692,4 +701,79 @@ describe('BaseTranslationEditorComponent', () => {
     expect(component.filteredKeys.every(k => k.missing)).toBeTrue();
     flush();
   }));
+
+  /**
+   * @description A part of what a language lacks (window Jazyky) opens where it is filled in: the
+   *   texts → the list of the missing ones; a tab of the page → the tab, asking it for the
+   *   language (a new request each time); a part of another page → the address of the
+   *   application (`missingPartLinks`, `{lang}` replaced); an unknown part does nothing.
+   * @input extra tab faq; openMissingPart('en', 'texts'), ('pl', 'page_titles'), ('pl', 'faq'),
+   *   ('de', 'inquiry_email'), ('de', 'unknown').
+   * @output showMissingIn('en'); activeTab page_titles + focusLang {pl, 1}; faq + {pl, 2};
+   *   navigateByUrl('/admin/web/user-request?email-template=de'); canOpenMissingPart true for
+   *   texts / faq / inquiry_email, false for unknown.
+   */
+  it('opens where a missing part of a language is filled in', () => {
+    (component as any).extraTabs.push({ key: 'faq', labelKey: 'tab_faq', icon: 'help-circle' });
+    const showMissing = spyOn(component, 'showMissingIn');
+    const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+
+    component.openMissingPart('en', 'texts');
+    expect(showMissing).toHaveBeenCalledWith('en');
+    component.openMissingPart('pl', 'page_titles');
+    expect([component.activeTab, component.focusLang]).toEqual(['page_titles', { code: 'pl', seq: 1 }]);
+    component.openMissingPart('pl', 'faq');
+    expect([component.activeTab, component.focusLang]).toEqual(['faq', { code: 'pl', seq: 2 }]);
+    component.openMissingPart('de', 'inquiry_email');
+    expect(navigate).toHaveBeenCalledWith('/admin/web/user-request?email-template=de');
+    navigate.calls.reset();
+    component.openMissingPart('de', 'unknown');
+    expect(navigate).not.toHaveBeenCalled();
+    expect(['texts', 'faq', 'inquiry_email', 'unknown'].map(part => component.canOpenMissingPart(part))).toEqual([true, true, true, false]);
+  });
+
+  /**
+   * @description The number on a language tab of the texts follows the menu: missing texts of an
+   *   active language orange (`languages`), of a switched off one grey (`preparing`); a complete
+   *   language has none (a switched off complete language shows no dot either - only its dashed tab).
+   * @input kind test_texts_missing { languages: { de: 2 }, preparing: { pl: 14 } }; de on, pl off,
+   *   en off without missing texts.
+   * @output de {2, attention}; pl {14, neutral}; en null.
+   */
+  it('numbers the language tabs of the texts like the menu', () => {
+    TestBed.inject(AdminNotificationsService).kinds.set([
+      { kind: 'test_texts_missing', module: 'test', link: '/admin/test', count: 2, attention: true, languages: { de: 2 }, preparing: { pl: 14 } },
+    ]);
+    const lang = (code: string, active: boolean) => ({ code, name: code, active } as any);
+    expect(component.langTabMissing(lang('de', true))).toEqual({ count: 2, tone: 'attention' });
+    expect(component.langTabMissing(lang('pl', false))).toEqual({ count: 14, tone: 'neutral' });
+    expect(component.langTabMissing(lang('en', false))).toBeNull();
+  });
+
+  /**
+   * @description The visual editor (TEXTS_PAGE_URL set) sends the parts that are tabs of the texts
+   *   page there (`?tab=&lang=`), keeps the texts in place (their list is beside it); the texts
+   *   page opens the tab and the language named in its address.
+   * @input TEXTS_PAGE_URL '/admin/test'; openMissingPart('pl', 'faq'), ('pl', 'texts'); then
+   *   without it: openTabOfUrl {tab: page_titles, lang: de}, {tab: unknown}.
+   * @output navigateByUrl('/admin/test?tab=faq&lang=pl'); texts: no showMissingIn, cannot be
+   *   opened; activeTab page_titles + focusLang de; unknown tab ignored.
+   */
+  it('routes missing parts of the visual editor to the texts page', () => {
+    const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+    const showMissing = spyOn(component, 'showMissingIn');
+    (component as any).TEXTS_PAGE_URL = '/admin/test';
+    component.openMissingPart('pl', 'faq');
+    expect(navigate).toHaveBeenCalledWith('/admin/test?tab=faq&lang=pl');
+    component.openMissingPart('pl', 'texts');
+    expect(showMissing).not.toHaveBeenCalled();
+    expect([component.canOpenMissingPart('texts'), component.canOpenMissingPart('faq')]).toEqual([false, true]);
+
+    (component as any).TEXTS_PAGE_URL = null;
+    const params = (values: Record<string, string>) => ({ get: (name: string) => values[name] ?? null });
+    (component as any).openTabOfUrl(params({ tab: 'page_titles', lang: 'de' }));
+    expect([component.activeTab, component.focusLang?.code]).toEqual(['page_titles', 'de']);
+    (component as any).openTabOfUrl(params({ tab: 'unknown' }));
+    expect(component.activeTab).toBe('page_titles');
+  });
 });

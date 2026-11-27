@@ -24,12 +24,13 @@ use App\Models\Legal\PageTitle;
 final class MissingPageTitles
 {
     /**
-     * @description Pages without a title per active language of an area - only the languages
-     *   that miss something.
+     * @description Pages without a title per active language of an area (or per given language) -
+     *   only the languages that miss something.
      * @param string $area Area of the pages (= translation module, e.g. 'web').
+     * @param string[]|null $codes Languages to check; null = the active ones.
      * @return array<string, int> Language code => pages without a title, e.g. ['de' => 12].
      */
-    public static function byLanguage(string $area): array
+    public static function byLanguage(string $area, ?array $codes = null): array
     {
         $titles = PageTitle::query()->where('area', $area)->pluck('title_i18n')
             ->map(fn ($value) => is_array($value) ? $value : []);
@@ -38,7 +39,7 @@ final class MissingPageTitles
         }
 
         $missing = [];
-        foreach (TranslationController::activeLanguageCodes($area) as $code) {
+        foreach ($codes ?? TranslationController::activeLanguageCodes($area) as $code) {
             $code = strtolower($code);
             $count = $titles->filter(fn (array $title) => trim((string) ($title[$code] ?? '')) === '')->count();
             if ($count > 0) {

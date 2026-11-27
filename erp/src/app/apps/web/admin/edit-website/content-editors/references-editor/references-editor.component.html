@@ -121,7 +121,7 @@
                          [(ngModel)]="ref.name_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_NAME"
                          [readonly]="!canUpdate" [name]="'ref_name_' + ref.key + '_' + lang">
                   @if (isMissing(ref.name_i18n)) {
-                    <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                    <span class="ce-missing-text">{{ missingFieldText }}</span>
                   }
                 </label>
                 <label class="ce-field">
@@ -130,7 +130,7 @@
                          [(ngModel)]="ref.category_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_CATEGORY"
                          [readonly]="!canUpdate" [name]="'ref_category_' + ref.key + '_' + lang" [placeholder]="strings.refs_category_placeholder">
                   @if (isMissing(ref.category_i18n, true)) {
-                    <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                    <span class="ce-missing-text">{{ missingFieldText }}</span>
                   }
                 </label>
                 <div class="ce-row">
@@ -141,7 +141,7 @@
                              [(ngModel)]="ref.size_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_META"
                              [readonly]="!canUpdate" [name]="'ref_size_' + ref.key + '_' + lang">
                       @if (isMissing(ref.size_i18n, true)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                   </div>
@@ -152,7 +152,7 @@
                              [(ngModel)]="ref.role_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_META"
                              [readonly]="!canUpdate" [name]="'ref_role_' + ref.key + '_' + lang">
                       @if (isMissing(ref.role_i18n, true)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                   </div>
@@ -163,7 +163,7 @@
                             [(ngModel)]="ref.description_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_DESCRIPTION"
                             [readonly]="!canUpdate" [name]="'ref_description_' + ref.key + '_' + lang"></textarea>
                   @if (isMissing(ref.description_i18n)) {
-                    <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                    <span class="ce-missing-text">{{ missingFieldText }}</span>
                   }
                 </label>
                 <label class="ce-field">
@@ -172,7 +172,7 @@
                             [(ngModel)]="ref.result_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_RESULT"
                             [readonly]="!canUpdate" [name]="'ref_result_' + ref.key + '_' + lang"></textarea>
                   @if (isMissing(ref.result_i18n, true)) {
-                    <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                    <span class="ce-missing-text">{{ missingFieldText }}</span>
                   }
                 </label>
               </div>
@@ -188,7 +188,7 @@
                              [readonly]="!canUpdate" [name]="'ref_feature_' + feature.key + '_' + lang"
                              [attr.aria-label]="strings.refs_feature + ' ' + (fi + 1) + ' ' + (lang | uppercase)">
                       @if (isMissing(feature.text_i18n)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </div>
                     @if (canUpdate) {
@@ -222,7 +222,7 @@
                              [readonly]="!canUpdate" [name]="'ref_stack_label_' + layer.key + '_' + lang"
                              [placeholder]="strings.refs_stack_label" [attr.aria-label]="strings.refs_stack_label + ' ' + (li + 1)">
                       @if (isMissing(layer.label_i18n)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </div>
                     <div class="ce-field ce-line-field">
@@ -231,7 +231,7 @@
                              [readonly]="!canUpdate" [name]="'ref_stack_value_' + layer.key + '_' + lang"
                              [placeholder]="strings.refs_stack_value" [attr.aria-label]="strings.refs_stack_value + ' ' + (li + 1)">
                       @if (isMissing(layer.value_i18n)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </div>
                     @if (canUpdate) {

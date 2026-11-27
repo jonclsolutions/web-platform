@@ -268,13 +268,17 @@ describe('RowButtonBuilderComponent', () => {
    *   inactiveTitle explanation appended to its own title; the active one stays normal.
    * @input cz active with title 'Missing', en inactive; inactiveTitle 'Off'; render as tabs, active cz.
    * @output cz muted false, title 'Missing'; en muted true, title 'Off'; both titles joined
-   *   'Missing – Off'; one rendered .rbb-btn--muted (en) with that title.
+   *   'Missing – Off'; counts: neutral (switched off) / attention (on); one rendered
+   *   .rbb-btn--muted (en) with that title.
    */
   it('mutes the switched off languages', () => {
     const langs = [{ code: 'cz', active: true }, { code: 'en', active: false }];
     const result = languageRowButtons(langs, { title: code => (code === 'cz' ? 'Missing' : ''), inactiveTitle: 'Off' });
     expect(result.map(b => [b.muted, b.title])).toEqual([[false, 'Missing'], [true, 'Off']]);
     expect(languageRowButtons([{ code: 'de', active: false }], { title: () => 'Missing', inactiveTitle: 'Off' })[0].title).toBe('Missing – Off');
+    // the number of a switched off language is grey (being prepared), of an active one orange
+    expect(languageRowButtons([{ code: 'de', active: false }, { code: 'en', active: true }], { count: () => 2 }).map(b => b.countTone))
+      .toEqual(['neutral', 'attention']);
 
     set({ kind: 'tabs', items: result, active: 'cz' });
     const muted = fixture.nativeElement.querySelectorAll('.rbb-btn--muted');

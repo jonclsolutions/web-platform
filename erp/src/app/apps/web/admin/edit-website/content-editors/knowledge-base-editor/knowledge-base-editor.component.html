@@ -69,7 +69,7 @@
                    [(ngModel)]="page.heading_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_HEADING"
                    [readonly]="!canUpdate" [name]="'kb_page_heading_' + lang">
             @if (isMissing(page.heading_i18n)) {
-              <span class="ce-missing-text">{{ strings.missing_field }}</span>
+              <span class="ce-missing-text">{{ missingFieldText }}</span>
             }
           </label>
           <label class="ce-field">
@@ -78,7 +78,7 @@
                       [(ngModel)]="page.text_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_TEXT"
                       [readonly]="!canUpdate" [name]="'kb_page_text_' + lang"></textarea>
             @if (isMissing(page.text_i18n)) {
-              <span class="ce-missing-text">{{ strings.missing_field }}</span>
+              <span class="ce-missing-text">{{ missingFieldText }}</span>
             }
           </label>
         </div>
@@ -131,7 +131,7 @@
                            [(ngModel)]="block.heading_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_HEADING"
                            [readonly]="!canUpdate" [name]="'kb_heading_' + block.key + '_' + lang">
                     @if (isMissing(block.heading_i18n)) {
-                      <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      <span class="ce-missing-text">{{ missingFieldText }}</span>
                     }
                   </label>
                   <label class="ce-field">
@@ -140,7 +140,7 @@
                               [(ngModel)]="block.text_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_TEXT"
                               [readonly]="!canUpdate" [name]="'kb_text_' + block.key + '_' + lang"></textarea>
                     @if (isMissing(block.text_i18n)) {
-                      <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      <span class="ce-missing-text">{{ missingFieldText }}</span>
                     }
                   </label>
                 </div>
@@ -172,7 +172,7 @@
                                [(ngModel)]="item.title_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_ITEM_TITLE"
                                [readonly]="!canUpdate" [name]="'kb_item_title_' + item.key + '_' + lang">
                         @if (isMissing(item.title_i18n)) {
-                          <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                          <span class="ce-missing-text">{{ missingFieldText }}</span>
                         }
                       </label>
                       <label class="ce-field">
@@ -181,7 +181,7 @@
                                   [(ngModel)]="item.text_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_ITEM_TEXT"
                                   [readonly]="!canUpdate" [name]="'kb_item_text_' + item.key + '_' + lang"></textarea>
                         @if (isMissing(item.text_i18n)) {
-                          <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                          <span class="ce-missing-text">{{ missingFieldText }}</span>
                         }
                       </label>
                     </div>

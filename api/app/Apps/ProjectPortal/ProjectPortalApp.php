@@ -31,6 +31,7 @@ use App\Apps\ProjectPortal\Services\ProjectPortalAgendaSource;
 use App\Apps\ProjectPortal\Services\ProjectPortalNotificationSource;
 use App\Apps\ProjectPortal\Services\ProjectPortalRetentionSource;
 use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
+use App\Apps\ProjectPortal\Support\SalesOrderEmailTemplate;
 use App\Support\I18n\I18nText;
 use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
@@ -154,6 +155,17 @@ final class ProjectPortalApp extends AppManifest
     public function languageModule(): string
     {
         return 'web';
+    }
+
+    /**
+     * @description See AppManifest::contentMissing() - the empty texts of the order confirmation
+     *   e-mail in a website language (`portal_order_email` - the client would get Czech there).
+     */
+    public function contentMissing(string $code): array
+    {
+        $count = count(SalesOrderEmailTemplate::missingIn(ProjectPortalSetting::query()->first() ?? new \stdClass(), strtolower($code)));
+
+        return $count > 0 ? ['portal_order_email' => $count] : [];
     }
 
     /** @description See AppManifest::languageDeleted() - the texts of the order confirmation e-mail. */

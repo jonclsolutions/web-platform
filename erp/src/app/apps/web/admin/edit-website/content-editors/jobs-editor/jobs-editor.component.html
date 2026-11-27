@@ -117,7 +117,7 @@
                              [(ngModel)]="job.title_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_TITLE"
                              [readonly]="!canUpdate" [name]="'job_title_' + job.key + '_' + lang" (blur)="suggestSlug(job)">
                       @if (isMissing(job.title_i18n)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                     <label class="ce-field">
@@ -126,7 +126,7 @@
                                 [(ngModel)]="job.summary_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_SUMMARY"
                                 [readonly]="!canUpdate" [name]="'job_summary_' + job.key + '_' + lang"></textarea>
                       @if (isMissing(job.summary_i18n)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
               </div>
@@ -141,7 +141,7 @@
                              [(ngModel)]="job.type_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_META"
                              [readonly]="!canUpdate" [name]="'job_type_' + job.key + '_' + lang">
                       @if (isMissing(job.type_i18n, true)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                   </div>
@@ -152,7 +152,7 @@
                              [(ngModel)]="job.location_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_META"
                              [readonly]="!canUpdate" [name]="'job_location_' + job.key + '_' + lang">
                       @if (isMissing(job.location_i18n, true)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                   </div>
@@ -185,7 +185,7 @@
                              [(ngModel)]="section.heading_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_HEADING"
                              [readonly]="!canUpdate" [name]="'job_heading_' + section.key + '_' + lang">
                       @if (isMissing(section.heading_i18n, true)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                     <label class="ce-field">
@@ -194,7 +194,7 @@
                                 [(ngModel)]="section.body_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_BODY"
                                 [readonly]="!canUpdate" [name]="'job_body_' + section.key + '_' + lang"></textarea>
                       @if (isMissing(section.body_i18n)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                   </div>

@@ -88,13 +88,25 @@
   color: var(--color-white, #fff);
 }
 
-/* A switched off language (visitors do not see it): dashed, with an orange dot. */
-.te-lang--off { border-style: dashed; }
-.te-lang-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #f97316;
+/* A switched off language (visitors do not see it): dashed and quieter - never orange (orange
+   means texts missing in an active language). */
+.te-lang--off:not(.te-lang--on) { border-style: dashed; color: var(--color-zinc-500, #71717a); }
+
+/* Texts a language misses: grey (switched off, being prepared), orange (an active language). */
+.te-lang-count {
+  min-width: 16px;
+  padding: 0 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--color-zinc-600);
+  background: var(--color-zinc-200);
+  border-radius: 999px;
+}
+.te-lang-count--attention {
+  color: var(--color-amber-800, #92400e);
+  background: var(--color-amber-100);
 }
 
 .te-langs-btn { flex-shrink: 0; }
@@ -116,6 +128,17 @@
 .te-inactive-btn { height: 30px; }
 /* what the switched off language lacks (it is switched on only complete) */
 .te-inactive-missing { font-weight: 500; }
+/* A part of what the language lacks - opens where it is filled in. */
+.te-missing-part {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.te-missing-part:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
 .te-lang-flag {
   width: 16px;

@@ -95,7 +95,7 @@
                        [(ngModel)]="category.name_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_NAME"
                        [readonly]="!canUpdate" [name]="'faq_cat_' + category.key + '_' + lang">
                 @if (isMissing(category.name_i18n)) {
-                  <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                  <span class="ce-missing-text">{{ missingFieldText }}</span>
                 }
               </label>
 
@@ -135,7 +135,7 @@
                              [(ngModel)]="item.question_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_QUESTION"
                              [readonly]="!canUpdate" [name]="'faq_q_' + item.key + '_' + lang">
                       @if (isMissing(item.question_i18n)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                     <label class="ce-field">
@@ -144,7 +144,7 @@
                                 [(ngModel)]="item.answer_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_ANSWER"
                                 [readonly]="!canUpdate" [name]="'faq_a_' + item.key + '_' + lang"></textarea>
                       @if (isMissing(item.answer_i18n)) {
-                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        <span class="ce-missing-text">{{ missingFieldText }}</span>
                       }
                     </label>
                   </div>

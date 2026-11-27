@@ -745,6 +745,7 @@
   },
   "notifications": {
     "kind_portal_orders": "Nové objednávky projektového portálu",
-    "kind_portal_leads_overdue": "Leady po termínu kontaktu"
+    "kind_portal_leads_overdue": "Leady po termínu kontaktu",
+    "kind_portal_order_email_missing": "Nevyplněné texty e-mailu objednávky"
   }
 }

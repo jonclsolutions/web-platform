@@ -1779,7 +1779,7 @@
               "ordered": false,
               "items": [
                 "Volba platí jen v tomto prohlížeči - v jiném prohlížeči nebo na jiném zařízení ji nastavíte zvlášť.",
-                "Červená čísla nepřečtených záznamů a oranžové tečky práce, která na vás čeká, se v menu zobrazují vždy, i když upozornění vypnete.",
+                "Červená čísla nepřečtených záznamů, oranžové tečky práce, která na vás čeká, a šedé tečky jazyků, které teprve připravujete (vypnutý jazyk, kterému něco chybí), se v menu zobrazují vždy, i když upozornění vypnete.",
                 "Upozornění obsahuje jen počet a druh záznamů, nikdy jména ani e-maily."
               ]
             }

@@ -213,14 +213,13 @@
           @if (hasUnsavedEdits(lang)) {
             <span class="ew-manage-note" role="note">{{ e.t('unsaved_download_note') }}</span>
           }
-          <!-- What the language lacks: switched off - why it cannot be switched on yet (and where
-               to fill it); switched on - visitors see 'Cannot load text' in its place. -->
-          @if (!lang.isBuiltIn && e.canUpdate && e.missingSummary(lang.code); as missing) {
+          <!-- What the language lacks: switched off - why it cannot be switched on yet; switched on -
+               visitors see 'Cannot load text' in its place. Every part is a button that opens
+               where it is filled in (the texts, a tab in that language, the page of an e-mail). -->
+          @if (!lang.isBuiltIn && e.canUpdate && e.missingSummary(lang.code)) {
+            @let note = noteAround(lang);
             <span class="ew-manage-missing" [class.is-on]="lang.active" role="note">
-              {{ (lang.active ? e.t('active_incomplete_note') : e.t('activate_incomplete_note')).replace('{parts}', missing) }}
-              @if (e.lacksTexts(lang.code)) {
-                <button type="button" class="ew-link-btn" (click)="showMissing(lang)">{{ e.t('show_missing_texts_button') }}</button>
-              }
+              <span>{{ note[0] }}@for (item of e.missingPartsOf(lang.code); track item.part; let last = $last) {@if (e.canOpenMissingPart(item.part)) {<button type="button" class="ew-link-btn ew-missing-part" [title]="e.t('missing_part_open_title')" (click)="openPart(lang, item.part)">{{ item.label }} {{ item.count }}</button>} @else {<span class="ew-missing-part">{{ item.label }} {{ item.count }}</span>}@if (!last) {<span aria-hidden="true"> · </span>}}{{ note[1] }}</span>
             </span>
           }
         </li>

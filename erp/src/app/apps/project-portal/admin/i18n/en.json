@@ -745,6 +745,7 @@
   },
   "notifications": {
     "kind_portal_orders": "New project portal orders",
-    "kind_portal_leads_overdue": "Leads overdue for contact"
+    "kind_portal_leads_overdue": "Leads overdue for contact",
+    "kind_portal_order_email_missing": "Empty texts of the order e-mail"
   }
 }

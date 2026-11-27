@@ -24,7 +24,7 @@ describe('TranslationLanguagesComponent', () => {
   beforeEach(() => {
     editor = jasmine.createSpyObj<BaseTranslationEditorComponent>('editor',
       ['toggleLangActive', 'openUploadModal', 'askDeleteLang', 'openAddForm', 'downloadSavedJson', 't', 'trackByCode', 'onLangCodeInput', 'closeAddForm', 'confirmAddLang', 'onIconFileSelected', 'clearIconSelection',
-        'loadCompleteness', 'canActivate', 'missingSummary', 'lacksTexts', 'missingPartsOf', 'showMissingIn']);
+        'loadCompleteness', 'canActivate', 'missingSummary', 'lacksTexts', 'missingPartsOf', 'showMissingIn', 'canOpenMissingPart', 'openMissingPart']);
     editor.t.and.callFake((key: string) => key);
     editor.canActivate.and.returnValue(true);
     editor.missingSummary.and.returnValue('');
@@ -80,19 +80,25 @@ describe('TranslationLanguagesComponent', () => {
   /**
    * @description A language is switched on only complete: opening the window asks what the
    *   languages lack; a switched off incomplete language has its switch-on disabled with what is
-   *   missing and the way to its missing texts (the window closes); a switched on one that lacks
-   *   texts says the visitors see 'Cannot load text'. A new language is created switched off.
-   * @input DE off lacking 'Texty 3', EN on lacking 'Texty 1'; open; click "show missing" of DE;
-   *   the add form
-   * @output loadCompleteness once; DE switch-on disabled + activate_incomplete_note; EN enabled +
-   *   active_incomplete_note; showMissingIn('de'), closed; the add form without the active box,
-   *   with new_language_off_note
+   *   missing - every part a button to where it is filled in (the window closes), a part without
+   *   a place to open is plain text; a switched on one that lacks texts says the visitors see
+   *   'Cannot load text'. A new language is created switched off.
+   * @input DE off lacking Texty 3 + FAQ 2 + Other 1 (cannot be opened), EN on lacking Texty 1;
+   *   open; click "FAQ 2" of DE; the add form
+   * @output loadCompleteness once; DE switch-on disabled + activate_incomplete_note with the
+   *   buttons 'Texty 3', 'FAQ 2' and the text 'Other 1'; EN enabled + active_incomplete_note;
+   *   openMissingPart('de', 'faq'), closed; the add form without the active box, with
+   *   new_language_off_note
    */
   it('switches on only a complete language and says what is missing', () => {
     const de = { code: 'de', name: 'Deutsch', active: false } as LangMeta;
     Object.assign(editor, { languages: [en, de] });
     editor.canActivate.and.callFake((lang: LangMeta) => lang.active);
     editor.missingSummary.and.callFake((code: string) => (code === 'de' ? 'Texty 3' : 'Texty 1'));
+    editor.missingPartsOf.and.callFake((code: string) => code === 'de'
+      ? [{ part: 'texts', label: 'Texty', count: 3 }, { part: 'faq', label: 'FAQ', count: 2 }, { part: 'other', label: 'Other', count: 1 }]
+      : [{ part: 'texts', label: 'Texty', count: 1 }]);
+    editor.canOpenMissingPart.and.callFake((part: string) => part !== 'other');
     editor.lacksTexts.and.returnValue(true);
     let closed = 0;
     component.closed.subscribe(() => closed++);
@@ -104,8 +110,10 @@ describe('TranslationLanguagesComponent', () => {
     expect(rows[1].querySelector('.ew-manage-missing')!.textContent).toContain('activate_incomplete_note');
     expect((rows[0].querySelector('.ew-manage-toggle') as HTMLButtonElement).disabled).toBeFalse();
     expect(rows[0].querySelector('.ew-manage-missing')!.textContent).toContain('active_incomplete_note');
-    (rows[1].querySelector('.ew-link-btn') as HTMLButtonElement).click();
-    expect(editor.showMissingIn).toHaveBeenCalledWith('de');
+    const parts = Array.from(rows[1].querySelectorAll('.ew-missing-part')) as HTMLElement[];
+    expect(parts.map(part => [part.tagName, part.textContent!.trim()])).toEqual([['BUTTON', 'Texty 3'], ['BUTTON', 'FAQ 2'], ['SPAN', 'Other 1']]);
+    parts[1].click();
+    expect(editor.openMissingPart).toHaveBeenCalledWith('de', 'faq');
     expect(closed).toBe(1);
 
     fixture.componentRef.setInput('open', false);

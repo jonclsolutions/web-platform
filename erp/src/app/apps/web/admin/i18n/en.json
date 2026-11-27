@@ -411,6 +411,8 @@
     "missing_badge_title": "Number of missing translations",
     "missing_field": "Translation missing - the website shows \"Cannot load text\".",
     "missing_warning": "Missing translations ({lang}): {count}. The website shows \"Cannot load text\" instead.",
+    "missing_warning_inactive": "The language {lang} is switched off – visitors do not see it. Missing translations: {count}; fill them in before you switch it on.",
+    "missing_field_inactive": "Translation missing – fill it in before you switch the language on.",
     "optional_label": "optional",
     "move_up": "Move up",
     "move_down": "Move down",
@@ -476,6 +478,7 @@
     "kind_web_faq_missing": "Missing FAQ translations",
     "kind_web_jobs_missing": "Missing job translations",
     "kind_web_references_missing": "Missing reference translations",
-    "kind_web_kb_missing": "Missing knowledge base translations"
+    "kind_web_kb_missing": "Missing knowledge base translations",
+    "kind_web_inquiry_email_missing": "Empty texts of the inquiry e-mail"
   }
 }

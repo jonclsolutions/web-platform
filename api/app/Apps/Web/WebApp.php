@@ -28,6 +28,7 @@ use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
 use App\Support\Uploads\AttachmentPolicy;
 use App\Apps\Web\Support\WebContentLanguages;
+use App\Apps\Web\Support\RawRequestEmailTemplate;
 use App\Support\I18n\I18nText;
 use App\Apps\Web\Database\Seeders\WebBaseDataSeeder;
 
@@ -149,11 +150,14 @@ final class WebApp extends AppManifest
 
     /**
      * @description See AppManifest::contentMissing() - FAQ, positions, references and knowledge
-     *   base records missing a text in the language.
+     *   base records missing a text in the language, and the empty texts of the inquiry
+     *   confirmation e-mail (`inquiry_email` - the customer would get Czech in their place).
      */
     public function contentMissing(string $code): array
     {
-        return array_filter(WebContentMissing::counts([$code]));
+        $email = count(RawRequestEmailTemplate::missingIn(WebSiteSetting::query()->first() ?? new \stdClass(), strtolower($code)));
+
+        return array_filter(WebContentMissing::counts([$code]) + ['inquiry_email' => $email]);
     }
 
     /** @description Texts of the inquiry confirmation e-mail stored per language (web settings). */

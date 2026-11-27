@@ -54,6 +54,8 @@ export const WEB_APP: AppManifest = {
     },
   ],
   maintenance: { endpoint: 'web/settings', permission: 'web-set-maintenance-mode', activeField: 'is_web_active', messageField: 'web_maintenance_message' },
+  // the inquiry confirmation e-mail opened in the language (UserRequestComponent, ?email-template=)
+  missingPartLinks: { inquiry_email: '/admin/web/user-request?email-template={lang}' },
   adminRoutes: WEB_ADMIN_ROUTES,
   publicArea: WEB_PUBLIC_AREA,
   publicRoutes: WEB_PUBLIC_ROUTES,
