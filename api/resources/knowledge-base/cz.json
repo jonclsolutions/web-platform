@@ -955,7 +955,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Kontaktní e-mail, telefon, adresa a sociální sítě, které vidí návštěvníci webu, e-shopu a klientského portálu, se nastavují v Core na stránce Firemní profil (záložka Firemní údaje)."
+              "content": "Kontaktní e-mail, telefon, adresa a sociální sítě, které vidí návštěvníci webu, e-shopu a klientského portálu, se nastavují v Core na stránce Firemní profil (záložky Firemní údaje a Sociální sítě a měření)."
             }
           ]
         }
@@ -1789,13 +1789,13 @@
     },
     "settings": {
       "navLabel": "Firemní profil",
-      "header": "Firemní profil - firemní údaje",
+      "header": "Firemní profil - firemní údaje, značka, sociální sítě",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Stránka Firemní profil obsahuje firemní údaje: logo, údaje o firmě a sociální sítě, které se ukazují návštěvníkům a v e-mailech. Jak dlouho se uchovávají osobní údaje, nastavíte na stránce Právní dokumenty, záložka Retence dat."
+              "content": "Stránka Firemní profil má tři záložky: Firemní údaje (název, IČO, DIČ, kontakty, adresa), Značka a texty (logo, slogan, copyright, text patičky) a Sociální sítě a měření (odkazy na profily, Google Analytics). Údaje vidí návštěvníci webu, e-shopu a portálu a jsou v e-mailech. Jak dlouho se uchovávají osobní údaje, nastavíte na stránce Právní dokumenty, záložka Retence dat."
             },
             {
               "type": "text",
@@ -1804,41 +1804,30 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Stránku vidí účty s oprávněním Zobrazit firemní údaje (core-legal-config-view). Ukládat smí jen účty s oprávněním upravovat firemní údaje (core-legal-config-update); přidávat a mazat sociální sítě mají vlastní oprávnění."
+              "content": "Stránku vidí účty s oprávněním Zobrazit firemní údaje (core-legal-config-view). Bez oprávnění upravovat firemní údaje (core-legal-config-update) jsou pole jen pro čtení a záložky nemají tlačítko Uložit; přidávat a mazat sociální sítě mají vlastní oprávnění."
             }
           ]
         },
         {
-          "heading": "01. Logo",
+          "heading": "01. Ukládání a neuložené změny",
           "blocks": [
             {
-              "type": "flow",
-              "steps": [
-                {
-                  "label": "Vybrat logo",
-                  "text": "V kartě Logo stiskněte Vybrat logo (nebo Změnit logo). Vyberte obrázek JPG, PNG nebo SVG do 2 MB.",
-                  "active": true
-                },
-                {
-                  "label": "Náhled",
-                  "text": "Logo se zobrazí v náhledu se značkou Nové logo připraveno k uložení. Tlačítkem Zrušit výběr ho zahodíte.",
-                  "active": false
-                },
-                {
-                  "label": "Uložení",
-                  "text": "Logo se uloží až tlačítkem Uložit firemní údaje v záhlaví karty Firemní údaje (na tlačítku přibude „+ logo“).",
-                  "active": false
-                }
-              ]
+              "type": "text",
+              "content": "Každá záložka má jedno tlačítko Uložit v záhlaví své karty. Ukládá jen tuto záložku - rozepsané změny v ostatních záložkách zůstanou ve formuláři a uložíte je jejich tlačítkem. Při posouvání zůstává záhlaví nahoře, takže tlačítko máte vždy po ruce."
+            },
+            {
+              "type": "note",
+              "highlight": "Oranžová tečka",
+              "content": "Záložka s neuloženými změnami má oranžovou tečku a v záhlaví karty značku Neuloženo. Po uložení se na chvíli ukáže Uloženo. Když stránku opouštíte s neuloženými změnami, administrace se zeptá a vyjmenuje záložky, kterých se to týká; zavření nebo obnovení záložky prohlížeče hlídá prohlížeč."
             },
             {
               "type": "text",
-              "content": "Logo se zobrazuje v hlavičce veřejného webu a e-shopu a jako ikonka v náhledu záložky na záložkách Názvy stránek."
+              "content": "Tlačítko Obnovit vše v hlavičce administrace ani automatické obnovení stránky rozepsané změny nesmaže - načte jen záložky a sociální sítě, které neupravujete."
             }
           ]
         },
         {
-          "heading": "02. Údaje o firmě",
+          "heading": "02. Firemní údaje",
           "blocks": [
             {
               "type": "grid",
@@ -1852,6 +1841,57 @@
                   "text": "Povinný. Kontakt pro návštěvníky - web, e-shop, stránky údržby, e-maily."
                 },
                 {
+                  "title": "IČO a DIČ",
+                  "text": "Identifikační a daňové číslo firmy."
+                },
+                {
+                  "title": "Telefon a Adresa",
+                  "text": "Kontaktní telefon a adresa sídla nebo provozovny."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Zobrazovat na webu",
+              "content": "Kromě povinných polí má každý údaj u názvu zaškrtávací políčko Zobrazovat na webu (platí ve všech záložkách). Vypnutý údaj se na webu ani v e-mailech nezobrazí, jeho hodnota ale zůstane uložená. Zapnutý údaj musí být vyplněný - jinak uložení skončí hláškou Chybějící údaje se seznamem polí."
+            },
+            {
+              "type": "text",
+              "content": "Firemní údaje se ukládají jako celek. Dokud nejsou uložené povinné údaje této záložky (například na novém webu), ostatní záložky nejdou uložit - hláška řekne, kterou záložku máte nejdřív vyplnit a uložit."
+            }
+          ]
+        },
+        {
+          "heading": "03. Značka a texty",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Vybrat logo",
+                  "text": "Tlačítkem Vybrat logo (nebo Změnit logo) vyberte obrázek JPG, PNG nebo WebP do 2 MB.",
+                  "active": true
+                },
+                {
+                  "label": "Náhled",
+                  "text": "Logo se ukáže v náhledu a záložka dostane oranžovou tečku. Tlačítkem Zrušit výběr ho zahodíte.",
+                  "active": false
+                },
+                {
+                  "label": "Uložení",
+                  "text": "Logo se uloží tlačítkem Uložit v záhlaví záložky spolu s texty.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Logo se zobrazuje v hlavičce veřejného webu a e-shopu a jako ikonka v náhledu záložky na záložkách Názvy stránek."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
                   "title": "Brand Tagline",
                   "text": "Slogan firmy - zadává se zvlášť pro každý jazyk."
                 },
@@ -1860,74 +1900,62 @@
                   "text": "Text o autorských právech - zvlášť pro každý jazyk."
                 },
                 {
-                  "title": "IČO a DIČ",
-                  "text": "Identifikační a daňové číslo firmy."
-                },
-                {
-                  "title": "Telefon a Adresa",
-                  "text": "Kontaktní telefon a adresa sídla nebo provozovny."
-                },
-                {
                   "title": "Text patičky webu",
                   "text": "Text v patičce veřejného webu, například „© 2026 Firma s.r.o. Všechna práva vyhrazena.“"
-                },
-                {
-                  "title": "Google Analytics 4 - Measurement ID",
-                  "text": "Identifikátor měření Google Analytics (začíná G-). Měření se na webu spustí jen u návštěvníka, který souhlasí s analytickými cookies. Prázdné pole = žádné měření."
                 }
               ]
             },
             {
               "type": "text",
-              "content": "U jazykových polí (slogan, copyright) přepínáte jazyk přepínačem Jazyk pro slogan a copyright nad formulářem. Vyplňte je ve všech jazycích."
-            },
-            {
-              "type": "note",
-              "highlight": "Zobrazovat na webu",
-              "content": "Kromě povinných polí má každý údaj u názvu zaškrtávací políčko Zobrazovat na webu. Vypnutý údaj se na webu ani v e-mailech nezobrazí, jeho hodnota ale zůstane uložená. Zapnutý údaj musí být vyplněný - jinak uložení skončí hláškou Chybějící údaje se seznamem polí."
-            },
-            {
-              "type": "text",
-              "content": "Vše uložíte tlačítkem Uložit firemní údaje v záhlaví karty - při posouvání stránky zůstává záhlaví nahoře, takže tlačítko máte vždy po ruce. Úspěšné uložení potvrdí hláška Uloženo a značka u karty."
+              "content": "Jazyk sloganu a copyrightu přepínáte přepínačem jazyků nad poli. Vyplňte je ve všech jazycích; vypnuté jazyky jsou přerušované a připravíte je předem."
             }
           ]
         },
         {
-          "heading": "03. Sociální sítě",
+          "heading": "04. Sociální sítě a měření",
           "blocks": [
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Přidat sociální síť",
-                  "text": "Tlačítkem Přidat sociální síť vytvoříte nový řádek.",
+                  "text": "Tlačítkem Přidat sociální síť vytvoříte nový (zelený) řádek.",
                   "active": true
                 },
                 {
                   "label": "Název a adresa",
-                  "text": "Vyplňte název (Facebook, Instagram, LinkedIn …) a celou adresu profilu začínající https://.",
+                  "text": "Vyplňte název (Facebook, Instagram, LinkedIn …) a celou adresu profilu začínající https://. Neplatnou adresu pole hned označí.",
                   "active": false
                 },
                 {
-                  "label": "Ikonka",
-                  "text": "Tlačítkem Nahrát ikonku vyberte obrázek ikony (do 2 MB) - zobrazí se na webu u odkazu.",
+                  "label": "Ikonka a pořadí",
+                  "text": "Klikem na čtvereček vyberte ikonku (do 2 MB). Šipkami nahoru a dolů změníte pořadí na webu.",
                   "active": false
                 },
                 {
                   "label": "Uložit",
-                  "text": "Ikonou uložení u řádku odkaz uložíte. Každý řádek se ukládá samostatně.",
+                  "text": "Tlačítko Uložit v záhlaví uloží všechny nové a změněné řádky najednou (změněné řádky jsou oranžově označené).",
                   "active": false
                 },
                 {
                   "label": "Smazat",
-                  "text": "Ikonou koše a potvrzením odkaz smažete i s ikonkou.",
+                  "text": "Ikonou koše a potvrzením odkaz smažete i s ikonkou - hned, ostatní rozepsané řádky zůstanou.",
                   "active": false
                 }
               ]
             },
             {
               "type": "text",
-              "content": "Sociální sítě se zobrazují na veřejném webu, v e-shopu, v klientském portálu a na stránkách údržby. Přidávání vyžaduje oprávnění core-legal-config-create, úprava core-legal-config-update a mazání core-legal-config-delete."
+              "content": "Sociální sítě se zobrazují na veřejném webu, v e-shopu, v klientském portálu a na stránkách údržby. Přidávání vyžaduje oprávnění core-legal-config-create, úprava a řazení core-legal-config-update a mazání core-legal-config-delete."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Google Analytics 4 - Measurement ID",
+                  "text": "Identifikátor měření Google Analytics ve tvaru G-XXXXXXXXXX. Měření se na webu spustí jen u návštěvníka, který souhlasí s analytickými cookies. Prázdné nebo vypnuté pole = žádné měření."
+                }
+              ]
             }
           ]
         }

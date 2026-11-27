@@ -11,6 +11,7 @@
  * - RouterModule: Core Angular routing service.
  * - AuthGuard: Authentication middleware ensuring restricted access to administrative routes.
  * - AdminLayoutComponent: Main wrapper layout for the admin section.
+ * - unsavedTextsGuard: pages with unsaved edits ask before they are left (company profile).
  */
 
 import { NgModule } from '@angular/core';
@@ -18,6 +19,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { AdminLayoutComponent } from './components/admin-layout/admin-layout.component';
 import { ADMIN_ERROR_PAGE_KEY, AuthGuard } from '../core/auth/guards/auth.guard';
 import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
+import { unsavedTextsGuard } from './components/translation-editor/unsaved-texts.guard';
 import { KnowledgeBaseComponent } from './intranet/knowledge-base/knowledge-base.component';
 import { KbArticleComponent } from './intranet/knowledge-base/kb-article/kb-article.component';
 
@@ -100,7 +102,8 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'apps', component: AppsComponent, data: { help: 'apps' } },
           // Release notes of the running installation - every administrator (no permission).
           { path: 'releases', component: ReleasesComponent, data: { help: 'releases' } },
-          { path: 'settings', component: SettingsComponent, data: { help: 'settings', permission: 'core-legal-config-view' } },
+          // unsavedTextsGuard: leaving the company profile with unsaved edits of a tab asks first
+          { path: 'settings', component: SettingsComponent, canDeactivate: [unsavedTextsGuard], data: { help: 'settings', permission: 'core-legal-config-view' } },
           { path: 'external-links', component: ExternalLinksComponent, data: { help: 'external-links', permission: 'core-external-links-view' } },
           // Restricted to the 'sysadmin' role regardless of the permission system (see sysadminGuard).
           { path: 'edit-roles', component: EditRolesComponent, data: { help: 'edit-roles' }, canActivate: [sysadminGuard] },

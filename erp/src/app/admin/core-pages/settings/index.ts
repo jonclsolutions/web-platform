@@ -4,8 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Types of the Web settings page: languages, company details (SiteSetting) and
- *   social links.
+ * @description Types of the company profile page (core/settings): languages, company details
+ *   (SiteSetting) and social links (with the state of their row in the form).
  */
 
 export interface LangMeta {
@@ -43,15 +43,24 @@ export type CompanyOptionalField =
   | 'brand_tagline' | 'copyright_text' | 'ico' | 'dic'
   | 'google_analytics_id' | 'contact_phone' | 'address' | 'footer_text';
 
+/** Stored version of a social link (the unsaved-changes check of its row). */
+export interface SocialLinkSaved {
+  name: string;
+  url: string;
+  position: number;
+}
+
 export interface SocialLink {
   id?: number;
   name: string;
   url: string;
   icon_path: string;
   position: number;
+  /** Stable key of the row in the form (tracking of the list, also for a row not yet saved). */
+  _key?: number;
+  /** Stored version - null / missing for a new row. */
+  _saved?: SocialLinkSaved | null;
   _iconFile?: File | null;
   _iconPreview?: string | null;
-  _saving?: boolean;
   _isNew?: boolean;
-  _dirty?: boolean;
 }

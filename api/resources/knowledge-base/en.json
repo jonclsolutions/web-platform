@@ -955,7 +955,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The contact e-mail, phone, address and social media that visitors of the website, the e-shop and the client portal see are set in Core on the Company profile page (tab Company details)."
+              "content": "The contact e-mail, phone, address and social media that visitors of the website, the e-shop and the client portal see are set in Core on the Company profile page (tabs Company details and Social media and measuring)."
             }
           ]
         }
@@ -1789,13 +1789,13 @@
     },
     "settings": {
       "navLabel": "Company profile",
-      "header": "Company profile - company details",
+      "header": "Company profile - company details, brand, social media",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The Company profile page holds the company details: the logo, the company details and the social media shown to visitors and in e-mails. How long personal data are kept is set on the Legal documents page, tab Data retention."
+              "content": "The Company profile page has three tabs: Company details (name, company ID, VAT ID, contacts, address), Brand and texts (logo, tagline, copyright, footer text) and Social media and measuring (profile links, Google Analytics). Visitors of the website, the e-shop and the portal see the details and they are in e-mails. How long personal data are kept is set on the Legal documents page, tab Data retention."
             },
             {
               "type": "text",
@@ -1804,36 +1804,25 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Accounts with the permission to show company details (core-legal-config-view) see the page. Only accounts with the permission to edit company details (core-legal-config-update) may save; adding and deleting social media have permissions of their own."
+              "content": "Accounts with the permission to show company details (core-legal-config-view) see the page. Without the permission to edit company details (core-legal-config-update) the fields are read-only and the tabs have no Save button; adding and deleting social media have permissions of their own."
             }
           ]
         },
         {
-          "heading": "01. Logo",
+          "heading": "01. Saving and unsaved changes",
           "blocks": [
             {
-              "type": "flow",
-              "steps": [
-                {
-                  "label": "Choose logo",
-                  "text": "In the Logo card press Choose logo (or Change logo). Choose a JPG, PNG or SVG image up to 2 MB.",
-                  "active": true
-                },
-                {
-                  "label": "Preview",
-                  "text": "The logo appears in the preview with the mark New logo ready to save. Cancel selection discards it.",
-                  "active": false
-                },
-                {
-                  "label": "Saving",
-                  "text": "The logo is saved only with the Save company details button in the header of the Company details card (the button shows “+ logo”).",
-                  "active": false
-                }
-              ]
+              "type": "text",
+              "content": "Every tab has one Save button in the header of its card. It saves only that tab - unfinished changes in the other tabs stay in the form and you save them with their own button. The header stays at the top while you scroll, so the button is always at hand."
+            },
+            {
+              "type": "note",
+              "highlight": "Amber dot",
+              "content": "A tab with unsaved changes has an amber dot and the mark Unsaved in the card header. After a save, Saved is shown for a moment. When you leave the page with unsaved changes, the administration asks and names the tabs concerned; closing or reloading the browser tab is guarded by the browser."
             },
             {
               "type": "text",
-              "content": "The logo is shown in the header of the public website and the e-shop and as the icon in the tab preview on the Page titles tabs."
+              "content": "Neither the Refresh all button in the administration header nor the automatic refresh deletes unfinished changes - they reload only the tabs and social media you are not editing."
             }
           ]
         },
@@ -1852,6 +1841,57 @@
                   "text": "Required. The contact for visitors - website, e-shop, maintenance pages, e-mails."
                 },
                 {
+                  "title": "Company ID and VAT ID",
+                  "text": "The registration and tax numbers of the company."
+                },
+                {
+                  "title": "Phone and Address",
+                  "text": "The contact phone and the address of the registered office or premises."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Show on the website",
+              "content": "Apart from the required fields, every detail has the checkbox Show on the website next to its name (in every tab). A switched-off detail is not shown on the website or in e-mails, but its value stays saved. A switched-on detail must be filled in - otherwise saving ends with the message Missing details and a list of the fields."
+            },
+            {
+              "type": "text",
+              "content": "The company details are stored as a whole. Until the required details of this tab are saved (on a new website, for example), the other tabs cannot be saved - the message says which tab to fill in and save first."
+            }
+          ]
+        },
+        {
+          "heading": "03. Brand and texts",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Choose logo",
+                  "text": "Choose logo (or Change logo) picks a JPG, PNG or WebP image up to 2 MB.",
+                  "active": true
+                },
+                {
+                  "label": "Preview",
+                  "text": "The logo appears in the preview and the tab gets an amber dot. Cancel selection discards it.",
+                  "active": false
+                },
+                {
+                  "label": "Saving",
+                  "text": "The logo is saved with the Save button in the header of the tab, together with the texts.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The logo is shown in the header of the public website and the e-shop and as the icon in the tab preview on the Page titles tabs."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
                   "title": "Brand tagline",
                   "text": "The company slogan - entered separately for every language."
                 },
@@ -1860,74 +1900,62 @@
                   "text": "The copyright notice - separately for every language."
                 },
                 {
-                  "title": "Company ID and VAT ID",
-                  "text": "The registration and tax numbers of the company."
-                },
-                {
-                  "title": "Phone and Address",
-                  "text": "The contact phone and the address of the registered office or premises."
-                },
-                {
                   "title": "Website footer text",
                   "text": "Text in the footer of the public website, for example “© 2026 Company Ltd. All rights reserved.”"
-                },
-                {
-                  "title": "Google Analytics 4 - Measurement ID",
-                  "text": "The Google Analytics measurement ID (starts with G-). Measuring starts on the website only for a visitor who agrees to analytics cookies. Empty field = no measuring."
                 }
               ]
             },
             {
               "type": "text",
-              "content": "For the language fields (tagline, copyright) switch the language with the switch Language for tagline and copyright above the form. Fill them in for all languages."
-            },
-            {
-              "type": "note",
-              "highlight": "Show on the website",
-              "content": "Apart from the required fields, every detail has the checkbox Show on the website next to its name. A switched-off detail is not shown on the website or in e-mails, but its value stays saved. A switched-on detail must be filled in - otherwise saving ends with the message Missing details and a list of the fields."
-            },
-            {
-              "type": "text",
-              "content": "Save everything with Save company details in the header of the card - the header stays at the top while you scroll, so the button is always at hand. A successful save is confirmed by the message and the Saved mark at the card."
+              "content": "Switch the language of the tagline and the copyright with the language switch above the fields. Fill them in for all languages; switched-off languages are dashed and can be prepared in advance."
             }
           ]
         },
         {
-          "heading": "03. Social media",
+          "heading": "04. Social media and measuring",
           "blocks": [
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Add social media",
-                  "text": "Add social media creates a new row.",
+                  "text": "Add social media creates a new (green) row.",
                   "active": true
                 },
                 {
                   "label": "Name and address",
-                  "text": "Fill in the name (Facebook, Instagram, LinkedIn …) and the full address of the profile starting with https://.",
+                  "text": "Fill in the name (Facebook, Instagram, LinkedIn …) and the full address of the profile starting with https://. An invalid address is marked at once.",
                   "active": false
                 },
                 {
-                  "label": "Icon",
-                  "text": "Upload icon chooses the icon image (up to 2 MB) - it is shown on the website at the link.",
+                  "label": "Icon and order",
+                  "text": "Click the square to choose the icon (up to 2 MB). The up and down arrows change the order on the website.",
                   "active": false
                 },
                 {
                   "label": "Save",
-                  "text": "The save icon of the row saves the link. Every row is saved on its own.",
+                  "text": "The Save button in the header saves all new and changed rows at once (changed rows are marked amber).",
                   "active": false
                 },
                 {
                   "label": "Delete",
-                  "text": "The bin icon and a confirmation delete the link together with its icon.",
+                  "text": "The bin icon and a confirmation delete the link with its icon - at once, the other unfinished rows stay.",
                   "active": false
                 }
               ]
             },
             {
               "type": "text",
-              "content": "Social media are shown on the public website, in the e-shop, in the client portal and on the maintenance pages. Adding requires core-legal-config-create, editing core-legal-config-update and deleting core-legal-config-delete."
+              "content": "Social media are shown on the public website, in the e-shop, in the client portal and on the maintenance pages. Adding requires core-legal-config-create, editing and ordering core-legal-config-update and deleting core-legal-config-delete."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Google Analytics 4 - Measurement ID",
+                  "text": "The Google Analytics measurement ID in the form G-XXXXXXXXXX. Measuring starts on the website only for a visitor who agrees to analytics cookies. An empty or switched-off field = no measuring."
+                }
+              ]
             }
           ]
         }

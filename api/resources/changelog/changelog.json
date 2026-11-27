@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Firemní profil je rozdělený do tří záložek: Firemní údaje, Značka a texty (logo, slogan, copyright, patička) a Sociální sítě a měření (pořadí šipkami, kontrola adresy, Google Analytics). Každá záložka má jedno Uložit a funguje i na mobilu."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Firemní profil už neztrácí rozepsané změny: uložení nebo smazání sociální sítě, uložení jiné záložky ani obnovení stránky je nepřepíše. Záložka s neuloženými změnami má tečku a při odchodu ze stránky se administrace zeptá."
+        },
+        {
             "type": "fixed",
             "area": "core",
             "part": "admin",

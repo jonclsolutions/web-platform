@@ -8,7 +8,7 @@
  *   unsaved edits asks first - any way out of the page: the Back button of the browser, the
  *   menu, "Otevřít editor", the close button of the editor. The page asks in its own window.
  * @usage `{ path: 'edit-website', canDeactivate: [unsavedTextsGuard], … }`; the page component
- *   implements `confirmLeave()`.
+ *   implements `confirmLeave()`. Also the company profile (core/settings) - its unsaved tabs.
  * @dependencies Angular Router (CanDeactivateFn)
  * @note Closing / reloading the browser tab is asked by the browser itself (beforeunload).
  * @note A second Back while the window is open does not leave: every navigation is stopped at
