@@ -5,7 +5,8 @@
     },
     "legal": {
         "terms_of_service": "Obchodní podmínky",
-        "privacy_policy": "Zásady ochrany osobních údajů"
+        "privacy_policy": "Zásady ochrany osobních údajů",
+        "cookies_policy": "Zásady cookies"
     },
     "header": {
         "logo_alt": "Logo společnosti",
@@ -232,5 +233,43 @@
         "text": "Tato stránka je dostupná i v češtině.",
         "action": "Přepnout do češtiny",
         "dismiss": "Zavřít"
+    },
+    "cookie_consent": {
+        "aria_label": "Nastavení souhlasu s cookies",
+        "title": "Používáme cookies",
+        "description": "Používáme cookies pro zajištění funkčnosti e-shopu a s vaším souhlasem i pro analytické a marketingové účely. Podrobnosti najdete v našich zásadách používání cookies.",
+        "policy_link": "Zásady cookies",
+        "btn_settings": "Nastavení",
+        "btn_necessary_only": "Jen nezbytné",
+        "btn_accept_all": "Přijmout vše",
+        "btn_back": "Zpět",
+        "btn_save_settings": "Uložit nastavení",
+        "settings_title": "Nastavení souhlasu s cookies",
+        "settings_desc": "Vyberte, které kategorie cookies chcete povolit. Nezbytné cookies nelze vypnout, protože bez nich by e-shop nefungoval správně.",
+        "cat_necessary": {
+            "label": "Nezbytné",
+            "desc": "Nutné pro základní fungování e-shopu (např. košík a zapamatování vašich předvoleb). Bez těchto cookies e-shop nemůže správně fungovat."
+        },
+        "cat_functional": {
+            "label": "Funkční",
+            "desc": "Umožňují si e-shop zapamatovat vaše nastavení (např. zvolený jazyk) a nabídnout vám pohodlnější nakupování."
+        },
+        "cat_analytics": {
+            "label": "Analytické",
+            "desc": "Pomáhají nám pochopit, jak návštěvníci e-shop používají, abychom ho mohli postupně vylepšovat (např. Google Analytics)."
+        },
+        "cat_marketing": {
+            "label": "Marketingové",
+            "desc": "Používají se k zobrazování relevantnější reklamy na základě vašeho zájmu, a to i na jiných webech."
+        }
+    },
+    "cookies_policy": {
+        "header_main": "Zásady používání cookies",
+        "last_update_text": "Poslední aktualizace:",
+        "change_settings_text": "Svůj souhlas s jednotlivými kategoriemi cookies můžete kdykoli změnit přes",
+        "change_settings_link_text": "nastavení cookies",
+        "more_info_text": "Podrobnosti o zpracování osobních údajů najdete v našich",
+        "more_info_link_text": "zásadách ochrany osobních údajů",
+        "effective_from_text": "Tyto zásady jsou účinné od {date}."
     }
 }

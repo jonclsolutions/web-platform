@@ -97,6 +97,7 @@
         "ico_label": "Nr identyfikacyjny (IČO)",
         "dic_label": "NIP \/ VAT",
         "contact_header": "Kontakt",
+        "copyright_text": "© {year} Wszelkie prawa zastrzeżone.",
         "language_label": "Język"
     },
     "legal": {
@@ -634,6 +635,7 @@
         "aria_label": "Ustawienia zgody na pliki cookie",
         "title": "Używamy plików cookie",
         "description": "Używamy plików cookie, aby zapewnić prawidłowe działanie strony, a za Twoją zgodą także w celach analitycznych i marketingowych. Szczegóły znajdziesz w naszej polityce plików cookie.",
+        "policy_link": "Polityka cookies",
         "btn_settings": "Ustawienia",
         "btn_necessary_only": "Tylko niezbędne",
         "btn_accept_all": "Akceptuj wszystkie",

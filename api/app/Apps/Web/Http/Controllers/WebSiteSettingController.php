@@ -180,4 +180,37 @@ class WebSiteSettingController extends Controller
 
         return $this->respond($settings);
     }
+
+    /**
+     * @description Footer options of the public website: whether the copyright line
+     *   (`footer.copyright_text` of its texts) is shown. Read by the texts page of the admin.
+     * @return JsonResponse { show_footer_copyright: bool }
+     */
+    public function showFooter(): JsonResponse
+    {
+        $settings = WebSiteSetting::first();
+
+        return $this->respond(['show_footer_copyright' => (bool) ($settings->show_footer_copyright ?? true)]);
+    }
+
+    /**
+     * @description Shows or hides the copyright line of the public website footer (all languages).
+     *   No password: it changes a text on the pages, not their availability.
+     * @param Request $request Body { show_footer_copyright: bool }.
+     * @return JsonResponse { show_footer_copyright: bool }
+     */
+    public function updateFooter(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['show_footer_copyright' => 'required|boolean']);
+
+        $settings = WebSiteSetting::first() ?? new WebSiteSetting(['is_web_active' => true, 'web_maintenance_message' => 'We apologize, but the website is currently undergoing maintenance.']);
+        $settings->show_footer_copyright = (bool) $validated['show_footer_copyright'];
+        $settings->save();
+        Cache::forget(self::CACHE_KEY);
+
+        $state = $settings->show_footer_copyright ? 'shown' : 'hidden';
+        $this->logAction($request, WebLog::class, 'update', 'Web', "Footer copyright line {$state}.", $settings->id, 'WebSiteSetting');
+
+        return $this->respond(['show_footer_copyright' => $settings->show_footer_copyright]);
+    }
 }

@@ -121,6 +121,30 @@ describe('BaseTranslationEditorComponent', () => {
   }));
 
   /**
+   * @description A text switched off on the public pages (setTextHidden - the copyright switch of
+   *   the host page) is not missing even when empty, before and after the load and after an edit;
+   *   switched on again it is.
+   * @input en loaded; home.title emptied (missing); setTextHidden('home.title', true); a reload;
+   *   an edit to ''; setTextHidden(false)
+   * @output missing true → false → false after the reload and the edit → true
+   */
+  it('does not count a switched-off text as missing', fakeAsync(() => {
+    component.ngOnInit();
+    component.loadLang('en');
+    component.updateValue('home.title', '');
+    const item = () => component.flattenedKeys.find(k => k.path === 'home.title')!;
+    expect(item().missing).toBeTrue();
+    component.setTextHidden('home.title', true);
+    expect(item().missing).toBeFalse();
+    component.refreshTranslations();
+    component.updateValue('home.title', '');
+    expect(item().missing).toBeFalse();
+    component.setTextHidden('home.title', false);
+    expect(item().missing).toBeTrue();
+    flush();
+  }));
+
+  /**
    * @description Changes of one text: the saved value is the loaded one; a text written
    *   back to it is no change any more; ↺ restores it (the other edits stay); the list of the
    *   changes goes from the last edited; a load clears it all.
@@ -706,12 +730,14 @@ describe('BaseTranslationEditorComponent', () => {
    * @description A part of what a language lacks (window Jazyky) opens where it is filled in: the
    *   texts → the list of the missing ones; a tab of the page → the tab, asking it for the
    *   language (a new request each time); a part of another page → the address of the
-   *   application (`missingPartLinks`, `{lang}` replaced); an unknown part does nothing.
+   *   application (`missingPartLinks`, `{lang}` replaced) or of the core (the company profile
+   *   texts); an unknown part does nothing.
    * @input extra tab faq; openMissingPart('en', 'texts'), ('pl', 'page_titles'), ('pl', 'faq'),
-   *   ('de', 'inquiry_email'), ('de', 'unknown').
+   *   ('de', 'inquiry_email'), ('fr', 'company_texts'), ('de', 'unknown').
    * @output showMissingIn('en'); activeTab page_titles + focusLang {pl, 1}; faq + {pl, 2};
-   *   navigateByUrl('/admin/web/user-request?email-template=de'); canOpenMissingPart true for
-   *   texts / faq / inquiry_email, false for unknown.
+   *   navigateByUrl('/admin/web/user-request?email-template=de'),
+   *   ('/admin/core/settings?tab=brand&lang=fr'); canOpenMissingPart true for texts / faq /
+   *   inquiry_email / company_texts, false for unknown.
    */
   it('opens where a missing part of a language is filled in', () => {
     (component as any).extraTabs.push({ key: 'faq', labelKey: 'tab_faq', icon: 'help-circle' });
@@ -726,10 +752,12 @@ describe('BaseTranslationEditorComponent', () => {
     expect([component.activeTab, component.focusLang]).toEqual(['faq', { code: 'pl', seq: 2 }]);
     component.openMissingPart('de', 'inquiry_email');
     expect(navigate).toHaveBeenCalledWith('/admin/web/user-request?email-template=de');
+    component.openMissingPart('fr', 'company_texts');
+    expect(navigate).toHaveBeenCalledWith('/admin/core/settings?tab=brand&lang=fr');
     navigate.calls.reset();
     component.openMissingPart('de', 'unknown');
     expect(navigate).not.toHaveBeenCalled();
-    expect(['texts', 'faq', 'inquiry_email', 'unknown'].map(part => component.canOpenMissingPart(part))).toEqual([true, true, true, false]);
+    expect(['texts', 'faq', 'inquiry_email', 'company_texts', 'unknown'].map(part => component.canOpenMissingPart(part))).toEqual([true, true, true, true, false]);
   });
 
   /**

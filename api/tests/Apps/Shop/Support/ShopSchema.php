@@ -37,6 +37,7 @@ final class ShopSchema
             $t->increments('id');
             $t->boolean('is_shop_active')->default(true);
             $t->string('maintenance_message')->nullable();
+            $t->boolean('show_footer_copyright')->default(true);
             // Unpaid orders (migration 2026_11_21_000003_shop_unpaid_orders).
             $t->unsignedTinyInteger('unpaid_reminder_days')->default(3);
             $t->unsignedTinyInteger('unpaid_cancel_days')->default(7);

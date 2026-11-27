@@ -14,6 +14,8 @@
  * - TranslationEditorViewComponent: the page; the panels of the extra tabs are its content.
  * - FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, KnowledgeBaseEditorComponent:
  *   the extra tabs.
+ * - FooterCopyrightOptionComponent: the copyright line of the website footer shown / hidden
+ *   (web/settings/footer) above the texts.
  * @note Unsaved edits of any tab: leaving the page asks first (unsavedTextsGuard).
  * @note `?tab=faq` (…) opens a tab - the visual text editor points to the part of a content.
  */
@@ -24,6 +26,7 @@ import {
   BaseTranslationEditorComponent, TranslationEditorTab
 } from '../../../../admin/components/translation-editor/base-translation-editor.component';
 import { TranslationEditorViewComponent } from '../../../../admin/components/translation-editor/translation-editor-view.component';
+import { FooterCopyrightOptionComponent } from '../../../../admin/components/footer-copyright-option/footer-copyright-option.component';
 import { LeaveConfirmable } from '../../../../admin/components/translation-editor/unsaved-texts.guard';
 import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
 import { JobsEditorComponent } from './content-editors/jobs-editor/jobs-editor.component';
@@ -37,7 +40,7 @@ import { KnowledgeBaseEditorComponent } from './content-editors/knowledge-base-e
 @Component({
   selector: 'app-edit-website',
   standalone: true,
-  imports: [TranslationEditorViewComponent, FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, KnowledgeBaseEditorComponent],
+  imports: [TranslationEditorViewComponent, FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, KnowledgeBaseEditorComponent, FooterCopyrightOptionComponent],
   templateUrl: './edit-website.component.html',
   styleUrls: ['../../../../admin/shared-styles/settings-page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

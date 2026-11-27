@@ -157,16 +157,42 @@ class SiteSettingTest extends TestCase
     /**
      * @description The public status is open to everybody and cached.
      * @input No settings row: GET /api/web/public/status; then the row switched off (cache still on).
-     * @output {is_web_active: true} both times (cached for 5 minutes); row created.
+     * @output {is_web_active: true, show_footer_copyright: true} both times (cached for 5
+     *   minutes); row created.
      */
     public function test_public_status(): void
     {
-        $this->getJson('/api/web/public/status')->assertOk()->assertExactJson(['data' => ['is_web_active' => true]]);
+        $this->getJson('/api/web/public/status')->assertOk()->assertExactJson(['data' => ['is_web_active' => true, 'show_footer_copyright' => true]]);
         WebSiteSetting::query()->update(['is_web_active' => false]);
 
-        $this->getJson('/api/web/public/status')->assertExactJson(['data' => ['is_web_active' => true]]);
+        $this->getJson('/api/web/public/status')->assertExactJson(['data' => ['is_web_active' => true, 'show_footer_copyright' => true]]);
         Cache::flush();
-        $this->getJson('/api/web/public/status')->assertExactJson(['data' => ['is_web_active' => false]]);
+        $this->getJson('/api/web/public/status')->assertExactJson(['data' => ['is_web_active' => false, 'show_footer_copyright' => true]]);
+    }
+
+    /**
+     * @description The copyright line of the website footer is switched on the texts page: read
+     *   with web-edit-website-view, switched with web-edit-website-update (no password - a text
+     *   of the pages, not their availability); the public status follows at once (cache cleared);
+     *   logged; a non-boolean is refused.
+     * @input viewer: GET / PUT; editor: PUT false; GET status; PUT 'x'; no row: PUT true.
+     * @output viewer 200 true / 403; editor 200 false, status show_footer_copyright false, web log
+     *   'Footer copyright line hidden.'; 422; row created with true.
+     */
+    public function test_footer_copyright_option(): void
+    {
+        $this->signIn($this->userWith(['web-edit-website-view']));
+        $this->getJson('/api/web/settings/footer')->assertOk()->assertExactJson(['data' => ['show_footer_copyright' => true]]);
+        $this->putJson('/api/web/settings/footer', ['show_footer_copyright' => false])->assertStatus(403);
+
+        $this->signIn($this->userWith(['web-edit-website-view', 'web-edit-website-update']));
+        $this->putJson('/api/web/settings/footer', ['show_footer_copyright' => true])->assertOk();
+        $this->getJson('/api/web/public/status')->assertJsonPath('data.show_footer_copyright', true);
+        $this->putJson('/api/web/settings/footer', ['show_footer_copyright' => false])->assertOk()->assertJsonPath('data.show_footer_copyright', false);
+        $this->getJson('/api/web/public/status')->assertJsonPath('data.show_footer_copyright', false);
+        $this->assertSame('Footer copyright line hidden.', \App\Apps\Web\Models\WebLog::query()->latest('id')->value('description'));
+        $this->putJson('/api/web/settings/footer', ['show_footer_copyright' => 'x'])->assertStatus(422);
+        $this->assertSame(1, WebSiteSetting::count());
     }
 
     /**
@@ -186,7 +212,7 @@ class SiteSettingTest extends TestCase
             $this->postJson("/api/{$form}", [])->assertStatus(503)->assertExactJson(['message' => 'Back soon']);
         }
 
-        $this->getJson('/api/web/public/status')->assertOk()->assertExactJson(['data' => ['is_web_active' => false]]);
+        $this->getJson('/api/web/public/status')->assertOk()->assertJsonPath('data.is_web_active', false);
         $this->getJson('/api/public/legal/config')->assertOk();
 
         WebSiteSetting::query()->update(['is_web_active' => true]);

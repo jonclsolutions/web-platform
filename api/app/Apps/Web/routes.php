@@ -108,6 +108,11 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-user-requests-update');
             Route::put('/raw-request-email-template', [WebSiteSettingController::class, 'updateRawRequestEmailTemplate'])
                 ->middleware('permission:web-user-requests-update');
+            // Footer of the public website (copyright line shown) - the texts page (web/edit-website).
+            Route::get('/footer', [WebSiteSettingController::class, 'showFooter'])
+                ->middleware('permission:web-edit-website-view');
+            Route::put('/footer', [WebSiteSettingController::class, 'updateFooter'])
+                ->middleware('permission:web-edit-website-update');
         });
 
         // ── web/job_applications ─────────────────────────────────────────

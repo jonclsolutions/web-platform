@@ -14,12 +14,15 @@
  * - BaseTranslationEditorComponent: language / translation editor logic and tabs.
  * - TranslationEditorViewComponent: the page.
  * - unsavedTextsGuard (LeaveConfirmable): the question before leaving with unsaved edits.
+ * - FooterCopyrightOptionComponent: the copyright line of the e-shop footer shown / hidden
+ *   (shop/settings/footer) above the texts.
  */
 
 import { Component, ChangeDetectionStrategy, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BaseTranslationEditorComponent } from '../../../../admin/components/translation-editor/base-translation-editor.component';
 import { TranslationEditorViewComponent } from '../../../../admin/components/translation-editor/translation-editor-view.component';
+import { FooterCopyrightOptionComponent } from '../../../../admin/components/footer-copyright-option/footer-copyright-option.component';
 import { LeaveConfirmable } from '../../../../admin/components/translation-editor/unsaved-texts.guard';
 
 /**
@@ -29,10 +32,14 @@ import { LeaveConfirmable } from '../../../../admin/components/translation-edito
 @Component({
   selector: 'app-edit-shop',
   standalone: true,
-  imports: [TranslationEditorViewComponent],
+  imports: [TranslationEditorViewComponent, FooterCopyrightOptionComponent],
   // `compactActions`: the layout of the texts of the website (the "Jazyky" button, the statistics
   // line, the "Chybí" / "Jako CZ" pills, the save bar on a phone); no `editorRoute` - no visual editor yet
-  template: '<app-translation-editor-view [e]="this" [compactActions]="true"></app-translation-editor-view>',
+  // the copyright switch of the e-shop footer above the texts (text footer.copyright_text)
+  template: `<app-translation-editor-view [e]="this" [compactActions]="true">
+    <app-footer-copyright-option textsOptions endpoint="shop/settings/footer" [canUpdate]="canUpdate"
+                                 (shownChange)="setTextHidden('footer.copyright_text', !$event)" />
+  </app-translation-editor-view>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditEshopComponent extends BaseTranslationEditorComponent implements LeaveConfirmable {

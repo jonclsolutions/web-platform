@@ -7,7 +7,8 @@
  * @description Pure helpers of the company profile form (SettingsComponent): the three tabs and
  *   the fields each of them owns, the unsaved-changes check of one tab, the request body that
  *   saves one tab (the stored values of the other tabs, so their unsaved edits stay only in the
- *   form) and the merge of freshly loaded data into the form (a tab with unsaved edits keeps them).
+ *   form), the merge of freshly loaded data into the form (a tab with unsaved edits keeps them)
+ *   and the texts per language missing in a language (the tagline).
  * @dependencies SiteSetting / SocialLink / CompanyOptionalField (./index)
  * @note The API saves the company details as a whole (PUT legal/config/settings validates every
  *   field), so the body of one tab is "stored values + the fields of this tab".
@@ -24,19 +25,50 @@ export const SETTINGS_TABS: readonly SettingsTab[] = ['company', 'brand', 'socia
 /** Value fields of SiteSetting a tab edits (the logo of the brand tab is a file - checked apart). */
 export const TAB_FIELDS: Readonly<Record<SettingsTab, readonly (keyof SiteSetting)[]>> = {
   company: ['company_name', 'ico', 'dic', 'contact_email', 'contact_phone', 'address'],
-  brand: ['brand_tagline_i18n', 'copyright_text_i18n', 'footer_text'],
+  brand: ['brand_tagline_i18n'],
   social: ['google_analytics_id'],
 };
 
 /** Optional fields (their "show" checkbox) of every tab. */
 export const TAB_TOGGLES: Readonly<Record<SettingsTab, readonly CompanyOptionalField[]>> = {
   company: ['ico', 'dic', 'contact_phone', 'address'],
-  brand: ['brand_tagline', 'copyright_text', 'footer_text'],
+  brand: ['brand_tagline'],
   social: ['google_analytics_id'],
 };
 
+/**
+ * Optional field shown per language => its texts (API SiteSetting::I18N_FIELDS). A switched-on one
+ * missing in a language is 'Cannot load text' on the public pages; Czech is required.
+ */
+export const I18N_FIELD_TEXTS: Readonly<Partial<Record<CompanyOptionalField, keyof SiteSetting>>> = {
+  brand_tagline: 'brand_tagline_i18n',
+};
+
 /** Translated fields (text per language code). */
-const I18N_FIELDS: readonly (keyof SiteSetting)[] = ['brand_tagline_i18n', 'copyright_text_i18n'];
+const I18N_FIELDS: readonly (keyof SiteSetting)[] = Object.values(I18N_FIELD_TEXTS) as (keyof SiteSetting)[];
+
+/**
+ * @description Whether a switched-on translated field has no text in a language.
+ * @param settings Company details.
+ * @param field Optional field with texts per language.
+ * @param code Language code.
+ * @returns True when the field is on and its text in the language is empty.
+ */
+export function textMissing(settings: SiteSetting, field: CompanyOptionalField, code: string): boolean {
+  const column = I18N_FIELD_TEXTS[field];
+  if (!column || !fieldOn(settings, field)) return false;
+  return text((settings[column] as Record<string, string> | undefined)?.[code]).trim() === '';
+}
+
+/**
+ * @description Switched-on translated fields without a text in a language (the count of its tab).
+ * @param settings Company details.
+ * @param code Language code.
+ * @returns 0-3.
+ */
+export function missingTextsIn(settings: SiteSetting, code: string): number {
+  return (Object.keys(I18N_FIELD_TEXTS) as CompanyOptionalField[]).filter(field => textMissing(settings, field, code)).length;
+}
 
 /**
  * @description Text of a field for comparing: null / undefined = empty text.

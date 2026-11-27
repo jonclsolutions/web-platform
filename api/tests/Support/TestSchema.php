@@ -357,12 +357,9 @@ final class TestSchema
             $t->string('google_analytics_id', 20)->nullable();
             $t->string('brand_tagline')->nullable();
             $t->longText('brand_tagline_i18n')->nullable();
-            $t->string('copyright_text')->nullable();
-            $t->longText('copyright_text_i18n')->nullable();
             $t->string('contact_email');
             $t->string('contact_phone', 20)->nullable();
             $t->text('address')->nullable();
-            $t->string('footer_text')->nullable();
             $t->string('logo_path')->nullable();
             $t->longText('hidden_fields')->nullable();
             $t->timestamp('updated_at')->useCurrent();

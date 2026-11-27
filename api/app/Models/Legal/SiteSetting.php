@@ -14,13 +14,14 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @description Stores business-critical information and site-wide legal settings, including i18n support.
+ * @note Only what belongs to the company as a whole (2026-11): the copyright line and the footer
+ *   text are texts of the applications (`footer.copyright_text` of Texty webu / Texty e-shopu).
  *
  * @property string $company_name The registered business name.
  * @property string $ico The company identification number.
  * @property string $dic The tax identification number.
  * @property string|null $google_analytics_id GA4 Measurement ID (format "G-XXXXXXXXXX").
  * @property array $brand_tagline_i18n Internationalized brand taglines.
- * @property array $copyright_text_i18n Internationalized copyright notices.
  * @property array<int, string>|null $hidden_fields Keys of the switched-off fields (HIDEABLE_FIELDS).
  */
 class SiteSetting extends Model
@@ -40,13 +41,20 @@ class SiteSetting extends Model
      */
     public const HIDEABLE_FIELDS = [
         'brand_tagline'       => ['brand_tagline', 'brand_tagline_i18n'],
-        'copyright_text'      => ['copyright_text', 'copyright_text_i18n'],
         'ico'                 => ['ico'],
         'dic'                 => ['dic'],
         'google_analytics_id' => ['google_analytics_id'],
         'contact_phone'       => ['contact_phone'],
         'address'             => ['address'],
-        'footer_text'         => ['footer_text'],
+    ];
+
+    /**
+     * @var array<string, string> Field shown on the public pages per language => its translation
+     *   column. A switched-on field missing in a language shows 'Cannot load text' there and the
+     *   language is not complete (CompanyTextsMissing, LanguageCompleteness).
+     */
+    public const I18N_FIELDS = [
+        'brand_tagline' => 'brand_tagline_i18n',
     ];
 
     /**
@@ -59,12 +67,9 @@ class SiteSetting extends Model
         'google_analytics_id',
         'brand_tagline',
         'brand_tagline_i18n',
-        'copyright_text',
-        'copyright_text_i18n',
         'contact_email',
         'contact_phone',
         'address',
-        'footer_text',
         'logo_path',
         'hidden_fields',
     ];
@@ -74,7 +79,6 @@ class SiteSetting extends Model
      */
     protected $casts = [
         'brand_tagline_i18n'  => 'array',
-        'copyright_text_i18n' => 'array',
         'hidden_fields'       => 'array',
     ];
 

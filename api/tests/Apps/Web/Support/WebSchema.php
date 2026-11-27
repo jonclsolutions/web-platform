@@ -127,6 +127,7 @@ final class WebSchema
             $t->increments('id');
             $t->boolean('is_web_active')->default(true);
             $t->string('web_maintenance_message', 500)->nullable();
+            $t->boolean('show_footer_copyright')->default(true);
             $t->timestamp('created_at')->nullable()->useCurrent();
             $t->timestamp('updated_at')->nullable()->useCurrent();
             foreach (['title', 'intro', 'outro', 'labels', 'subject'] as $part) {

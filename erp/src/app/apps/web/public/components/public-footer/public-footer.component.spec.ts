@@ -5,15 +5,17 @@
  * @author JS
  * @created 2026
  * @description Unit tests of PublicFooterComponent: link groups (translated titles, no Czech
- *   fallback any more - finding #44), legal and login links, the copyright / tagline per language (localized
- *   setting → plain setting, no translation fallback since 2026-10-31) and rendering without a
+ *   fallback any more - finding #44), legal and login links, the tagline per language (the text of
+ *   the language only), the copyright of the website texts (switch of the texts page) and rendering without a
  *   contact phone (bugfix 2026-10-23 - the footer is on every web page) and the language switcher
  *   in the bottom bar (moved from the header 2026-11).
  * @dependencies
  * - createPublicPageContext (getText resolves the navigation keys).
  */
 
+import { MISSING_TEXT } from '../../../../../shared/utils/missing-text';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { PublicFooterComponent } from './public-footer.component';
 import { PublicPageContext, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
@@ -63,37 +65,45 @@ describe('PublicFooterComponent', () => {
   });
 
   /**
-   * @description Copyright and tagline: localized setting for the language → plain setting;
-   *   {year} replaced; a missing or switched-off value → '' (no translation fallback).
-   * @input i18n settings for en; language en / cz; plain settings; empty settings; none.
-   * @output 'EN 2026'-style text; plain; ''; ''.
+   * @description Tagline: the company profile text of the current language only - a language
+   *   without it → 'Cannot load text' (never the Czech text), switched off (null map) or no
+   *   settings → '' (left out). Copyright: the website text `footer.copyright_text` with {year}
+   *   replaced, left out when switched off on the texts page (web/public/status).
+   * @input tagline map for en; language en / cz; no map; copyright text; status show false;
+   *   no settings and the copyright switched off.
+   * @output 'EN tag'; MISSING_TEXT; ''; '© <year> Web'; status read once, '' when switched off;
+   *   no tagline / copyright elements.
    */
-  it('resolves copyright and tagline per language', () => {
+  it('resolves the tagline per language and the copyright of the website texts', () => {
     const year = new Date().getFullYear();
-    footer.settings = { copyright_text_i18n: { en: 'EN {year}' }, brand_tagline_i18n: { en: 'EN tag' }, copyright_text: 'Plain {year}', brand_tagline: 'Plain tag' };
+    footer.settings = { brand_tagline_i18n: { en: 'EN tag' }, brand_tagline: 'Plain tag' };
     ctx.localization.currentLanguage$.next('en');
-    expect(footer.copyrightText).toBe(`EN ${year}`);
     expect(footer.brandTagline).toBe('EN tag');
-
     ctx.localization.currentLanguage$.next('cz');
-    expect(footer.copyrightText).toBe(`Plain ${year}`);
-    expect(footer.brandTagline).toBe('Plain tag');
-
+    expect(footer.brandTagline).toBe(MISSING_TEXT);
     footer.settings = {};
-    expect(footer.copyrightText).toBe('');
     expect(footer.brandTagline).toBe('');
+
+    ctx.setTranslations({ ...translations, footer: { ...translations.footer, copyright_text: '© {year} Web' } });
+    expect(footer.copyrightText).toBe(`© ${year} Web`);
+    expect(ctx.publicData.get).toHaveBeenCalledWith('web/public/status');
+    ctx.publicData.get.and.returnValue(of({ is_web_active: true, show_footer_copyright: false }));
+    (footer as any).onInit();
+    expect(footer.showCopyright).toBeFalse();
+    expect(footer.copyrightText).toBe('');
+    footer.settings = { company_name: 'RPSW', contact_email: 'a@b.cz', ico: '123' };
+    (footer as any).cdr.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.footer-copy')).toBeNull();
 
     footer.settings = null;
     footer.t = null;
-    expect(footer.copyrightText).toBe('');
-    expect(footer.brandTagline).toBe('');
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('.footer-meta-item').length).toBe(1);
     expect(el.querySelector('.footer-meta-item')?.textContent).toContain('123');
     expect(el.querySelector('a[href^="tel:"]')).toBeNull();
     expect(el.querySelector('.footer-contact-address')).toBeNull();
     expect(el.querySelector('.footer-brand-tagline')).toBeNull();
-    expect(el.querySelector('.footer-copy')).toBeNull();
   });
 
   /**
@@ -114,12 +124,13 @@ describe('PublicFooterComponent', () => {
 
   /**
    * @description With every company detail filled in, all rows render.
-   * @input Settings with tagline, IČO, DIČ, phone, address and copyright.
+   * @input Settings with tagline, IČO, DIČ, phone, address (Czech texts); the copyright of the website texts.
    * @output two meta items; tel: link '+420111'; address, tagline and copyright elements.
    */
   it('renders every filled-in company detail', () => {
     footer.settings = { company_name: 'RPSW', contact_email: 'a@b.cz', ico: '123', dic: 'CZ123', contact_phone: '+420 111',
-      address: 'Praha', brand_tagline: 'Tag', copyright_text: '© RPSW' };
+      address: 'Praha', brand_tagline_i18n: { cz: 'Tag' } };
+    ctx.setTranslations({ ...translations, footer: { ...translations.footer, copyright_text: '© RPSW' } });
     (footer as any).cdr.markForCheck();
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;

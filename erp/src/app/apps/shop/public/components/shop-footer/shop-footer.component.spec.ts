@@ -4,7 +4,7 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of ShopFooterComponent: shop module, site data (footer text with {year}), social
+ * @description Unit tests of ShopFooterComponent: shop module, site data, the copyright line of the e-shop texts (with {year}, switch of the texts page), social
  *   links, navigation / legal links, payment method icons (image or icon) and request errors.
  * @dependencies
  * - createPublicPageContext (get spy routed by URL).
@@ -37,23 +37,25 @@ describe('ShopFooterComponent', () => {
   /**
    * @description Site data with {year}, links and payment icons; a translation reload repeats
    *   the links; without translations nothing is built.
-   * @input footer_text '© {year} Shop', social links; translations; translations null.
-   * @output '© <year> Shop'; social [fb]; nav [Home, navigation.faq_full]; legal [legal.terms_of_service, Privacy]; icons /storage/card.svg, /storage/cash.svg.
+   * @input social links; translations with footer.copyright_text '© {year} Shop'; translations null.
+   * @output copyrightText '© <year> Shop'; social [fb]; nav [Home, navigation.faq_full]; legal [legal.terms_of_service, Privacy]; icons /storage/card.svg, /storage/cash.svg.
    */
   it('builds the footer from site data and translations', () => {
     requiresApps('web');
-    create(of({ settings: { footer_text: '© {year} Shop' }, social_links: [{ id: 1, url: 'https://fb' }] }));
+    create(of({ settings: {}, social_links: [{ id: 1, url: 'https://fb' }] }));
+    ctx.setTranslations({ footer: { title: 'Shop', copyright_text: '© {year} Shop' }, navigation: { home: 'Home' }, legal: { privacy_policy: 'Privacy' } });
     expect(ctx.localization.setModule).toHaveBeenCalledWith('shop');
-    expect(footer.siteSettings.footer_text).toBe(`© ${new Date().getFullYear()} Shop`);
+    expect(footer.copyrightText).toBe(`© ${new Date().getFullYear()} Shop`);
     expect(footer.socialLinks.length).toBe(1);
     expect(footer.footerNavLinks.map(l => [l.route, l.text])).toEqual([['/home', 'Home'], ['/faq', 'navigation.faq_full']]);
-    expect(footer.footerLegalLinks.map(l => l.text)).toEqual(['legal.terms_of_service', 'Privacy']);
+    expect(footer.footerLegalLinks.map(l => l.text)).toEqual(['legal.terms_of_service', 'Privacy', 'legal.cookies_policy']);
     expect(footer.paymentMethods).toEqual([{ name: 'Card', icon: '/storage/card.svg' }, { name: 'Cash', icon: '/storage/cash.svg' }]);
     expect(footer.getStorageUrl('x.png')).toBe('/storage/x.png');
+    fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Shop');
 
     ctx.setTranslations(null);
-    expect(footer.t).toEqual({ title: 'Shop' });
+    expect(footer.t).toEqual({ title: 'Shop', copyright_text: '© {year} Shop' });
   });
 
   /**
@@ -77,6 +79,26 @@ describe('ShopFooterComponent', () => {
   });
 
   /**
+   * @description The copyright line is left out when switched off on the texts page
+   *   (shop/public/status show_footer_copyright false).
+   * @input status { show_footer_copyright: false }; translations with the copyright.
+   * @output status read; copyrightText ''; no line in the footer bottom.
+   */
+  it('hides the copyright line switched off on the texts page', () => {
+    create(of({ settings: {}, social_links: [] }));
+    expect(ctx.publicData.get).toHaveBeenCalledWith('shop/public/status');
+    ctx.publicData.get.and.callFake(((url: string) => url === 'shop/public/status'
+      ? of({ is_shop_active: true, show_footer_copyright: false })
+      : of([])) as any);
+    (footer as any).loadFooterOptions();
+    ctx.setTranslations({ footer: { title: 'Shop', copyright_text: '© {year} Shop' }, navigation: {}, legal: {} });
+    fixture.detectChanges();
+    expect(footer.showCopyright).toBeFalse();
+    expect(footer.copyrightText).toBe('');
+    expect(fixture.nativeElement.querySelector('.footer-bottom .footer-text')).toBeNull();
+  });
+
+  /**
    * @description Settings without footer text are kept as they are; a failing config is logged.
    * @input settings {}; config error.
    * @output siteSettings {}; console.error + siteSettings null.
@@ -94,9 +116,10 @@ describe('ShopFooterComponent', () => {
 
   /**
    * @description Open finding #64 + optional company details: address, IČO, DIČ and phone render
-   *   only with a value; a switched-off footer text (null) shows no line, the generic copyright
-   *   is only for missing company details.
-   * @input Settings with IČO only; then no settings (config without settings).
+   *   only with a value; without a copyright text (texts not loaded) the bottom bar has no line;
+   *   with the e-shop texts the copyright line is shown (also without company details).
+   * @input Settings with IČO only, translations without a copyright; then no settings and the
+   *   translations with the copyright.
    * @output one company row (IČO), no phone row, empty footer bottom; then the translated copyright.
    */
   it('renders only the filled-in company details', () => {

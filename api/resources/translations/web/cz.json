@@ -97,6 +97,7 @@
         "ico_label": "IČO",
         "dic_label": "DIČ",
         "contact_header": "Kontakt",
+        "copyright_text": "© {year} Všechna práva vyhrazena.",
         "language_label": "Jazyk"
     },
     "legal": {
@@ -634,6 +635,7 @@
         "aria_label": "Nastavení souhlasu s cookies",
         "title": "Používáme cookies",
         "description": "Používáme cookies pro zajištění funkčnosti webu a s vaším souhlasem i pro analytické a marketingové účely. Podrobnosti najdete v našich zásadách používání cookies.",
+        "policy_link": "Zásady cookies",
         "btn_settings": "Nastavení",
         "btn_necessary_only": "Jen nezbytné",
         "btn_accept_all": "Přijmout vše",

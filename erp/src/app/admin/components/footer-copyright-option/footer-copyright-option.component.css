@@ -1,0 +1,51 @@
+/*
+    @file: footer-copyright-option.component.css
+    @path: /src/app/admin/components/footer-copyright-option/footer-copyright-option.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Styles of the copyright switch on the texts page: a light bar above the list of
+        the texts (checkbox, note, saved mark); wraps on phones.
+*/
+
+.fco {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
+  border-radius: 12px;
+}
+.fco--off { background: var(--color-zinc-50); }
+.fco-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--color-zinc-900);
+  cursor: pointer;
+}
+.fco-check {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--color-zinc-900);
+  cursor: pointer;
+}
+.fco-check:disabled { cursor: not-allowed; }
+.fco-saved {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-emerald-600);
+}
+.fco-note {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--color-zinc-500);
+}

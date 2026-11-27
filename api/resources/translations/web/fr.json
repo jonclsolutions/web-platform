@@ -97,6 +97,7 @@
         "ico_label": "N° d'identification (IČO)",
         "dic_label": "N° de TVA",
         "contact_header": "Contact",
+        "copyright_text": "© {year} Tous droits réservés.",
         "language_label": "Langue"
     },
     "legal": {
@@ -634,6 +635,7 @@
         "aria_label": "Paramètres de consentement aux cookies",
         "title": "Nous utilisons des cookies",
         "description": "Nous utilisons des cookies pour assurer le bon fonctionnement du site et, avec votre consentement, à des fins d'analyse et de marketing. Vous trouverez plus de détails dans notre politique relative aux cookies.",
+        "policy_link": "Politique de cookies",
         "btn_settings": "Paramètres",
         "btn_necessary_only": "Nécessaires uniquement",
         "btn_accept_all": "Tout accepter",

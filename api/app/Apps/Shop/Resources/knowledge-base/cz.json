@@ -1463,12 +1463,13 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název; nový jazyk je vypnutý), zapnutí jen kompletního jazyka (okno Jazyky napíše, co chybí - texty, názvy stránek i e-maily objednávky; každá položka je odkaz na místo, kde se doplní), vypnutí, smazání (smaže i všechny texty jazyka včetně názvů stránek a e-mailu objednávky). Čeština je výchozí jazyk. Vypnutý jazyk nabízí k úpravě i záložka Názvy stránek a e-mail objednávky v Objednávkách - jeho záložka je čárkovaná a šedší, takže ho celý doplníte dřív, než ho zapnete. Co vypnutému jazyku chybí, ukazuje šedá tečka v menu a šedé číslo na záložce; oranžová znamená chybějící text v zapnutém jazyce.",
+                "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název; nový jazyk je vypnutý), zapnutí jen kompletního jazyka (okno Jazyky napíše, co chybí - texty, názvy stránek, e-maily objednávky a slogan firemního profilu; každá položka je odkaz na místo, kde se doplní), vypnutí, smazání (smaže i všechny texty jazyka včetně názvů stránek a e-mailu objednávky). Čeština je výchozí jazyk. Vypnutý jazyk nabízí k úpravě i záložka Názvy stránek a e-mail objednávky v Objednávkách - jeho záložka je čárkovaná a šedší, takže ho celý doplníte dřív, než ho zapnete. Co vypnutému jazyku chybí, ukazuje šedá tečka v menu a šedé číslo na záložce; oranžová znamená chybějící text v zapnutém jazyce.",
                 "Jazyk je i v adrese e-shopu, například /cs/shop/catalog česky a /en/shop/catalog anglicky - stejně jako u webu (nápověda Texty webu, kapitola 03). Aktivní jazyk má e-shop v adrese sám, nic dalšího se nenastavuje.",
                 "Tabulka s čitelnou cestou textu (například Pokladna › Popisky polí › Jméno) a pod ní přesným klíčem, hledání (i podle čitelné cesty), řádek se statistikou a přepínač Chybí.",
                 "Stažení a nahrání JSON pro překladatele.",
                 "Tlačítko Uložit (s počtem změn) uloží změněné texty aktuálního jazyka. Texty, které mezitím uložil někdo jiný, se nepřepíšou bez dotazu (Přepsat / Neukládat). Odchod ze stránky s neuloženými úpravami (menu, Zpět) se nejdřív zeptá; na telefonu je tlačítko Uložit v liště dole.",
-                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou. Že v zapnutých jazycích chybí texty, ukazuje oranžová tečka u položky Texty e-shopu v menu a pruh nad jazyky na této stránce: kolik textů chybí v kterém jazyce a tlačítko, které jazyk otevře jen s chybějícími texty. Tečka i pruh zmizí po doplnění."
+                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou. Že v zapnutých jazycích chybí texty, ukazuje oranžová tečka u položky Texty e-shopu v menu a pruh nad jazyky na této stránce: kolik textů chybí v kterém jazyce a tlačítko, které jazyk otevře jen s chybějícími texty. Tečka i pruh zmizí po doplnění.",
+                "Copyright v patičce e-shopu je text footer.copyright_text ({year} = aktuální rok), upravíte ho tu v každém jazyce. Volba Zobrazovat copyright v patičce nad seznamem textů ho skryje ve všech jazycích (uloží se hned); skrytý text se nepočítá jako chybějící."
               ]
             },
             {
@@ -1496,8 +1497,8 @@
               "items": [
                 "Názvy, popisy a ceny produktů - stránka Produkty.",
                 "Potvrzovací e-mail objednávky - stránka Objednávky e-shopu (Akce → Editovat potvrzovací e-mail).",
-                "Obchodní podmínky a zásady ochrany osobních údajů - Core → Právní dokumenty.",
-                "Kontakty a sociální sítě - Core → Nastavení."
+                "Obchodní podmínky, zásady ochrany osobních údajů a zásady cookies - Core → Právní dokumenty. E-shop má vlastní stránku zásad cookies (/shop/cookies-policy), na kterou odkazuje jeho lišta cookies a patička.",
+                "Kontakty, logo, slogan a sociální sítě - Core → Firemní profil."
               ]
             }
           ]

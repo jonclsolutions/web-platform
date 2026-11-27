@@ -149,6 +149,18 @@ final class WebApp extends AppManifest
     }
 
     /**
+     * @description See AppManifest::hiddenTextKeys() - the copyright line of the footer switched
+     *   off on the texts page (WebSiteSetting.show_footer_copyright) is not counted as missing.
+     * @return array<int, string>
+     */
+    public function hiddenTextKeys(): array
+    {
+        $settings = WebSiteSetting::query()->first();
+
+        return $settings && !$settings->show_footer_copyright ? ['footer.copyright_text'] : [];
+    }
+
+    /**
      * @description See AppManifest::contentMissing() - FAQ, positions, references and knowledge
      *   base records missing a text in the language, and the empty texts of the inquiry
      *   confirmation e-mail (`inquiry_email` - the customer would get Czech in their place).

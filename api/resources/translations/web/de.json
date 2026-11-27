@@ -97,6 +97,7 @@
         "ico_label": "Firmen-ID (IČO)",
         "dic_label": "USt-IdNr.",
         "contact_header": "Kontakt",
+        "copyright_text": "© {year} Alle Rechte vorbehalten.",
         "language_label": "Sprache"
     },
     "legal": {
@@ -634,6 +635,7 @@
         "aria_label": "Cookie-Einwilligungseinstellungen",
         "title": "Wir verwenden Cookies",
         "description": "Wir verwenden Cookies, um die Funktionalität der Website sicherzustellen, und mit Ihrer Einwilligung auch für Analyse- und Marketingzwecke. Einzelheiten finden Sie in unserer Cookie-Richtlinie.",
+        "policy_link": "Cookie-Richtlinie",
         "btn_settings": "Einstellungen",
         "btn_necessary_only": "Nur notwendige",
         "btn_accept_all": "Alle akzeptieren",

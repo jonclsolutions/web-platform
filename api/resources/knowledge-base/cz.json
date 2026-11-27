@@ -1576,6 +1576,11 @@
               "type": "note",
               "highlight": "Co se nemaže",
               "content": "Objednávky a zákazníci e-shopu se automaticky nemažou - podléhají účetním lhůtám. Prošlá přihlášení do klientského portálu se mažou vždy. Bezpečnostní monitoring má vlastní retenci na své stránce."
+            },
+            {
+              "type": "note",
+              "highlight": "Zásady cookies",
+              "content": "Zásady cookies se zobrazují na webu (/cookies-policy) i v e-shopu (/shop/cookies-policy) a odkazuje na ně lišta cookies obou aplikací. Uveďte v nich, že web i e-shop po souhlasu měří návštěvnost přes Google Analytics."
             }
           ]
         }
@@ -1795,7 +1800,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Stránka Firemní profil má tři záložky: Firemní údaje (název, IČO, DIČ, kontakty, adresa), Značka a texty (logo, slogan, copyright, text patičky) a Sociální sítě a měření (odkazy na profily, Google Analytics). Údaje vidí návštěvníci webu, e-shopu a portálu a jsou v e-mailech. Jak dlouho se uchovávají osobní údaje, nastavíte na stránce Právní dokumenty, záložka Retence dat."
+              "content": "Stránka Firemní profil má tři záložky: Firemní údaje (název, IČO, DIČ, kontakty, adresa), Značka (logo a slogan) a Sociální sítě a měření (odkazy na profily, Google Analytics). Jsou tu jen údaje firmy jako celku - vidí je návštěvníci webu, e-shopu i portálu a jsou v e-mailech. Copyright v patičce je text každé aplikace (Texty webu, Texty e-shopu). Jak dlouho se uchovávají osobní údaje, nastavíte na stránce Právní dokumenty, záložka Retence dat."
             },
             {
               "type": "text",
@@ -1862,7 +1867,7 @@
           ]
         },
         {
-          "heading": "03. Značka a texty",
+          "heading": "03. Značka",
           "blocks": [
             {
               "type": "flow",
@@ -1879,7 +1884,7 @@
                 },
                 {
                   "label": "Uložení",
-                  "text": "Logo se uloží tlačítkem Uložit v záhlaví záložky spolu s texty.",
+                  "text": "Logo se uloží tlačítkem Uložit v záhlaví záložky spolu se sloganem.",
                   "active": false
                 }
               ]
@@ -1892,22 +1897,24 @@
               "type": "grid",
               "cards": [
                 {
-                  "title": "Brand Tagline",
-                  "text": "Slogan firmy - zadává se zvlášť pro každý jazyk."
-                },
-                {
-                  "title": "Copyright Text",
-                  "text": "Text o autorských právech - zvlášť pro každý jazyk."
-                },
-                {
-                  "title": "Text patičky webu",
-                  "text": "Text v patičce veřejného webu, například „© 2026 Firma s.r.o. Všechna práva vyhrazena.“"
+                  "title": "Slogan (Brand Tagline)",
+                  "text": "Slogan firmy na veřejných stránkách (patička webu, popis stránek pro vyhledávače) - zvlášť pro každý jazyk."
                 }
               ]
             },
             {
               "type": "text",
-              "content": "Jazyk sloganu a copyrightu přepínáte přepínačem jazyků nad poli. Vyplňte je ve všech jazycích; vypnuté jazyky jsou přerušované a připravíte je předem."
+              "content": "Jazyk sloganu přepínáte přepínačem jazyků nad polem. Čeština je u zapnutého sloganu povinná. Číslo na jazyku a na záložce Značka ukazuje, že slogan v jazyce chybí, a pole je oranžově označené."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Chybějící slogan se návštěvníkům nenahradí češtinou - uvidí místo něj „Cannot load text“. Proto se počítá do kontroly jazyka: jazyk webu ani e-shopu nejde zapnout, dokud ho nemá vyplněný, a menu ukazuje oranžovou tečku (zapnutý jazyk) nebo šedou (vypnutý jazyk). Odkaz Firemní profil v okně Jazyky otevře tuto záložku rovnou v daném jazyce."
+            },
+            {
+              "type": "note",
+              "highlight": "Copyright v patičce",
+              "content": "Řádek s copyrightem je text aplikace, ne firmy: upravíte ho v Textech webu a v Textech e-shopu (klíč footer.copyright_text, {year} = aktuální rok). Volbou Zobrazovat copyright v patičce nad seznamem textů ho v dané aplikaci skryjete ve všech jazycích."
             }
           ]
         },
@@ -1953,7 +1960,7 @@
               "cards": [
                 {
                   "title": "Google Analytics 4 - Measurement ID",
-                  "text": "Identifikátor měření Google Analytics ve tvaru G-XXXXXXXXXX. Měření se na webu spustí jen u návštěvníka, který souhlasí s analytickými cookies. Prázdné nebo vypnuté pole = žádné měření."
+                  "text": "Identifikátor měření Google Analytics ve tvaru G-XXXXXXXXXX - jeden pro celou doménu, měří web i e-shop. Měření se spustí jen u návštěvníka, který v liště cookies souhlasí s analytickými cookies (souhlas platí pro web i e-shop). Prázdné nebo vypnuté pole = žádné měření."
                 }
               ]
             }

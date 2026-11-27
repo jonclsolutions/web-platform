@@ -11,6 +11,9 @@
  * - RouterModule: Facilitates navigation to internal support/legal pages.
  * - RxJS: Manages subscription lifecycles to prevent memory leaks.
  * - FooterLanguageSwitcherComponent: Language switcher of the bottom bar (moved from the header).
+ * @note The copyright line is a text of the e-shop (`footer.copyright_text`, Texty e-shopu; a
+ *   missing one is 'Cannot load text' - the texts of the API), shown unless switched off on that
+ *   page (`show_footer_copyright` of shop/public/status). The company profile has no footer text.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
@@ -54,6 +57,8 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
   
   siteSettings: any = null;
   socialLinks: SocialLink[] = [];
+  /** The copyright line is shown (shop/public/status; shown until the answer comes). */
+  showCopyright = true;
 
   private destroy$ = new Subject<void>();
 
@@ -71,6 +76,7 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
    */
   ngOnInit(): void {
     this.loadSiteData();
+    this.loadFooterOptions();
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(translations => {
@@ -85,8 +91,30 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * @description Copyright line of the e-shop texts ('{year}' replaced); '' when switched off on
+   *   the texts page or before the texts are loaded.
+   * @returns The copyright text or ''.
+   */
+  get copyrightText(): string {
+    const text = this.showCopyright ? this.t?.copyright_text : '';
+    return typeof text === 'string' ? text.replace('{year}', this.currentYear.toString()) : '';
+  }
+
+  /** @description Reads whether the copyright line is switched on (Texty e-shopu). */
+  private loadFooterOptions(): void {
+    this.publicDataService.get<{ show_footer_copyright?: boolean }>('shop/public/status')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: status => {
+          this.showCopyright = status?.show_footer_copyright !== false;
+          this.cdr.markForCheck();
+        },
+        error: () => {},
+      });
+  }
+
+  /**
    * @description Fetches global site metadata and social links from the Public API.
-   * @note Automatically injects the current year into the footer text template.
    */
   private loadSiteData(): void {
     this.publicDataService.get<{settings: any, social_links: SocialLink[]}>('public/legal/config')
@@ -95,10 +123,6 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
         next: (data) => {
           this.siteSettings = data.settings;
           this.socialLinks = data.social_links;
-          
-          if (this.siteSettings?.footer_text) {
-            this.siteSettings.footer_text = this.siteSettings.footer_text.replace('{year}', this.currentYear.toString());
-          }
           this.cdr.markForCheck();
         },
         error: (err) => console.error('Error loading footer site data:', err)
@@ -153,7 +177,8 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
   private loadFooterLegalLinks(): void {
     const legalLinkKeys = [
       { route: '/shop/tos', key: 'legal.terms_of_service' },
-      { route: '/shop/privacy-policy', key: 'legal.privacy_policy' }
+      { route: '/shop/privacy-policy', key: 'legal.privacy_policy' },
+      { route: '/shop/cookies-policy', key: 'legal.cookies_policy' }
     ];
     this.footerLegalLinks = legalLinkKeys.map(link => ({ 
       route: link.route, 

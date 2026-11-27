@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2026 
-    @description: Template of the shop layout component (header, page, footer, language offer).
+    @description: Template of the shop layout component (header, page, footer, language offer,
+        cookie bar).
 -->
     
 <app-shop-header></app-shop-header>
@@ -16,3 +17,5 @@
 <app-shop-footer></app-shop-footer>
 <!-- Offer of the visitor's own language (e.g. a shared /en/ link in a Czech browser) -->
 <app-language-suggestion theme="light" />
+<!-- Cookie bar: the consent decides about Google Analytics (shared with the website) -->
+<app-cookie-consent policyRoute="/shop/cookies-policy"></app-cookie-consent>

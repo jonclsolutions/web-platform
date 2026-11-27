@@ -111,6 +111,18 @@ final class ShopApp extends AppManifest
     }
 
     /**
+     * @description See AppManifest::hiddenTextKeys() - the copyright line of the footer switched
+     *   off on the texts page (ShopSiteSetting.show_footer_copyright) is not counted as missing.
+     * @return array<int, string>
+     */
+    public function hiddenTextKeys(): array
+    {
+        $settings = ShopSiteSetting::query()->first();
+
+        return $settings && !$settings->show_footer_copyright ? ['footer.copyright_text'] : [];
+    }
+
+    /**
      * @description See AppManifest::contentMissing() - the empty texts of the order e-mails
      *   (`order_email` - confirmation, payment reminder, cancellation; the customer would get
      *   Czech in their place).
@@ -133,7 +145,7 @@ final class ShopApp extends AppManifest
         $products = ShopProduct::active()->orderBy('id')->get(['id', 'slug'])
             ->map(fn (ShopProduct $product) => '/shop/products/' . rawurlencode((string) ($product->slug ?: $product->id)));
 
-        return array_values(array_merge(['/shop/catalog', '/shop/privacy-policy', '/shop/tos'], $products->all()));
+        return array_values(array_merge(['/shop/catalog', '/shop/privacy-policy', '/shop/tos', '/shop/cookies-policy'], $products->all()));
     }
 
     /** @description See AppManifest::availability() - the switch of the storefront (shop/settings). */

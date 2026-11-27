@@ -6,6 +6,11 @@
  * @author JS
  * @created 2026
  * @description Centralized management for site-wide configuration, including company details, localized branding assets, and social media links with file handling.
+ * @note The tagline is kept per language (SiteSetting::I18N_FIELDS): cleaned plain text, only the
+ *   languages of the modules; switched on, it needs its Czech text (the built-in language
+ *   visitors always have). The public configuration gives the text of the requested language
+ *   only - a missing one is 'Cannot load text' on the public pages, never another language.
+ * @note The copyright line and the footer text are texts of the applications (2026-11) - not here.
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -14,6 +19,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Legal\SiteSetting;
 use App\Models\Legal\SocialLink;
 use App\Models\Core\CoreLog;
+use App\Http\Controllers\Api\TranslationController;
+use App\Support\I18n\I18nText;
+use App\Support\I18n\MissingTranslations;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +38,9 @@ use Illuminate\Validation\ValidationException;
 class SiteConfigurationController extends Controller
 {
     use LogsActivity;
+
+    /** @description Longest text of a translated field per language (the base columns are VARCHAR(255)). */
+    private const I18N_MAX_LENGTH = 255;
 
     /**
      * Fetches current corporate settings and social media configuration.
@@ -66,36 +77,23 @@ class SiteConfigurationController extends Controller
             'google_analytics_id'  => $rule('google_analytics_id', 'required|string|max:20|regex:/^G-[A-Z0-9]{6,10}$/'),
             'brand_tagline'        => 'nullable|string|max:255',
             'brand_tagline_i18n'   => 'nullable',
-            'copyright_text'       => 'nullable|string|max:255',
-            'copyright_text_i18n'  => 'nullable',
             'contact_email'        => 'required|email|max:255',
             'contact_phone'        => $rule('contact_phone', 'required|string|max:20'),
             'address'              => $rule('address', 'required|string|max:500'),
-            'footer_text'          => $rule('footer_text', 'required|string|max:255'),
             'logo_file'            => 'nullable|file|image|max:2048',
         ]);
 
-        // Only validated fields.
-        $data = collect($validated)->except(['logo_file', 'brand_tagline_i18n', 'copyright_text_i18n'])->all();
+        // Only validated fields (the translated ones are cleaned below).
+        $data = collect($validated)->except(['logo_file', ...array_values(SiteSetting::I18N_FIELDS)])->all();
 
-        // Normalize i18n fields for consistency
-        $data['brand_tagline_i18n'] = $this->normalizeI18nField(
-            $request->input('brand_tagline_i18n'),
-            $settings->brand_tagline_i18n
-        );
-        $data['copyright_text_i18n'] = $this->normalizeI18nField(
-            $request->input('copyright_text_i18n'),
-            $settings->copyright_text_i18n
-        );
-
-        // Fallback: Ensure primary columns match the Czech (cz) translation
-        $data['brand_tagline']  = $data['brand_tagline_i18n']['cz']  ?? ($data['brand_tagline']  ?? $settings->brand_tagline);
-        $data['copyright_text'] = $data['copyright_text_i18n']['cz'] ?? ($data['copyright_text'] ?? $settings->copyright_text);
-
-        // A switched-on i18n field needs a text in at least one language (the stored base column
-        // does not count - the admin form shows only the translations).
-        foreach (['brand_tagline', 'copyright_text'] as $field) {
-            if (!in_array($field, $hidden, true) && !$this->hasAnyText($data["{$field}_i18n"], $validated[$field] ?? null)) {
+        // Texts per language: cleaned, only the languages of the modules; the base column follows
+        // the Czech text. A switched-on field needs its Czech text.
+        $languages = TranslationController::allLanguageCodes();
+        foreach (SiteSetting::I18N_FIELDS as $field => $column) {
+            $texts = $this->i18nTexts($request, $field, $column, $settings->{$column}, $languages);
+            $data[$column] = $texts;
+            $data[$field] = $texts[MissingTranslations::PRIMARY] ?? null;
+            if (!in_array($field, $hidden, true) && !isset($texts[MissingTranslations::PRIMARY])) {
                 throw ValidationException::withMessages([$field => __('validation.required', ['attribute' => str_replace('_', ' ', $field)])]);
             }
         }
@@ -132,6 +130,9 @@ class SiteConfigurationController extends Controller
 
     /**
      * Delivers localized configuration for public consumption.
+     * @note The base columns of the translated fields hold the text of the requested language or
+     *   null (missing) - no fallback to Czech; the `*_i18n` maps are sent for the language switch
+     *   of the page (null = the field is switched off).
      *
      * @param Request $request Optional query param ?lang=xx (defaults to 'cz').
      * @return JsonResponse Publicly exposed settings and links.
@@ -139,21 +140,27 @@ class SiteConfigurationController extends Controller
     public function publicShow(Request $request): JsonResponse
     {
         $settings    = SiteSetting::first();
-        $lang        = $request->input('lang', 'cz');
+        $lang        = is_string($request->input('lang')) ? strtolower($request->input('lang')) : MissingTranslations::PRIMARY;
         $socialLinks = SocialLink::orderBy('position', 'asc')->get();
 
-        if ($settings) {
-            $taglineI18n   = $settings->brand_tagline_i18n ?? [];
-            $copyrightI18n = $settings->copyright_text_i18n ?? [];
-
-            // Apply language fallback logic: requested lang -> 'cz' -> base column
-            $settings->brand_tagline  = $taglineI18n[$lang] ?? $taglineI18n['cz'] ?? $settings->brand_tagline;
-            $settings->copyright_text = $copyrightI18n[$lang] ?? $copyrightI18n['cz'] ?? $settings->copyright_text;
+        $public = $settings?->toPublicArray();
+        if ($public !== null) {
+            // The text of the requested language only (null = missing - 'Cannot load text' on the
+            // page); a switched-on field always has its map (null = switched off).
+            foreach (SiteSetting::I18N_FIELDS as $field => $column) {
+                if ($settings->isFieldHidden($field)) {
+                    continue;
+                }
+                $texts = is_array($public[$column] ?? null) ? $public[$column] : [];
+                $public[$column] = $texts;
+                $text = trim((string) ($texts[$lang] ?? ''));
+                $public[$field] = $text === '' ? null : $text;
+            }
         }
 
         return $this->respond([
             // Switched-off fields are null.
-            'settings'     => $settings?->toPublicArray(),
+            'settings'     => $public,
             'social_links' => $socialLinks,
         ]);
     }
@@ -274,40 +281,40 @@ class SiteConfigurationController extends Controller
     }
 
     /**
-     * @description Whether an i18n field has a non-empty text in any language (or the base column).
-     * @param array<string, mixed> $i18n Texts by language.
-     * @param mixed $base The base column value sent in the request.
-     * @return bool True when some text is filled in.
+     * @description Texts of one translated field from the request: an array or a JSON string
+     *   (multipart with a logo); not sent / not decodable = the stored texts. Each text must be a
+     *   string of at most I18N_MAX_LENGTH characters; it is cleaned to plain text (I18nText) and
+     *   only the languages of the modules are kept. An older client sending only the base column
+     *   gives the Czech text that way.
+     * @param Request $request The update request.
+     * @param string $field Field key (e.g. 'brand_tagline').
+     * @param string $column Its translation column (e.g. 'brand_tagline_i18n').
+     * @param mixed $stored Stored texts.
+     * @param string[] $languages Allowed language codes.
+     * @return array<string, string> Language code => text, empty ones left out.
+     * @throws ValidationException When a text is not a string or too long.
      */
-    private function hasAnyText(array $i18n, mixed $base): bool
+    private function i18nTexts(Request $request, string $field, string $column, mixed $stored, array $languages): array
     {
-        foreach ([...array_values($i18n), $base] as $text) {
-            if (is_string($text) && trim($text) !== '') {
-                return true;
+        $raw = $request->input($column);
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+        if (!is_array($raw)) {
+            $raw = is_array($stored) ? $stored : [];
+        } else {
+            $validator = Validator::make([$column => $raw], I18nText::rules($column, self::I18N_MAX_LENGTH));
+            if ($validator->fails()) {
+                throw ValidationException::withMessages([$column => $validator->errors()->first()]);
             }
         }
 
-        return false;
-    }
-
-    /**
-     * Normalizes i18n inputs from either JSON arrays or strings.
-     *
-     * @param mixed $raw The raw input.
-     * @param mixed $existing The current database value.
-     * @return array Normalized associative array.
-     */
-    private function normalizeI18nField($raw, $existing): array
-    {
-        $existing = is_array($existing) ? $existing : (json_decode($existing ?? '[]', true) ?? []);
-
-        if (is_array($raw)) return $raw;
-
-        if (is_string($raw)) {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) return $decoded;
+        $texts = I18nText::clean($raw, self::I18N_MAX_LENGTH, false, $languages);
+        $base = $request->input($field);
+        if (!isset($texts[MissingTranslations::PRIMARY]) && is_string($base) && trim($base) !== '') {
+            $texts[MissingTranslations::PRIMARY] = trim(strip_tags($base));
         }
 
-        return $existing;
+        return $texts;
     }
 }

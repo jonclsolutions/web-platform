@@ -1,0 +1,23 @@
+<!--
+    @file: footer-copyright-option.component.html
+    @path: /src/app/admin/components/footer-copyright-option/footer-copyright-option.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Switch of the copyright line of the footer (texts page of an application): a
+        checkbox saved at once, a short note where the text is, the "Uloženo" mark.
+-->
+
+@if (shown !== null) {
+  <div class="fco" [class.fco--off]="!shown">
+    <label class="fco-label">
+      <input type="checkbox" class="fco-check" [checked]="shown" [disabled]="!canUpdate || saving"
+             (change)="toggle($any($event.target).checked)" aria-describedby="fco-note">
+      <span>{{ t('footer_copyright_label') }}</span>
+    </label>
+    @if (saved) {
+      <span class="fco-saved" role="status">{{ t('footer_copyright_saved') }}</span>
+    }
+    <p class="fco-note" id="fco-note">{{ shown ? t('footer_copyright_note') : t('footer_copyright_note_off') }}</p>
+  </div>
+}

@@ -12,15 +12,14 @@
 
 import { SiteSetting, SocialLink } from './';
 import {
-  isWebUrl, mergeSocialLinks, settingsForTab, settingsTabDirty, socialLinkDirty, takeSavedTab,
+  isWebUrl, mergeSocialLinks, missingTextsIn, settingsForTab, settingsTabDirty, socialLinkDirty, takeSavedTab, textMissing,
 } from './settings-form';
 
 describe('settings-form', () => {
   const stored = (): SiteSetting => ({
     company_name: 'RPSW', ico: '1', dic: 'CZ1', contact_email: 'a@b.cz', contact_phone: null, address: 'Praha',
-    google_analytics_id: null, footer_text: 'F', logo_path: 'logo.png',
+    google_analytics_id: null, logo_path: 'logo.png',
     brand_tagline: 'Tag', brand_tagline_i18n: { cz: 'Tag', en: '' },
-    copyright_text: '©', copyright_text_i18n: { cz: '©', en: '' },
     hidden_fields: ['google_analytics_id', 'contact_phone'],
   });
 
@@ -47,32 +46,46 @@ describe('settings-form', () => {
   /**
    * @description The body of a tab save: stored values + the fields and checkboxes of the tab;
    *   the edits of the other tabs are not sent.
-   * @input  draft with a new name (company), a new footer (brand) and DIČ switched off; save brand
-   * @output body.footer_text 'New'; body.company_name 'RPSW' (stored); hidden_fields keep the
+   * @input  draft with a new name (company), a new tagline (brand), DIČ and the tagline switched off; save brand
+   * @output body.brand_tagline_i18n { cz: 'New' }; body.company_name 'RPSW' (stored); hidden_fields keep the
    *   stored company / social checkboxes (DIČ not hidden); i18n maps are copies
    */
   it('builds the body of one tab', () => {
     const saved = stored();
-    const draft = { ...stored(), company_name: 'Draft', footer_text: 'New', hidden_fields: ['google_analytics_id', 'contact_phone', 'dic', 'footer_text'] as any };
+    const draft = { ...stored(), company_name: 'Draft', brand_tagline_i18n: { cz: 'New' }, hidden_fields: ['google_analytics_id', 'contact_phone', 'dic', 'brand_tagline'] as any };
     const body = settingsForTab(draft, saved, 'brand');
-    expect(body.footer_text).toBe('New');
+    expect(body.brand_tagline_i18n).toEqual({ cz: 'New' });
     expect(body.company_name).toBe('RPSW');
-    expect(body.hidden_fields).toEqual(['google_analytics_id', 'contact_phone', 'footer_text']);
+    expect(body.hidden_fields).toEqual(['google_analytics_id', 'contact_phone', 'brand_tagline']);
     expect(body.brand_tagline_i18n).not.toBe(draft.brand_tagline_i18n);
     expect(settingsForTab(draft, saved, 'company').hidden_fields).toEqual(['google_analytics_id', 'contact_phone', 'dic']);
   });
 
   /**
    * @description Taking the stored values of a tab into the form keeps the other tabs as typed.
-   * @input  draft with a typed name and footer; stored values with another footer and logo; take brand
-   * @output footer from the stored values, name stays typed, logo_path from the stored values
+   * @input  draft with a typed name and tagline; stored values with another tagline and logo; take brand
+   * @output tagline from the stored values, name stays typed, logo_path from the stored values
    */
   it('takes the stored values of one tab', () => {
-    const saved = { ...stored(), footer_text: 'Stored', logo_path: 'new.png' };
-    const draft = { ...stored(), company_name: 'Typed', footer_text: 'Typed', hidden_fields: ['dic'] as any };
+    const saved = { ...stored(), brand_tagline_i18n: { cz: 'Stored' }, logo_path: 'new.png' };
+    const draft = { ...stored(), company_name: 'Typed', brand_tagline_i18n: { cz: 'Typed' }, hidden_fields: ['dic'] as any };
     const form = takeSavedTab(draft, saved, 'brand');
-    expect([form.company_name, form.footer_text, form.logo_path]).toEqual(['Typed', 'Stored', 'new.png']);
+    expect([form.company_name, form.brand_tagline_i18n['cz'], form.logo_path]).toEqual(['Typed', 'Stored', 'new.png']);
+    expect(form.brand_tagline_i18n).not.toBe(saved.brand_tagline_i18n);
     expect(form.hidden_fields).toEqual(['dic']);
+  });
+
+  /**
+   * @description Missing texts per language: switched-on translated fields with an empty text in
+   *   the language; switched-off fields and other fields are not counted.
+   * @input  stored values (tagline cz / en with en ''); en, de, cz; tagline switched off
+   * @output en 1, de 1, cz 0; tagline off → en 0; textMissing of ico false
+   */
+  it('counts the texts missing in a language', () => {
+    const settings = { ...stored(), hidden_fields: [] };
+    expect(['en', 'de', 'cz'].map(code => missingTextsIn(settings, code))).toEqual([1, 1, 0]);
+    expect(missingTextsIn({ ...settings, hidden_fields: ['brand_tagline'] }, 'en')).toBe(0);
+    expect(textMissing(settings, 'ico', 'en')).toBeFalse();
   });
 
   /**

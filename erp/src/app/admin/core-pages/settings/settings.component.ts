@@ -5,8 +5,8 @@
  * @author JS
  * @created 2026
  * @description Company profile (route core/settings, label "Firemní profil") in three tabs:
- *   Company details (name, IDs, contacts), Brand and texts (logo, tagline, copyright and footer
- *   text - the tagline and the copyright per language) and Social media and measuring (social
+ *   Company details (name, IDs, contacts), Brand (logo and the tagline per language) and Social
+ *   media and measuring (social
  *   links with their order, Google Analytics ID). The tab is in the address (`?tab=brand`,
  *   `?tab=social`; the company details without it).
  * @note Every tab has one Save button in the sticky header of its card; it saves only that tab.
@@ -15,6 +15,13 @@
  * @note A reload (the global "Refresh all", the background refresh, a new login) merges the loaded
  *   data into the form - a tab or a social link with unsaved edits keeps them. Saving or deleting
  *   never reloads the page; it updates the stored values from the API answer.
+ * @note Only what belongs to the company as a whole (2026-11): the copyright line and the footer
+ *   text are texts of the applications (Texty webu / Texty e-shopu, with their own switch).
+ * @note The tagline is kept per language (Czech required): switched on and missing in a
+ *   language it is 'Cannot load text' on the public pages and the
+ *   language is not complete - the language tabs and the brand tab count them (orange for a
+ *   language visitors see, grey for a switched-off one), the field says it is missing.
+ *   `?tab=brand&lang=de` (the window Jazyky of the text editors) opens the language.
  * @note Leaving the page with unsaved edits asks first (unsavedTextsGuard of the route,
  *   `confirmLeave()`); closing / reloading the browser tab is asked by the browser (beforeunload).
  * @note The administration has no editable browser titles (2026-11): its tab title is a text of
@@ -27,7 +34,9 @@
  * - ResourceCacheService: TTL cache of the languages (10 min) / settings (2 min) fetch; the
  *   settings key is invalidated after every saved change.
  * - RowButtonBuilderComponent / RowButtonItems: the page tabs and the language tabs.
- * - settings-form.ts: the fields of the tabs, unsaved-changes checks, save bodies, merges.
+ * - settings-form.ts: the fields of the tabs, unsaved-changes checks, save bodies, merges,
+ *   missing texts per language.
+ * - AdminNotificationsService: the orange / grey dots of the missing texts follow a save at once.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, HostListener, inject } from '@angular/core';
@@ -44,9 +53,10 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 import { environment } from '../../../../environments/environment';
 import { CompanyOptionalField, LangMeta, SiteSetting, SocialLink } from './';
 import {
-  SETTINGS_TABS, SettingsTab, TAB_TOGGLES, fieldOn, isWebUrl, mergeSocialLinks, settingsForTab,
-  settingsTabDirty, socialLinkDirty, takeSavedTab,
+  I18N_FIELD_TEXTS, SETTINGS_TABS, SettingsTab, TAB_TOGGLES, fieldOn, isWebUrl, mergeSocialLinks, missingTextsIn,
+  settingsForTab, settingsTabDirty, socialLinkDirty, takeSavedTab, textMissing,
 } from './settings-form';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
 import { RowButton, RowButtonItems, languageRowButtons } from '../../components/builders/row-button-builder/row-button';
@@ -86,10 +96,9 @@ function emptySettings(): SiteSetting {
     company_name: '', ico: '', dic: '',
     google_analytics_id: null,
     contact_email: '', contact_phone: '',
-    address: '', footer_text: '',
+    address: '',
     logo_path: null,
     brand_tagline: '', brand_tagline_i18n: {},
-    copyright_text: '', copyright_text_i18n: {},
     hidden_fields: [],
   };
 }
@@ -119,8 +128,12 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
   private readonly SETTINGS_CACHE_KEY = 'settings:all';
 
   private resourceCache = inject(ResourceCacheService);
-  /** Route of the page - the open tab is its `tab` query parameter. */
+  /** Route of the page - the open tab is its `tab` query parameter, a language its `lang`. */
   private readonly tabRoute = inject(ActivatedRoute);
+  /** Notifications of the admin - refreshed after the texts are saved. */
+  private readonly notifications = inject(AdminNotificationsService);
+  /** Language named in the address (`?lang=`) before the languages are loaded. */
+  private requestedLang: string | null = null;
 
   public override t(key: string): string {
     return this.i18n.getValue(`settings.${key}`);
@@ -140,13 +153,11 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
   /** Label key (strings.field_*) of every optional field - order of the validation message. */
   private readonly optionalFieldLabels: Record<CompanyOptionalField, string> = {
     brand_tagline: 'field_brand_tagline',
-    copyright_text: 'field_copyright_text',
     ico: 'field_ico',
     dic: 'field_dic',
     google_analytics_id: 'field_ga_label',
     contact_phone: 'field_phone',
     address: 'field_address',
-    footer_text: 'field_footer_text',
   };
 
   /** The data were loaded at least once (a reload keeps the form on the screen). */
@@ -185,6 +196,11 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
     this.tabRoute.queryParamMap.pipe(Core.takeUntil(this.destroy$)).subscribe(params => {
       const tab = params.get('tab') as SettingsTab | null;
       this.activeTab = tab && ADDRESS_TABS.includes(tab) ? tab : 'company';
+      const lang = params.get('lang');
+      if (lang) {
+        this.requestedLang = lang.toLowerCase();
+        this.applyRequestedLang();
+      }
       this.cd.markForCheck();
     });
     this.initWithAuthCheck(this.router);
@@ -202,18 +218,40 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
 
   // ── Tabs, unsaved changes, leaving ─────────────────────────────
 
-  /** @description Page tabs; a tab with unsaved edits has an amber dot. */
+  /**
+   * @description Page tabs; a tab with unsaved edits has an amber dot; the brand tab counts its
+   *   missing texts (orange in the languages visitors see, else grey for the switched-off ones).
+   */
   get tabItems(): RowButton[] {
+    const missing = this.brandMissing;
     return this.tabButtons.update(SETTINGS_TABS.map(tab => {
       const dirty = this.tabDirty(tab);
+      const count = tab === 'brand' ? missing.count : null;
+      const titles = [dirty ? this.t('tab_unsaved_title') : '', count ? this.t('tab_missing_title').replace('{count}', String(count)) : ''];
       return {
         value: tab,
         label: this.t(`tab_${tab}`),
         icon: TAB_ICONS[tab],
         dot: dirty,
-        title: dirty ? this.t('tab_unsaved_title') : undefined,
+        count: count || null,
+        countTone: missing.tone,
+        title: titles.filter(Boolean).join(' – ') || undefined,
       };
     }));
+  }
+
+  /**
+   * @description Missing texts of the brand tab: in the languages visitors see (orange), or - when
+   *   none is missing there - in the switched-off languages (grey).
+   * @returns Count and its tone (count 0 = nothing missing).
+   */
+  get brandMissing(): { count: number; tone: 'attention' | 'neutral' } {
+    if (!this.loaded) return { count: 0, tone: 'attention' };
+    const sum = (active: boolean) => this.languages
+      .filter(lang => (lang.active !== false) === active)
+      .reduce((total, lang) => total + missingTextsIn(this.settings, lang.code), 0);
+    const visible = sum(true);
+    return visible ? { count: visible, tone: 'attention' } : { count: sum(false), tone: 'neutral' };
   }
 
   /**
@@ -368,6 +406,7 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
     if (languages) this.languages = Array.isArray(languages) ? languages : [];
     if (!this.languages.length) this.languages = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }];
     if (!this.languages.find(l => l.code === this.currentLang)) this.currentLang = this.languages[0].code;
+    this.applyRequestedLang();
 
     const dirtyTabs = SETTINGS_TABS.filter(tab => settingsTabDirty(this.settings, this.saved, tab));
     this.saved = this.normalize(config?.settings);
@@ -387,6 +426,14 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
     this.cd.markForCheck();
   }
 
+  /** @description Opens the language named in the address once it is one of the languages. */
+  private applyRequestedLang(): void {
+    if (this.requestedLang && this.languages.some(lang => lang.code === this.requestedLang)) {
+      this.currentLang = this.requestedLang;
+      this.requestedLang = null;
+    }
+  }
+
   /**
    * @description Stored company details from the API with every language present (Czech falls
    *   back to the base column, as the API keeps it).
@@ -398,7 +445,6 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
       ...emptySettings(),
       ...(raw ?? {}),
       brand_tagline_i18n: { ...(raw?.brand_tagline_i18n ?? {}) },
-      copyright_text_i18n: { ...(raw?.copyright_text_i18n ?? {}) },
       hidden_fields: [...(raw?.hidden_fields ?? [])],
     });
   }
@@ -409,13 +455,15 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
    * @returns A copy with complete language maps.
    */
   private withI18nDefaults(values: SiteSetting): SiteSetting {
-    const tagline = { ...(values.brand_tagline_i18n ?? {}) };
-    const copyright = { ...(values.copyright_text_i18n ?? {}) };
-    for (const lang of this.languages) {
-      if (tagline[lang.code] === undefined) tagline[lang.code] = lang.code === 'cz' ? (values.brand_tagline ?? '') : '';
-      if (copyright[lang.code] === undefined) copyright[lang.code] = lang.code === 'cz' ? (values.copyright_text ?? '') : '';
+    const result: SiteSetting = { ...values };
+    for (const [field, column] of Object.entries(I18N_FIELD_TEXTS) as [CompanyOptionalField, keyof SiteSetting][]) {
+      const texts: Record<string, string> = { ...((values[column] as Record<string, string> | undefined) ?? {}) };
+      for (const lang of this.languages) {
+        if (texts[lang.code] === undefined) texts[lang.code] = lang.code === 'cz' ? String(values[field as keyof SiteSetting] ?? '') : '';
+      }
+      (result as any)[column] = texts;
     }
-    return { ...values, brand_tagline_i18n: tagline, copyright_text_i18n: copyright };
+    return result;
   }
 
   /**
@@ -442,9 +490,38 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
 
   // ── Languages ──────────────────────────────────────────────────
 
-  /** @description Language tabs of the translated fields (brand tab). */
+  /**
+   * @description Language tabs of the translated fields (brand tab) with the count of the texts
+   *   missing in the language (orange; grey for a switched-off language).
+   */
   get langItems(): RowButton[] {
-    return this.langButtons.update(languageRowButtons(this.languages, { inactiveTitle: this.i18n.getValue('shared.inactive_language_title') }));
+    return this.langButtons.update(languageRowButtons(this.languages, {
+      count: code => (this.loaded ? missingTextsIn(this.settings, code) : 0),
+      title: code => {
+        const count = this.loaded ? missingTextsIn(this.settings, code) : 0;
+        return count ? this.t('lang_missing_title').replace('{count}', String(count)) : '';
+      },
+      inactiveTitle: this.i18n.getValue('shared.inactive_language_title'),
+    }));
+  }
+
+  /** @returns Whether the open language is switched off (visitors do not see it). */
+  get currentLangInactive(): boolean {
+    return this.languages.find(lang => lang.code === this.currentLang)?.active === false;
+  }
+
+  /**
+   * @description Whether a translated field is switched on and has no text in the open language.
+   * @param field Optional field with texts per language.
+   * @returns True when the field should be marked as missing.
+   */
+  isTextMissing(field: CompanyOptionalField): boolean {
+    return this.loaded && textMissing(this.settings, field, this.currentLang);
+  }
+
+  /** @returns Note under a missing translated field (another for a switched-off language). */
+  get missingFieldNote(): string {
+    return this.t(this.currentLangInactive ? 'missing_field_inactive' : 'missing_field_active');
   }
 
   /**
@@ -485,15 +562,14 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
 
   /**
    * @description Labels of the empty required fields of a tab in the given values: company name
-   *   and contact e-mail (company tab) and every switched-on optional field of the tab (an i18n
-   *   field needs a text in at least one language; the GA ID also its format).
+   *   and contact e-mail (company tab) and every switched-on optional field of the tab (a field
+   *   per language needs its Czech text; the GA ID also its format).
    * @param values Company details to check (the body of a save).
    * @param tab Tab whose fields are checked.
    * @returns Labels without the "*" mark; empty when everything is filled in.
    */
   missingFieldLabels(values: SiteSetting, tab: SettingsTab): string[] {
     const filled = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
-    const anyText = (texts: Record<string, string> | undefined): boolean => Object.values(texts ?? {}).some(filled);
     const label = (key: string): string => (this.strings[key] ?? key).replace(/\s*\*$/, '');
 
     const missing: string[] = [];
@@ -507,10 +583,13 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
         missing.push(label('field_ga_invalid'));
         continue;
       }
-      const ok = field === 'brand_tagline' ? anyText(values.brand_tagline_i18n)
-        : field === 'copyright_text' ? anyText(values.copyright_text_i18n)
-        : filled(values[field]);
-      if (!ok) missing.push(label(this.optionalFieldLabels[field]));
+      const column = I18N_FIELD_TEXTS[field];
+      if (column) {
+        // a text per language: Czech required (the other languages are counted, not required)
+        if (!filled((values[column] as Record<string, string> | undefined)?.['cz'])) missing.push(`${label(this.optionalFieldLabels[field])} (CZ)`);
+        continue;
+      }
+      if (!filled(values[field])) missing.push(label(this.optionalFieldLabels[field]));
     }
     return missing;
   }
@@ -598,14 +677,12 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
       const fd = new FormData();
       fd.append('company_name', body.company_name ?? '');
       fd.append('brand_tagline_i18n', JSON.stringify(body.brand_tagline_i18n ?? {}));
-      fd.append('copyright_text_i18n', JSON.stringify(body.copyright_text_i18n ?? {}));
       fd.append('ico', body.ico ?? '');
       fd.append('dic', body.dic ?? '');
       fd.append('google_analytics_id', body.google_analytics_id ?? '');
       fd.append('contact_email', body.contact_email ?? '');
       fd.append('contact_phone', body.contact_phone ?? '');
       fd.append('address', body.address ?? '');
-      fd.append('footer_text', body.footer_text ?? '');
       fd.append('hidden_fields', JSON.stringify(body.hidden_fields ?? []));
       fd.append('logo_file', logo, logo.name);
       fd.append('_method', 'PUT');
@@ -614,14 +691,12 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
     return this.dataHandler.put<SiteSetting>('legal/config/settings', {
       company_name: body.company_name,
       brand_tagline_i18n: body.brand_tagline_i18n ?? {},
-      copyright_text_i18n: body.copyright_text_i18n ?? {},
       ico: body.ico,
       dic: body.dic,
       google_analytics_id: body.google_analytics_id || null,
       contact_email: body.contact_email,
       contact_phone: body.contact_phone,
       address: body.address,
-      footer_text: body.footer_text,
       hidden_fields: body.hidden_fields ?? [],
     } as any);
   }
@@ -666,7 +741,10 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit,
       if (result.kind === 'settings') {
         this.saved = this.normalize(result.res);
         this.settings = this.withI18nDefaults(takeSavedTab(this.settings, this.saved, tab));
-        if (tab === 'brand') this.cancelLogoSelection();
+        if (tab === 'brand') {
+          this.cancelLogoSelection();
+          this.notifications.refresh(); // the orange / grey dots follow the saved texts at once
+        }
       } else {
         this.socialLinks = this.socialLinks.map(link => {
           if (link._key !== result.key) return link;

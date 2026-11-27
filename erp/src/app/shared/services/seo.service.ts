@@ -28,6 +28,7 @@ import { DOCUMENT } from '@angular/common';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { combineLatest, filter, map, of, startWith } from 'rxjs';
+import { companyText } from '../utils/company-text';
 
 import { PublicDataService } from './public-data.service';
 import { LangMeta, LocalizationService } from './localization.service';
@@ -121,11 +122,12 @@ export class SeoService {
   }
 
   /**
-   * @description Tagline in the current language, else the default one.
+   * @description Tagline in the current language only (companyText) - a missing or switched-off
+   *   one gives no description tag (no text of another language, no placeholder in the head).
    * @returns The tagline, '' when there is none.
    */
   private tagline(settings: any, lang: string): string {
-    return settings.brand_tagline_i18n?.[lang] || settings.brand_tagline || '';
+    return companyText(settings.brand_tagline_i18n, lang, '');
   }
 
   /**

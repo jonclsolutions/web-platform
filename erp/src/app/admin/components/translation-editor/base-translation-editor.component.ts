@@ -114,6 +114,24 @@ export interface UploadMismatch {
   unexpectedCount: number;
 }
 
+
+/**
+ * Parts of what a language lacks kept by the core, with the page where they are filled in
+ * (`{lang}` = the language code) - next to `missingPartLinks` of the applications.
+ */
+export const CORE_MISSING_PART_LINKS: Readonly<Record<string, string>> = {
+  company_texts: '/admin/core/settings?tab=brand&lang={lang}',
+};
+
+/**
+ * @description Page where a part of what a language lacks is filled in (core, then the applications).
+ * @param part Part of completeness (`company_texts`, `inquiry_email` …).
+ * @returns Link with `{lang}`, or undefined (a part of the text page itself).
+ */
+export function missingPartLink(part: string): string | undefined {
+  return CORE_MISSING_PART_LINKS[part] ?? APPS.map(app => app.missingPartLinks?.[part]).find(Boolean);
+}
+
 @Directive()
 export abstract class BaseTranslationEditorComponent
   extends BaseDataComponent<any>
@@ -330,6 +348,12 @@ export abstract class BaseTranslationEditorComponent
   translations: any = {};
   czTranslations: any = {};
   flattenedKeys: FlatKey[] = [];
+  /**
+   * Keys switched off on the public pages of the application (e.g. the copyright line of the
+   * footer - FooterCopyrightOptionComponent): an empty one is not "missing" (the API counts the
+   * same - AppManifest::hiddenTextKeys()).
+   */
+  private hiddenTextKeys = new Set<string>();
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
 
@@ -505,7 +529,7 @@ export abstract class BaseTranslationEditorComponent
    * @description Opens where a part of what a language lacks is filled in (a click in the window
    *   Jazyky): the texts → the list of its missing texts; a tab of this page (page titles, FAQ …)
    *   → the tab in that language; a part of another page (an e-mail - `missingPartLinks` of the
-   *   application) → that page with its editor in the language.
+   *   application; the company profile texts - CORE_MISSING_PART_LINKS) → that page in the language.
    * @param code Language code.
    * @param part Part of completeness (`texts`, `page_titles`, `faq`, `inquiry_email` …).
    */
@@ -521,7 +545,7 @@ export abstract class BaseTranslationEditorComponent
       this.cd.markForCheck();
       return;
     }
-    const link = APPS.map(app => app.missingPartLinks?.[part]).find(Boolean);
+    const link = missingPartLink(part);
     if (link) {
       this.navigator.navigateByUrl(link.replace('{lang}', encodeURIComponent(code)));
     } else if (this.TEXTS_PAGE_URL) {
@@ -536,7 +560,7 @@ export abstract class BaseTranslationEditorComponent
    */
   canOpenMissingPart(part: string): boolean {
     if (part === 'texts') return !this.TEXTS_PAGE_URL;
-    return !!this.TEXTS_PAGE_URL || this.tabs.some(tab => tab.key === part) || APPS.some(app => !!app.missingPartLinks?.[part]);
+    return !!this.TEXTS_PAGE_URL || this.tabs.some(tab => tab.key === part) || !!missingPartLink(part);
   }
 
   /**
@@ -735,7 +759,7 @@ export abstract class BaseTranslationEditorComponent
       this.flattenedKeys.push({
         path,
         value: curVal,
-        missing: curVal.trim() === ''
+        missing: !this.hiddenTextKeys.has(path) && curVal.trim() === ''
       });
     }
 
@@ -943,8 +967,22 @@ export abstract class BaseTranslationEditorComponent
     const item = this.flattenedKeys.find(k => k.path === path);
     if (item) {
       item.value   = value;
-      item.missing = (typeof value === 'string' ? value : String(value)).trim() === '';
+      item.missing = !this.hiddenTextKeys.has(path) && (typeof value === 'string' ? value : String(value)).trim() === '';
     }
+  }
+
+  /**
+   * @description Marks a text switched off / on on the public pages (the host page's option, e.g.
+   *   the copyright switch): a switched-off one is not missing even when empty.
+   * @param path Dot path of the key.
+   * @param hidden True = switched off on the public pages.
+   */
+  setTextHidden(path: string, hidden: boolean): void {
+    if (hidden) this.hiddenTextKeys.add(path);
+    else this.hiddenTextKeys.delete(path);
+    const item = this.flattenedKeys.find(k => k.path === path);
+    if (item) item.missing = !hidden && item.value.trim() === '';
+    this.cd.markForCheck();
   }
 
   /**

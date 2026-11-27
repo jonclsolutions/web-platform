@@ -7,8 +7,8 @@
  * @description Unit tests of SettingsComponent - the company profile in three tabs (company
  *   details / brand and texts / social media and measuring): the tab of the address, the dots of
  *   unsaved tabs, saving one tab without touching the others, reloads that keep unsaved edits,
- *   leaving with unsaved edits, the logo, the social links (order, address check, delete) and
- *   the permissions.
+ *   leaving with unsaved edits, the logo, the social links (order, address check, delete), the
+ *   texts per language (counts, missing marks, `?lang=`, Czech required) and the permissions.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, permission stub),
  *   ResourceCacheService (real), ActivatedRoute stub (query parameter `tab`)
@@ -21,6 +21,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { SettingsComponent } from './settings.component';
 import { environment } from '../../../../environments/environment';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 
 describe('SettingsComponent', () => {
   let ctx: AdminTestContext;
@@ -30,8 +31,7 @@ describe('SettingsComponent', () => {
 
   const config = () => ({
     settings: {
-      id: 1, company_name: 'RPSW', ico: '1', dic: 'CZ1', contact_email: 'a@b.cz', brand_tagline: 'Tag', copyright_text: '©',
-      footer_text: 'F', logo_path: 'logo.png',
+      id: 1, company_name: 'RPSW', ico: '1', dic: 'CZ1', contact_email: 'a@b.cz', brand_tagline: 'Tag', logo_path: 'logo.png',
       hidden_fields: ['google_analytics_id', 'contact_phone', 'address']
     },
     social_links: [
@@ -82,7 +82,6 @@ describe('SettingsComponent', () => {
       expect((ctx.dataHandler as any).get.calls.allArgs().filter((a: any[]) => a[0] === 'legal/config').length).toBe(1);
       expect(component.settings.company_name).toBe('RPSW');
       expect(component.settings.brand_tagline_i18n).toEqual({ cz: 'Tag', en: '' });
-      expect(component.settings.copyright_text_i18n).toEqual({ cz: '©', en: '' });
       expect(component.socialLinks.map(s => s.name)).toEqual(['LinkedIn', 'Facebook']);
       expect([component.loaded, component.loading, component.hasUnsavedChanges]).toEqual([true, false, false]);
       discardPeriodicTasks();
@@ -224,21 +223,23 @@ describe('SettingsComponent', () => {
     /**
      * @description Saving the company tab sends the stored values of the other tabs - the unsaved
      *   brand edit stays only in the form (and its tab stays dirty); no reload, one mark, no dialog.
-     * @input  name 'New', footer 'Typed' (brand); saveTab('company')
-     * @output PUT body company_name 'New', footer_text 'F'; afterwards company clean, brand dirty,
-     *   footer still 'Typed'; GET legal/config not repeated; savedTab 'company'; no success alert
+     * @input  name 'New', Czech tagline 'Typed' (brand); saveTab('company')
+     * @output PUT body company_name 'New', brand_tagline_i18n cz 'Tag' (stored); afterwards company
+     *   clean, brand dirty, tagline still 'Typed'; GET legal/config not repeated; savedTab 'company';
+     *   no success alert; no copyright / footer text in the body
      */
     it('saves the company tab without the edits of the others', fakeAsync(() => {
       init();
       (ctx.dataHandler as any).get.calls.reset();
       component.settings.company_name = 'New';
-      component.settings.footer_text = 'Typed';
+      component.settings.brand_tagline_i18n['cz'] = 'Typed';
       component.saveTab('company');
       const [url, body] = put().calls.mostRecent().args;
       expect(url).toBe('legal/config/settings');
-      expect(body).toEqual(jasmine.objectContaining({ company_name: 'New', footer_text: 'F', google_analytics_id: null }));
+      expect(body).toEqual(jasmine.objectContaining({ company_name: 'New', brand_tagline_i18n: { cz: 'Tag', en: '' }, google_analytics_id: null }));
+      expect([body.footer_text, body.footer_text_i18n, body.copyright_text_i18n]).toEqual([undefined, undefined, undefined]);
       expect([component.tabDirty('company'), component.tabDirty('brand')]).toEqual([false, true]);
-      expect(component.settings.footer_text).toBe('Typed');
+      expect(component.settings.brand_tagline_i18n['cz']).toBe('Typed');
       expect((ctx.dataHandler as any).get).not.toHaveBeenCalled();
       expect(component.savedTab).toBe('company');
       expect(ctx.alert.open).not.toHaveBeenCalled();
@@ -276,7 +277,7 @@ describe('SettingsComponent', () => {
     /**
      * @description Validation: empty switched-on fields of the tab are listed; an empty stored
      *   field of another tab blocks the save with the name of that tab; nothing is sent.
-     * @input  company: name ' ', phone switched on and empty; brand: stored name empty + footer typed
+     * @input  company: name ' ', phone switched on and empty; brand: stored name empty + tagline typed
      * @output warning validation_required_message (name, phone); then validation_other_tab_message; no PUT
      */
     it('refuses empty required fields', fakeAsync(() => {
@@ -288,7 +289,7 @@ describe('SettingsComponent', () => {
       expect(component.missingFieldLabels(component.settings, 'company')).toEqual(['settings.field_company_name', 'settings.field_phone']);
 
       (component as any).saved = { ...(component as any).saved, company_name: '' };
-      component.settings.footer_text = 'Typed';
+      component.settings.brand_tagline_i18n['cz'] = 'Typed';
       component.saveTab('brand');
       expect(ctx.alert.open.calls.mostRecent().args[1]).toBe('settings.validation_other_tab_message');
       expect(put()).not.toHaveBeenCalled();
@@ -378,9 +379,9 @@ describe('SettingsComponent', () => {
      * @description "Refresh all" (and the background refresh) reloads past the cache and keeps
      *   unsaved edits: a dirty tab keeps the typed values, clean tabs and clean rows take the
      *   loaded values, a new row stays.
-     * @input  typed name (company dirty); renamed LinkedIn; a new row; the API now has footer 'F2',
+     * @input  typed name (company dirty); renamed LinkedIn; a new row; the API now has tagline 'T2',
      *   Facebook 'FB2'; refreshAll$
-     * @output name 'Typed'; footer 'F2'; rows LinkedIn typed, 'FB2', new row; GET legal/config again
+     * @output name 'Typed'; Czech tagline 'T2'; rows LinkedIn typed, 'FB2', new row; GET legal/config again
      */
     it('keeps unsaved edits when the page reloads', fakeAsync(() => {
       init();
@@ -391,13 +392,13 @@ describe('SettingsComponent', () => {
       (ctx.dataHandler as any).get.and.callFake((url: string) => {
         if (url === 'languages') return of(languages);
         const fresh = config();
-        fresh.settings.footer_text = 'F2';
+        fresh.settings.brand_tagline = 'T2';
         fresh.social_links[1].name = 'FB2';
         return of(fresh);
       });
       ctx.refreshAll$.next();
       expect(component.settings.company_name).toBe('Typed');
-      expect(component.settings.footer_text).toBe('F2');
+      expect(component.settings.brand_tagline_i18n['cz']).toBe('T2');
       expect(component.socialLinks.map(link => link.name)).toEqual(['LinkedIn typed', 'FB2', '']);
       expect([component.tabDirty('company'), component.tabDirty('brand')]).toEqual([true, false]);
       discardPeriodicTasks();
@@ -416,7 +417,7 @@ describe('SettingsComponent', () => {
       component.onBeforeUnload(clean);
       expect(clean.preventDefault).not.toHaveBeenCalled();
 
-      component.settings.footer_text = 'Typed';
+      component.settings.brand_tagline_i18n['en'] = 'Typed';
       component.moveSocialLink(0, 1);
       ctx.confirm.open.and.resolveTo(false);
       expect(await component.confirmLeave()).toBeFalse();
@@ -535,6 +536,82 @@ describe('SettingsComponent', () => {
       expect((ctx.dataHandler as any).delete).toHaveBeenCalledTimes(1);
       await component.deleteSocialLink(9);
       flush();
+      discardPeriodicTasks();
+    }));
+  });
+
+  describe('texts per language', () => {
+    beforeEach(() => setup());
+
+    /**
+     * @description The language tabs and the brand tab count the tagline missing in a language
+     *   (orange; the brand tab grey when only a switched-off language misses it); a missing tagline
+     *   of the open language is marked with its note; switching the tagline off removes it.
+     * @input  languages cz, en (en without the tagline); then en filled and a switched-off
+     *   language de; tagline switched off
+     * @output en 1 (attention), brand tab 1; mark on the field in en; later de 1 neutral, brand
+     *   tab 1 neutral; with the tagline off de none
+     */
+    it('counts and marks the missing tagline', fakeAsync(() => {
+      fixture.detectChanges();
+      flush();
+      params$.next(convertToParamMap({ tab: 'brand' }));
+      component.switchLang('en');
+      fixture.detectChanges();
+      const lang = (code: string) => component.langItems.find(item => item.value === code)!;
+      expect([lang('cz').count, lang('en').count, lang('en').countTone]).toEqual([null, 1, 'attention']);
+      const brand = component.tabItems.find(item => item.value === 'brand')!;
+      expect([brand.count, brand.countTone]).toEqual([1, 'attention']);
+      expect(fixture.nativeElement.querySelectorAll('.ws-field--missing').length).toBe(1);
+      expect(fixture.nativeElement.querySelector('.ws-field-missing')?.textContent).toContain('settings.missing_field_active');
+      expect(fixture.nativeElement.querySelector('[name="copyright_text"], [name="footer_text"]')).toBeNull();
+
+      component.settings.brand_tagline_i18n['en'] = 'x';
+      component.languages = [...component.languages, { code: 'de', name: 'Deutsch', active: false }];
+      expect([lang('en').count, lang('de').count, lang('de').countTone]).toEqual([null, 1, 'neutral']);
+      expect([component.brandMissing.count, component.brandMissing.tone]).toEqual([1, 'neutral']);
+      component.switchLang('de');
+      expect(component.missingFieldNote).toBe('settings.missing_field_inactive');
+      component.setFieldOn('brand_tagline', false);
+      expect(lang('de').count).toBeNull();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description `?lang=` (a link of the window Jazyky) opens the language once it is loaded; an
+     *   unknown one is ignored.
+     * @input  ?tab=brand&lang=EN before the load; then ?lang=xx
+     * @output activeTab brand, currentLang en; stays en
+     */
+    it('opens the language of the address', fakeAsync(() => {
+      params$.next(convertToParamMap({ tab: 'brand', lang: 'EN' }));
+      init();
+      expect([component.activeTab, component.currentLang]).toEqual(['brand', 'en']);
+      params$.next(convertToParamMap({ tab: 'brand', lang: 'xx' }));
+      expect(component.currentLang).toBe('en');
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description A switched-on text needs its Czech text (the other languages are counted, not
+     *   required); the tagline is sent per language; a saved brand tab refreshes the dots.
+     * @input  Czech tagline emptied, English filled; saveTab('brand'); Czech filled; saveTab('brand')
+     * @output warning listing 'settings.field_brand_tagline (CZ)', no PUT; then PUT with
+     *   brand_tagline_i18n and notifications.refresh() called
+     */
+    it('requires the Czech text and refreshes the dots after a save', fakeAsync(() => {
+      init();
+      const refresh = spyOn(TestBed.inject(AdminNotificationsService), 'refresh');
+      component.settings.brand_tagline_i18n['cz'] = ' ';
+      component.settings.brand_tagline_i18n['en'] = 'Tag EN';
+      component.saveTab('brand');
+      expect(component.missingFieldLabels(component.settings, 'brand')).toEqual(['settings.field_brand_tagline (CZ)']);
+      expect(put()).not.toHaveBeenCalled();
+
+      component.settings.brand_tagline_i18n['cz'] = 'Tag';
+      component.saveTab('brand');
+      expect(put().calls.mostRecent().args[1]).toEqual(jasmine.objectContaining({ brand_tagline_i18n: { cz: 'Tag', en: 'Tag EN' } }));
+      expect(refresh).toHaveBeenCalled();
       discardPeriodicTasks();
     }));
   });

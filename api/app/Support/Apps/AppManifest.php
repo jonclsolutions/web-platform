@@ -279,6 +279,17 @@ abstract class AppManifest
     }
 
     /**
+     * @description Keys of the texts of the application's own translation module (dot paths,
+     *   e.g. `footer.copyright_text`) switched off on its public pages - not counted as missing in
+     *   any language (MissingTranslations; the text editor gets them with the completeness).
+     * @return array<int, string> Switched-off keys ([] = all texts are shown).
+     */
+    public function hiddenTextKeys(): array
+    {
+        return [];
+    }
+
+    /**
      * @description Translation module whose languages the content of the application uses -
      *   its own id by default; an application without own texts names the module it follows
      *   (the project portal: the languages of the website). A deleted language of that module

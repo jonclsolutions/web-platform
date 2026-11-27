@@ -7,7 +7,8 @@
  * @author JS
  * @created 2026
  * @description Feature tests of the site configuration (SiteConfigurationController,
- *   PageTitleController): company details with translated tagline / copyright and logo,
+ *   PageTitleController): company details with the translated tagline and the logo (no copyright
+ *   line, no footer text - texts of the applications since 2026-11),
  *   social links with icons, page titles (of the applications + public; the administration has
  *   none - its tab title is a text of the admin UI), the public configuration.
  * @dependencies
@@ -51,8 +52,7 @@ class SiteConfigurationTest extends TestCase
     {
         return array_merge([
             'company_name' => 'Acme s.r.o.', 'ico' => '12345678', 'dic' => 'CZ12345678', 'contact_email' => 'info@acme.cz',
-            'contact_phone' => '+420 111 222 333', 'address' => 'Praha 1', 'brand_tagline' => 'Base', 'copyright_text' => '© Acme',
-            'footer_text' => 'Footer', 'google_analytics_id' => 'G-ABC12345',
+            'contact_phone' => '+420 111 222 333', 'address' => 'Praha 1', 'brand_tagline' => 'Base', 'google_analytics_id' => 'G-ABC12345',
         ], $overrides);
     }
 
@@ -76,9 +76,9 @@ class SiteConfigurationTest extends TestCase
      * @description The first save on an empty table creates the row; translated fields come as
      *   arrays or JSON strings, the base columns follow the cz text; only validated fields are
      *   stored (logo_path cannot be injected); changed keys are logged; the list needs permission.
-     * @input Empty table: PUT with brand_tagline_i18n array {cz, en}, copyright_text_i18n JSON string,
-     *        logo_path '../x'; then PUT same values (no change); GET config.
-     * @output 200 brand_tagline 'Ahoj', copyright '© CZ', logo_path null; log lists the keys;
+     * @input Empty table: PUT with brand_tagline_i18n JSON string {cz, en}, logo_path '../x'; then
+     *        PUT same values (no change); GET config.
+     * @output 200 brand_tagline 'Ahoj', logo_path null; log lists the keys;
      *   second log "no field changes"; GET settings + ordered social links; 403 without permission.
      */
     public function test_update_settings(): void
@@ -88,13 +88,13 @@ class SiteConfigurationTest extends TestCase
 
         $this->signIn($this->userWith(self::ALL));
         $body = $this->company([
-            'brand_tagline_i18n' => ['cz' => 'Ahoj', 'en' => 'Hello'], 'copyright_text_i18n' => json_encode(['cz' => '© CZ']),
+            'brand_tagline_i18n' => json_encode(['cz' => 'Ahoj', 'en' => 'Hello']),
             'google_analytics_id' => 'G-ABC12345', 'logo_path' => '../.env',
         ]);
 
         $this->putJson('/api/legal/config/settings', $body)->assertOk()
             ->assertJsonPath('data.brand_tagline', 'Ahoj')->assertJsonPath('data.brand_tagline_i18n.en', 'Hello')
-            ->assertJsonPath('data.copyright_text', '© CZ')->assertJsonPath('data.google_analytics_id', 'G-ABC12345')->assertJsonPath('data.logo_path', null);
+            ->assertJsonPath('data.google_analytics_id', 'G-ABC12345')->assertJsonPath('data.logo_path', null);
         $this->assertSame(1, SiteSetting::count());
         $this->assertCoreLog('update', 'Updated company details: ');
         $this->putJson('/api/legal/config/settings', $body)->assertOk();
@@ -126,8 +126,10 @@ class SiteConfigurationTest extends TestCase
         Storage::disk('public')->assertMissing($first);
         Storage::disk('public')->assertExists($second);
 
-        $this->putJson('/api/legal/config/settings', $this->company(['ico' => '', 'contact_email' => 'x', 'contact_phone' => str_repeat('1', 21), 'footer_text' => str_repeat('a', 256), 'google_analytics_id' => 'UA-1']))
-            ->assertStatus(422)->assertJsonValidationErrors(['ico', 'contact_email', 'contact_phone', 'footer_text', 'google_analytics_id']);
+        $this->putJson('/api/legal/config/settings', $this->company(['ico' => '', 'contact_email' => 'x', 'contact_phone' => str_repeat('1', 21), 'brand_tagline_i18n' => ['cz' => str_repeat('a', 256)], 'google_analytics_id' => 'UA-1']))
+            ->assertStatus(422)->assertJsonValidationErrors(['ico', 'contact_email', 'contact_phone', 'google_analytics_id']);
+        $this->putJson('/api/legal/config/settings', $this->company(['brand_tagline_i18n' => ['cz' => str_repeat('a', 256)]]))
+            ->assertStatus(422)->assertJsonValidationErrors(['brand_tagline_i18n']);
     }
 
     /**
@@ -178,18 +180,50 @@ class SiteConfigurationTest extends TestCase
     }
 
     /**
-     * @description Public configuration: tagline / copyright in the requested language, else cz,
-     *   else the base column; social links ordered; empty configuration.
-     * @input No row: GET; row with tagline i18n {cz, en}, copyright without i18n: ?lang=en, ?lang=de.
-     * @output settings null; en 'Hello'; de 'Ahoj'; copyright base column.
+     * @description Public configuration: the tagline of the requested language only - a missing
+     *   one is null (the page shows 'Cannot load text', never another language) with its map still
+     *   sent; switched off it is null with a null map; a non-string `lang` is Czech; no copyright /
+     *   footer text (texts of the applications); empty configuration.
+     * @input No row: GET; row with tagline {cz, en}: ?lang=en, ?lang=de, ?lang[]=x; tagline off.
+     * @output settings null; en 'Hello'; de null with the map; lang[] 'Ahoj'; no copyright_text /
+     *   footer_text keys; switched off null / null.
      */
     public function test_public_config(): void
     {
         $this->getJson('/api/public/legal/config')->assertOk()->assertJsonPath('data.settings', null)->assertJsonPath('data.social_links', []);
 
-        SiteSetting::create($this->company(['brand_tagline_i18n' => ['cz' => 'Ahoj', 'en' => 'Hello']]));
-        $this->getJson('/api/public/legal/config?lang=en')->assertJsonPath('data.settings.brand_tagline', 'Hello')->assertJsonPath('data.settings.copyright_text', '© Acme');
-        $this->getJson('/api/public/legal/config?lang=de')->assertJsonPath('data.settings.brand_tagline', 'Ahoj');
+        $row = SiteSetting::create($this->company(['brand_tagline_i18n' => ['cz' => 'Ahoj', 'en' => 'Hello']]));
+        $en = $this->getJson('/api/public/legal/config?lang=en')->assertJsonPath('data.settings.brand_tagline', 'Hello')->json('data.settings');
+        foreach (['copyright_text', 'copyright_text_i18n', 'footer_text', 'footer_text_i18n'] as $gone) {
+            $this->assertArrayNotHasKey($gone, $en, $gone);
+        }
+        $this->getJson('/api/public/legal/config?lang=de')->assertJsonPath('data.settings.brand_tagline', null)
+            ->assertJsonPath('data.settings.brand_tagline_i18n.cz', 'Ahoj');
+        $this->getJson('/api/public/legal/config?lang[]=x')->assertOk()->assertJsonPath('data.settings.brand_tagline', 'Ahoj');
+
+        $row->update(['hidden_fields' => ['brand_tagline']]);
+        $this->getJson('/api/public/legal/config?lang=en')->assertJsonPath('data.settings.brand_tagline', null)
+            ->assertJsonPath('data.settings.brand_tagline_i18n', null);
+    }
+
+    /**
+     * @description The company details hold nothing of a single application: a copyright line or
+     *   a footer text sent by an older client is ignored and cannot be switched off any more.
+     * @input PUT with copyright_text(_i18n) / footer_text(_i18n); hidden_fields ['footer_text'].
+     * @output 200 without those keys in the answer; 422 hidden_fields.
+     */
+    public function test_application_texts_are_not_company_details(): void
+    {
+        $this->signIn($this->userWith(['core-legal-config-update']));
+        SiteSetting::create($this->company());
+
+        $data = $this->putJson('/api/legal/config/settings', $this->company(['copyright_text' => '© X', 'copyright_text_i18n' => ['cz' => '© X'],
+            'footer_text' => 'F', 'footer_text_i18n' => ['cz' => 'F']]))->assertOk()->json('data');
+        foreach (['copyright_text', 'copyright_text_i18n', 'footer_text', 'footer_text_i18n'] as $gone) {
+            $this->assertArrayNotHasKey($gone, $data, $gone);
+        }
+        $this->putJson('/api/legal/config/settings', $this->company(['hidden_fields' => ['footer_text']]))
+            ->assertStatus(422)->assertJsonValidationErrors(['hidden_fields']);
     }
 
     /**

@@ -119,6 +119,9 @@
       </button>
     </div>
   }
+  <!-- Options of the texts given by the application (e.g. the copyright switch of the footer). -->
+  <ng-content select="[textsOptions]"></ng-content>
+
   <!-- Texts missing in the active languages (the orange dot of the menu): which languages lack
        them and a button per language that opens it with only its missing texts. -->
   @if (e.missingLanguages.length) {

@@ -149,7 +149,9 @@ class ShopPublicController extends Controller
         $settings = ShopSiteSetting::first();
 
         return $this->respond([
-            'is_shop_active' => (bool) ($settings->is_shop_active ?? true)
+            'is_shop_active' => (bool) ($settings->is_shop_active ?? true),
+            // the footer shows the copyright line (texts page of the admin)
+            'show_footer_copyright' => (bool) ($settings->show_footer_copyright ?? true),
         ]);
     }
 }

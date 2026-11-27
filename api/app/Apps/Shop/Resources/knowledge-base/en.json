@@ -1463,12 +1463,13 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "The row of e-shop languages - adding a language (flag, code, name; a new language is switched off), switching on only a complete language (the Languages window says what is missing - texts, page titles and the order e-mails; every item is a link to the place where it is filled in), switching off, deleting (deletes all texts of the language too, including page titles and the order e-mail). Czech is the default language. A switched off language is offered for editing in the Page titles tab and in the order e-mail in Orders too - its tab is dashed and greyer, so you complete it before you switch it on. What a switched off language lacks is shown by a grey dot in the menu and a grey number on the tab; orange means a text is missing in a switched on language.",
+                "The row of e-shop languages - adding a language (flag, code, name; a new language is switched off), switching on only a complete language (the Languages window says what is missing - texts, page titles, the order e-mails and the company profile tagline; every item is a link to the place where it is filled in), switching off, deleting (deletes all texts of the language too, including page titles and the order e-mail). Czech is the default language. A switched off language is offered for editing in the Page titles tab and in the order e-mail in Orders too - its tab is dashed and greyer, so you complete it before you switch it on. What a switched off language lacks is shown by a grey dot in the menu and a grey number on the tab; orange means a text is missing in a switched on language.",
                 "The language is in the e-shop address too, for example /cs/shop/catalog in Czech and /en/shop/catalog in English - the same as on the website (manual Website texts, chapter 03). An active language gets its addresses by itself, nothing else is set.",
                 "The table with the readable path of a text (for example Checkout › Field labels › First name) and the exact key under it, search (by the readable path too), the statistics line and the Missing toggle.",
                 "Downloading and uploading JSON for a translator.",
                 "Save (with the count of the changes) stores the changed texts of the current language. Texts saved meanwhile by someone else are not overwritten without asking (Overwrite / Do not save). Leaving the page with unsaved edits (menu, Back) asks first; on a phone the Save button is in the bar at the bottom.",
-                "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing (filter of missing ones) and texts the application no longer uses are removed. An orange dot at this page in the menu and a banner above the languages on this page show that texts are missing in the active languages: how many are missing in which language and a button that opens the language with only its missing texts. The dot and the banner disappear once the texts are filled."
+                "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing (filter of missing ones) and texts the application no longer uses are removed. An orange dot at this page in the menu and a banner above the languages on this page show that texts are missing in the active languages: how many are missing in which language and a button that opens the language with only its missing texts. The dot and the banner disappear once the texts are filled.",
+                "The copyright line of the e-shop footer is the text footer.copyright_text ({year} = current year), edited here in every language. The option Show the copyright in the footer above the list of texts hides it in every language (saved at once); a hidden text is not counted as missing."
               ]
             },
             {
@@ -1496,8 +1497,8 @@
               "items": [
                 "Names, descriptions and prices of products - page Products.",
                 "The order confirmation e-mail - page E-shop orders (Actions → Edit confirmation e-mail).",
-                "Terms and conditions and the privacy policy - Core → Legal documents.",
-                "Contacts and social media - Core → Settings."
+                "Terms of service, the privacy policy and the cookies policy - Core → Legal documents. The e-shop has its own cookies policy page (/shop/cookies-policy), linked from its cookie bar and footer.",
+                "Contacts, logo, tagline and social media - Core → Company profile."
               ]
             }
           ]

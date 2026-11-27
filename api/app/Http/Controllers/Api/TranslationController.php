@@ -412,7 +412,8 @@ class TranslationController extends Controller
     /**
      * @description Languages of all applications together (one entry per code, the first one
      *   wins) - the languages of the content the core manages for every application, e.g. the
-     *   legal documents and the company details.
+     *   legal documents and the company details. `active` = switched on in at least one module
+     *   (visitors of that application see the language).
      * @return JsonResponse { data: language[] } with icon URLs.
      */
     public function getAllLanguages(): JsonResponse
@@ -422,6 +423,10 @@ class TranslationController extends Controller
             if (is_array($lang) && is_string($lang['code'] ?? null)) {
                 $byCode[strtolower($lang['code'])] ??= $lang;
             }
+        }
+        $active = self::activeLanguageCodesOfAll();
+        foreach ($byCode as $code => $lang) {
+            $byCode[$code]['active'] = in_array($code, $active, true);
         }
 
         return $this->respond($this->withIconUrls(array_values($byCode)));
@@ -626,7 +631,7 @@ class TranslationController extends Controller
      *   languages of the module (AppManifest::languageModule() / languageDeleted() - e.g. the FAQ
      *   and the inquiry e-mail of the web, the order e-mail of the e-shop and of the project
      *   portal), the page titles of the module and - once no module has the language any more -
-     *   the slogan and the copyright of the site settings (they offer the languages of all modules).
+     *   the tagline of the site settings (it offers the languages of all modules).
      * @note Called after languages.json is written (the language is already gone from the list).
      * @param string $module Translation module (= application id).
      * @param string $code Deleted language code.
@@ -645,7 +650,7 @@ class TranslationController extends Controller
                 I18nText::forget($row, ['title_i18n'], $code);
             }
             if (!in_array($code, self::allLanguageCodes(), true) && ($settings = SiteSetting::query()->first())) {
-                I18nText::forget($settings, ['brand_tagline_i18n', 'copyright_text_i18n'], $code);
+                I18nText::forget($settings, array_values(SiteSetting::I18N_FIELDS), $code);
             }
         });
     }
@@ -665,6 +670,33 @@ class TranslationController extends Controller
         }
 
         return array_values(array_unique($codes));
+    }
+
+    /**
+     * @description Codes of the languages switched on in at least one module (lower case, Czech
+     *   always) - the languages visitors may see the texts shared by all modules in (site settings).
+     * @return string[]
+     */
+    public static function activeLanguageCodesOfAll(): array
+    {
+        $codes = [MissingTranslations::PRIMARY];
+        foreach (self::readLanguagesMeta() ?: self::DEFAULT_LANGUAGES as $lang) {
+            if (is_array($lang) && is_string($lang['code'] ?? null) && !empty($lang['active'])) {
+                $codes[] = strtolower($lang['code']);
+            }
+        }
+
+        return array_values(array_unique($codes));
+    }
+
+    /**
+     * @description Codes of the languages switched off in every module (being prepared - visitors
+     *   see them nowhere; lower case, never Czech).
+     * @return string[]
+     */
+    public static function inactiveLanguageCodesOfAll(): array
+    {
+        return array_values(array_diff(self::allLanguageCodes(), self::activeLanguageCodesOfAll()));
     }
 
     /**

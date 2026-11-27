@@ -40,7 +40,7 @@ class SupportAndProvidersTest extends TestCase
         config(['app.name' => 'RPSW']);
         $this->assertSame(['companyName' => 'RPSW', 'contactEmail' => null, 'contactPhone' => null], CompanyContactInfo::get());
 
-        SiteSetting::create(['company_name' => 'Acme s.r.o.', 'ico' => '1', 'brand_tagline' => 't', 'copyright_text' => 'c', 'contact_email' => 'info@acme.cz', 'contact_phone' => '+420 123', 'address' => 'Praha']);
+        SiteSetting::create(['company_name' => 'Acme s.r.o.', 'ico' => '1', 'brand_tagline' => 't', 'contact_email' => 'info@acme.cz', 'contact_phone' => '+420 123', 'address' => 'Praha']);
         $this->assertSame(['companyName' => 'Acme s.r.o.', 'contactEmail' => 'info@acme.cz', 'contactPhone' => '+420 123'], CompanyContactInfo::get());
     }
 

@@ -676,7 +676,7 @@ class TranslationTest extends TestCase
      *   that no longer exists stays in the database: web content (FAQ), the inquiry e-mail texts
      *   of the web, the order e-mail texts of the project portal (it uses the web languages), the
      *   page titles of the module (not of another module), and - only once no module has the
-     *   language - the slogan / copyright of the site settings. Leaving a language out of the
+     *   language - the slogan of the site settings. Leaving a language out of the
      *   saved list does the same.
      * @input web cz + de + fr, shop cz + de; FAQ category, web settings, portal settings, page
      *   titles web + shop, site settings - all with cz + de (+ fr); DELETE web/de; DELETE shop/de;
@@ -702,7 +702,7 @@ class TranslationTest extends TestCase
         $title = fn (string $area, string $key) => tap(new \App\Models\Legal\PageTitle())->forceFill(['area' => $area, 'page_key' => $key, 'route_path' => '/', 'sort_order' => 1, 'title_i18n' => $texts])->save();
         $title('web', 'home');
         $title('shop', 'cart');
-        $site = \App\Models\Legal\SiteSetting::forceCreate(['company_name' => 'Acme', 'contact_email' => 'info@acme.cz', 'brand_tagline_i18n' => $texts, 'copyright_text_i18n' => $texts]);
+        $site = \App\Models\Legal\SiteSetting::forceCreate(['company_name' => 'Acme', 'contact_email' => 'info@acme.cz', 'brand_tagline_i18n' => $texts]);
         $pageTitle = fn (string $area) => \App\Models\Legal\PageTitle::where('area', $area)->first()->title_i18n;
 
         $this->deleteJson('/api/languages/web/de')->assertNoContent();
@@ -717,7 +717,6 @@ class TranslationTest extends TestCase
         $this->deleteJson('/api/languages/shop/de')->assertNoContent();
         $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $pageTitle('shop'));
         $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $site->fresh()->brand_tagline_i18n);
-        $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $site->fresh()->copyright_text_i18n);
 
         $this->postJson('/api/languages/web', ['languages' => json_encode([['code' => 'cz', 'name' => 'Čeština', 'isBuiltIn' => true, 'active' => true]])])->assertNoContent();
         $this->assertSame(['cz' => 'CZ'], $faq->fresh()->name_i18n);

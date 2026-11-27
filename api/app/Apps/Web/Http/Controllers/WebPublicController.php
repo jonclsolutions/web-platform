@@ -34,6 +34,8 @@ class WebPublicController extends Controller
 
         return $this->respond([
             'is_web_active' => (bool) $settings->is_web_active,
+            // the footer shows the copyright line (texts page of the admin)
+            'show_footer_copyright' => (bool) ($settings->show_footer_copyright ?? true),
         ]);
     }
 }

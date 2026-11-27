@@ -23,8 +23,6 @@ export interface SiteSetting {
   company_name: string;
   brand_tagline: string;
   brand_tagline_i18n: I18nMap;
-  copyright_text: string;
-  copyright_text_i18n: I18nMap;
   ico: string | null;
   dic: string | null;
   /** GA4 Measurement ID (format "G-XXXXXXXXXX"). Optional - the web works the same without GA. */
@@ -32,16 +30,18 @@ export interface SiteSetting {
   contact_email: string;
   contact_phone: string | null;
   address: string | null;
-  footer_text: string | null;
   logo_path?: string | null;
   /** Keys of the switched-off optional fields (not shown on the public pages). */
   hidden_fields?: CompanyOptionalField[];
 }
 
-/** Company detail fields that can be switched off (API SiteSetting::HIDEABLE_FIELDS). */
+/**
+ * Company detail fields that can be switched off (API SiteSetting::HIDEABLE_FIELDS). The copyright
+ * line and the footer text are texts of the applications (2026-11) - not company details.
+ */
 export type CompanyOptionalField =
-  | 'brand_tagline' | 'copyright_text' | 'ico' | 'dic'
-  | 'google_analytics_id' | 'contact_phone' | 'address' | 'footer_text';
+  | 'brand_tagline' | 'ico' | 'dic'
+  | 'google_analytics_id' | 'contact_phone' | 'address';
 
 /** Stored version of a social link (the unsaved-changes check of its row). */
 export interface SocialLinkSaved {

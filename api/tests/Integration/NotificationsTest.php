@@ -38,6 +38,8 @@ use App\Apps\Shop\Support\ShopOrderEmailTemplate;
 use App\Console\Commands\SyncTranslationsCommand;
 use App\Models\Core\CoreNotificationMark;
 use App\Models\Core\CoreSecurityEvent;
+use App\Models\Legal\SiteSetting;
+use App\Support\I18n\LanguageCompleteness;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -52,7 +54,7 @@ class NotificationsTest extends TestCase
     use ShopFixtures;
 
     /** @description Every kind of the sysadmin, in menu order (applications, then the core). */
-    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'web_page_titles_missing', 'web_faq_missing', 'web_jobs_missing', 'web_references_missing', 'web_kb_missing', 'web_inquiry_email_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'shop_page_titles_missing', 'shop_order_email_missing', 'portal_orders', 'portal_leads_overdue', 'portal_order_email_missing', 'core_security_events'];
+    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'web_page_titles_missing', 'web_faq_missing', 'web_jobs_missing', 'web_references_missing', 'web_kb_missing', 'web_inquiry_email_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'shop_page_titles_missing', 'shop_order_email_missing', 'portal_orders', 'portal_leads_overdue', 'portal_order_email_missing', 'core_security_events', 'core_company_texts_missing'];
 
     /**
      * @description Freezes the clock.
@@ -154,6 +156,7 @@ class NotificationsTest extends TestCase
             'web_jobs_missing' => 0, 'web_references_missing' => 0, 'web_kb_missing' => 0, 'web_inquiry_email_missing' => 0, 'shop_orders' => 1,
             'shop_low_stock' => 1, 'shop_texts_missing' => 0, 'shop_page_titles_missing' => 0, 'shop_order_email_missing' => 0,
             'portal_orders' => 1, 'portal_leads_overdue' => 1, 'portal_order_email_missing' => 0, 'core_security_events' => 1,
+            'core_company_texts_missing' => 0,
         ], collect($response->json('data.kinds'))->pluck('count', 'kind')->all());
         $this->assertSame(['kind' => 'web_inquiries', 'module' => 'web', 'link' => '/admin/web/user-request', 'count' => 1], $response->json('data.kinds.0'));
         $this->assertSame('/admin/project-portal/sales-leads', collect($response->json('data.kinds'))->firstWhere('kind', 'portal_leads_overdue')['link']);
@@ -255,6 +258,80 @@ class NotificationsTest extends TestCase
 
         $this->signIn($this->userWith(['view-web', 'web-user-requests-view']));
         $this->assertArrayNotHasKey('web_inquiry_email_missing', $this->counts());
+    }
+
+    /**
+     * @description A text switched off on the public pages of its application (the copyright line
+     *   of the website footer, AppManifest::hiddenTextKeys()) is not counted as missing - in the
+     *   notification, the completeness of a language and forLanguage(); switched on again it is.
+     * @input Own storage: web cz {a, footer.copyright_text}, en (active) {a}; the copyright shown;
+     *   then web_site_settings.show_footer_copyright false.
+     * @output shown: web_texts_missing 1 (en), completeness en texts 1; hidden: 0, completeness
+     *   texts 0, forLanguage 0, hiddenKeys ['footer.copyright_text'].
+     */
+    public function test_switched_off_texts_are_not_missing(): void
+    {
+        $storage = sys_get_temp_dir() . '/rpsw-notification-hidden-' . uniqid();
+        $dir = $storage . '/app/public/translations';
+        File::makeDirectory($dir . '/web', 0755, true);
+        File::put($dir . '/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'en', 'module' => 'web', 'active' => true],
+        ]));
+        File::put($dir . '/web/cz.json', json_encode(['a' => 'A', 'footer' => ['copyright_text' => '© {year}']]));
+        File::put($dir . '/web/en.json', json_encode(['a' => 'A en']));
+        $this->app->useStoragePath($storage);
+        $this->beforeApplicationDestroyed(fn () => File::deleteDirectory($storage));
+        $settings = \App\Apps\Web\Models\WebSiteSetting::query()->create(['is_web_active' => true, 'web_maintenance_message' => 'm']);
+
+        $this->signIn($this->userWith(['view-web', 'web-edit-website-view', 'web-edit-website-update']));
+        $this->assertSame(1, $this->counts()['web_texts_missing']);
+        $this->assertSame(1, LanguageCompleteness::missing('web', 'en')['texts'] ?? 0);
+
+        $settings->update(['show_footer_copyright' => false]);
+        $this->assertSame(0, $this->counts()['web_texts_missing']);
+        $this->assertArrayNotHasKey('texts', LanguageCompleteness::missing('web', 'en'));
+        $this->assertSame(0, \App\Support\I18n\MissingTranslations::forLanguage('web', 'en'));
+        $this->assertSame(['footer.copyright_text'], \App\Support\I18n\MissingTranslations::hiddenKeys('web'));
+    }
+
+    /**
+     * @description The texts of the company profile (the tagline) missing in a
+     *   language are an attention kind of the company profile: Czech and the languages switched on
+     *   in any module counted (orange), the languages switched off everywhere only as `preparing`
+     *   (grey); switched-off fields not counted; only for the admins who may edit the company details.
+     * @input Own storage: web cz + en active, sk off; shop de active; company details with the
+     *   tagline in cz / en (sk blank); an editor; a viewer; then the tagline switched off.
+     * @output core_company_texts_missing 1 {de: 1} preparing {sk: 1}, module core, link
+     *   /admin/core/settings; the completeness of de in the shop lists company_texts 1; switched
+     *   off: count 0; the viewer gets no kind.
+     */
+    public function test_missing_company_texts_are_an_attention_kind(): void
+    {
+        $storage = sys_get_temp_dir() . '/rpsw-notification-company-' . uniqid();
+        File::makeDirectory($storage . '/app/public/translations', 0755, true);
+        File::put($storage . '/app/public/translations/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'en', 'module' => 'web', 'active' => true],
+            ['code' => 'sk', 'module' => 'web', 'active' => false],
+            ['code' => 'cz', 'module' => 'shop', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'de', 'module' => 'shop', 'active' => true],
+        ]));
+        $this->app->useStoragePath($storage);
+        $this->beforeApplicationDestroyed(fn () => File::deleteDirectory($storage));
+        $site = SiteSetting::forceCreate(['company_name' => 'Acme', 'contact_email' => 'a@b.cz', 'hidden_fields' => [],
+            'brand_tagline_i18n' => ['cz' => 'Ahoj', 'en' => 'Hello', 'sk' => ' ']]);
+
+        $this->signIn($this->userWith(['view-core', 'core-legal-config-view', 'core-legal-config-update']));
+        $kinds = collect($this->getJson('/api/core/notifications')->assertOk()->json('data.kinds'))->keyBy('kind');
+        $this->assertSame(['kind' => 'core_company_texts_missing', 'module' => 'core', 'link' => '/admin/core/settings', 'count' => 1,
+            'attention' => true, 'languages' => ['de' => 1], 'preparing' => ['sk' => 1]], $kinds['core_company_texts_missing']);
+        $this->assertSame(['company_texts' => 1], array_intersect_key(LanguageCompleteness::missing('shop', 'de'), ['company_texts' => 0]));
+        $site->update(['hidden_fields' => ['brand_tagline']]);
+        $this->assertSame(0, $this->counts()['core_company_texts_missing']);
+
+        $this->signIn($this->userWith(['view-core', 'core-legal-config-view']));
+        $this->assertArrayNotHasKey('core_company_texts_missing', $this->counts());
     }
 
     /**

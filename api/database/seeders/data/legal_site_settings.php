@@ -9,6 +9,9 @@
  *   row): neutral English PLACEHOLDERS - visible at once as "to be filled in" (admin → Company
  *   details). The public footer, contact page and FAQ render only when this row exists.
  *   example.com is a domain reserved for examples (RFC 2606) - no real mailbox.
+ * @note The tagline per language is filled in every language of the
+ *   default translations (resources/translations/languages.json) - a seeded language is complete.
+ *   The copyright line is a text of the applications (`footer.copyright_text`), not seeded here.
  * @note No Google Analytics ID: analytics may run only with consent and only once the operator
  *   sets their own ID. The logo is set by BaseDataSeeder (copied default logo).
  */
@@ -19,12 +22,9 @@ return [
     'dic'                 => 'CZ00000000',
     'google_analytics_id' => null,
     'brand_tagline'       => 'Your company tagline',
-    'brand_tagline_i18n'  => ['cz' => 'Your company tagline', 'en' => 'Your company tagline'],
-    'copyright_text'      => '© Company name Ltd.',
-    'copyright_text_i18n' => ['cz' => '© Company name Ltd.', 'en' => '© Company name Ltd.'],
+    'brand_tagline_i18n'  => ['cz' => 'Your company tagline', 'en' => 'Your company tagline', 'pl' => 'Your company tagline', 'fr' => 'Your company tagline', 'de' => 'Your company tagline'],
     'contact_email'       => 'info@example.com',
     'contact_phone'       => '+420 000 000 000',
     'address'             => 'Street 1, 100 00 City',
-    'footer_text'         => '© Company name Ltd. All rights reserved.',
     'hidden_fields'       => ['google_analytics_id'],
 ];

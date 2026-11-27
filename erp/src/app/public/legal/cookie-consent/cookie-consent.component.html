@@ -15,7 +15,12 @@
         <div class="cc-main">
           <div class="cc-text">
             <p class="cc-title">{{ t?.title }}</p>
-            <p class="cc-desc">{{ t?.description }}</p>
+            <p class="cc-desc">
+              {{ t?.description }}
+              @if (policyRoute) {
+                <a class="cc-link" [routerLink]="policyRoute" (click)="onPolicyLink($event)">{{ t?.policy_link }}</a>
+              }
+            </p>
           </div>
 
           <div class="cc-actions">

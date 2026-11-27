@@ -278,4 +278,37 @@ class ShopSiteSettingController extends Controller
 
         return $template;
     }
+
+    /**
+     * @description Footer options of the public e-shop: whether the copyright line
+     *   (`footer.copyright_text` of its texts) is shown. Read by the texts page of the admin.
+     * @return JsonResponse { show_footer_copyright: bool }
+     */
+    public function showFooter(): JsonResponse
+    {
+        $settings = ShopSiteSetting::first();
+
+        return $this->respond(['show_footer_copyright' => (bool) ($settings->show_footer_copyright ?? true)]);
+    }
+
+    /**
+     * @description Shows or hides the copyright line of the public e-shop footer (all languages).
+     *   No password: it changes a text on the pages, not their availability.
+     * @param Request $request Body { show_footer_copyright: bool }.
+     * @return JsonResponse { show_footer_copyright: bool }
+     */
+    public function updateFooter(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['show_footer_copyright' => 'required|boolean']);
+
+        $settings = ShopSiteSetting::first() ?? new ShopSiteSetting(['is_shop_active' => true, 'maintenance_message' => 'We apologize, the shop is currently undergoing maintenance. Please try again later.']);
+        $settings->show_footer_copyright = (bool) $validated['show_footer_copyright'];
+        $settings->save();
+        Cache::forget(self::CACHE_KEY);
+
+        $state = $settings->show_footer_copyright ? 'shown' : 'hidden';
+        $this->logAction($request, ShopLog::class, 'update', 'Shop', "Footer copyright line {$state}.", $settings->id, 'ShopSiteSetting');
+
+        return $this->respond(['show_footer_copyright' => $settings->show_footer_copyright]);
+    }
 }

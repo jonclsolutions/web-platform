@@ -92,12 +92,12 @@ class ShopSettingTest extends TestCase
      */
     public function test_public_status_and_settings(): void
     {
-        $this->getJson('/api/shop/public/status')->assertExactJson(['data' => ['is_shop_active' => true]]);
+        $this->getJson('/api/shop/public/status')->assertExactJson(['data' => ['is_shop_active' => true, 'show_footer_copyright' => true]]);
         $this->getJson('/api/shop/public/settings')->assertExactJson(['data' => ['is_shop_active' => true, 'maintenance_message' => null]]);
 
         ShopSiteSetting::create(['is_shop_active' => false, 'maintenance_message' => 'Inventory']);
 
-        $this->getJson('/api/shop/public/status')->assertExactJson(['data' => ['is_shop_active' => false]]);
+        $this->getJson('/api/shop/public/status')->assertExactJson(['data' => ['is_shop_active' => false, 'show_footer_copyright' => true]]);
         $this->getJson('/api/shop/public/settings')->assertExactJson(['data' => ['is_shop_active' => false, 'maintenance_message' => 'Inventory']]);
     }
 
@@ -123,5 +123,24 @@ class ShopSettingTest extends TestCase
         Cache::forget('site_setting_active_shop');
         $this->getJson('/api/shop/public/categories')->assertStatus(503)
             ->assertJsonPath('message', 'We apologize, but order acceptance and e-shop operations are currently suspended..');
+    }
+
+    /**
+     * @description The copyright line of the e-shop footer is switched on the texts page: read
+     *   with shop-edit-eshop-view, switched with shop-edit-eshop-update (no password); the public
+     *   status follows; a non-boolean is refused.
+     * @input viewer: GET / PUT; editor: PUT false; GET status; PUT 'x'.
+     * @output viewer 200 true / 403; editor 200 false, status show_footer_copyright false; 422.
+     */
+    public function test_footer_copyright_option(): void
+    {
+        $this->signIn($this->userWith(['shop-edit-eshop-view']));
+        $this->getJson('/api/shop/settings/footer')->assertOk()->assertExactJson(['data' => ['show_footer_copyright' => true]]);
+        $this->putJson('/api/shop/settings/footer', ['show_footer_copyright' => false])->assertStatus(403);
+
+        $this->signIn($this->userWith(['shop-edit-eshop-view', 'shop-edit-eshop-update']));
+        $this->putJson('/api/shop/settings/footer', ['show_footer_copyright' => false])->assertOk()->assertJsonPath('data.show_footer_copyright', false);
+        $this->getJson('/api/shop/public/status')->assertJsonPath('data.show_footer_copyright', false);
+        $this->putJson('/api/shop/settings/footer', ['show_footer_copyright' => 'x'])->assertStatus(422);
     }
 }

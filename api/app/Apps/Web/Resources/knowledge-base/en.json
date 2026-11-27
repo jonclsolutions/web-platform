@@ -541,7 +541,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see a switched off language, its texts stay. Only a complete language can be switched on: while it lacks something (texts, page titles, FAQ, positions, references, help center, the confirmation e-mail of the inquiries and of the portal orders), Activate is disabled and what is missing is written under the language. Every item (e.g. FAQ 32) is a link - it opens exactly that place in that language, an e-mail directly in its editor. When something is missing in a switched on language after an update of the application, the window shows it there too. A switched off language is offered for editing in the other tabs too (Page titles, FAQ, Job positions, References, Help center) - its tab is dashed and greyer, so you complete it before you switch it on. What a switched off language still lacks is shown by a grey dot (in the menu, at the application in the switcher) and a grey number on the tab; orange means something is missing in a switched on language and visitors see it.",
+                "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see a switched off language, its texts stay. Only a complete language can be switched on: while it lacks something (texts, page titles, FAQ, positions, references, help center, the confirmation e-mail of the inquiries and of the portal orders, the company profile tagline), Activate is disabled and what is missing is written under the language. Every item (e.g. FAQ 32) is a link - it opens exactly that place in that language, an e-mail directly in its editor. When something is missing in a switched on language after an update of the application, the window shows it there too. A switched off language is offered for editing in the other tabs too (Page titles, FAQ, Job positions, References, Help center) - its tab is dashed and greyer, so you complete it before you switch it on. What a switched off language still lacks is shown by a grey dot (in the menu, at the application in the switcher) and a grey number on the tab; orange means something is missing in a switched on language and visitors see it.",
                 "Delete deletes the language (after a confirmation; Cancel keeps you in the Languages window). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
                 "Download JSON and Upload JSON are at every language in the Languages window (see chapter 06).",
                 "When the open language has unsaved edits, adding a language does not throw them away - the open language stays open and the new one is in the row of languages."
@@ -658,6 +658,11 @@
             {
               "type": "text",
               "content": "When the same text was saved meanwhile by someone else (or by you in another tab), Save asks first: Overwrite saves your edits, Do not save saves nothing - their version is shown as the saved one and your edits stay unsaved."
+            },
+            {
+              "type": "note",
+              "highlight": "Copyright in the footer",
+              "content": "The copyright line of the website footer is the text footer.copyright_text ({year} is replaced by the current year) - edit it here like the other texts, in every language. The option Show the copyright in the footer above the list of texts hides it in every language (saved at once). A hidden text stays among the texts but is not counted as missing."
             }
           ]
         },

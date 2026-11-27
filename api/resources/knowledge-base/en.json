@@ -1576,6 +1576,11 @@
               "type": "note",
               "highlight": "What is not deleted",
               "content": "E-shop orders and customers are not deleted automatically - they are subject to accounting periods. Expired sign-ins to the client portal are always deleted. Security monitoring has its own retention on its page."
+            },
+            {
+              "type": "note",
+              "highlight": "Cookies policy",
+              "content": "The cookies policy is shown on the website (/cookies-policy) and in the e-shop (/shop/cookies-policy), and the cookie bars of both applications link to it. State in it that the website and the e-shop measure visits with Google Analytics after consent."
             }
           ]
         }
@@ -1795,7 +1800,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "The Company profile page has three tabs: Company details (name, company ID, VAT ID, contacts, address), Brand and texts (logo, tagline, copyright, footer text) and Social media and measuring (profile links, Google Analytics). Visitors of the website, the e-shop and the portal see the details and they are in e-mails. How long personal data are kept is set on the Legal documents page, tab Data retention."
+              "content": "The Company profile page has three tabs: Company details (name, company ID, VAT ID, contacts, address), Brand (logo and tagline) and Social media and measuring (profile links, Google Analytics). It holds only the details of the company as a whole - visitors of the website, the e-shop and the portal see them and they are in e-mails. The copyright line of a footer is a text of each application (Website texts, E-shop texts). How long personal data are kept is set on the Legal documents page, tab Data retention."
             },
             {
               "type": "text",
@@ -1862,7 +1867,7 @@
           ]
         },
         {
-          "heading": "03. Brand and texts",
+          "heading": "03. Brand",
           "blocks": [
             {
               "type": "flow",
@@ -1879,7 +1884,7 @@
                 },
                 {
                   "label": "Saving",
-                  "text": "The logo is saved with the Save button in the header of the tab, together with the texts.",
+                  "text": "The logo is saved with the Save button in the header of the tab, together with the tagline.",
                   "active": false
                 }
               ]
@@ -1892,22 +1897,24 @@
               "type": "grid",
               "cards": [
                 {
-                  "title": "Brand tagline",
-                  "text": "The company slogan - entered separately for every language."
-                },
-                {
-                  "title": "Copyright text",
-                  "text": "The copyright notice - separately for every language."
-                },
-                {
-                  "title": "Website footer text",
-                  "text": "Text in the footer of the public website, for example “© 2026 Company Ltd. All rights reserved.”"
+                  "title": "Tagline (Brand tagline)",
+                  "text": "The company slogan on the public pages (website footer, page description for search engines) - separately for every language."
                 }
               ]
             },
             {
               "type": "text",
-              "content": "Switch the language of the tagline and the copyright with the language switch above the fields. Fill them in for all languages; switched-off languages are dashed and can be prepared in advance."
+              "content": "Switch the language of the tagline with the language switch above the field. Czech is required for a switched-on tagline. The number on a language and on the Brand tab shows the tagline is missing in that language, and the field is marked amber."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "A missing tagline is not replaced by Czech for visitors - they see “Cannot load text” instead. That is why it counts into the language check: a language of the website or the e-shop cannot be switched on until it is filled in, and the menu shows an amber dot (switched-on language) or a grey one (switched-off language). The Company profile link in the Languages window opens this tab directly in that language."
+            },
+            {
+              "type": "note",
+              "highlight": "Copyright in the footer",
+              "content": "The copyright line is a text of the application, not of the company: edit it in Website texts and E-shop texts (key footer.copyright_text, {year} = current year). The option Show the copyright in the footer above the list of texts hides it in that application in every language."
             }
           ]
         },
@@ -1953,7 +1960,7 @@
               "cards": [
                 {
                   "title": "Google Analytics 4 - Measurement ID",
-                  "text": "The Google Analytics measurement ID in the form G-XXXXXXXXXX. Measuring starts on the website only for a visitor who agrees to analytics cookies. An empty or switched-off field = no measuring."
+                  "text": "The Google Analytics measurement ID in the form G-XXXXXXXXXX - one for the whole domain, it measures the website and the e-shop. Measuring starts only for a visitor who agrees to analytics cookies in the cookie bar (the consent holds for the website and the e-shop). An empty or switched-off field = no measuring."
                 }
               ]
             }

@@ -377,6 +377,17 @@
 .ws-input--invalid:focus {
   border-color: var(--color-rose-500, #f43f5e);
 }
+/* A switched-on text missing in the open language (visitors would see 'Cannot load text'). */
+.ws-field--missing .ws-input,
+.ws-field--missing .ws-textarea {
+  border-color: var(--color-amber-400, #fbbf24);
+  background: var(--color-amber-50);
+}
+.ws-field-missing {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--color-amber-700, #b45309);
+}
 .ws-field-error {
   font-size: 0.74rem;
   font-weight: 500;

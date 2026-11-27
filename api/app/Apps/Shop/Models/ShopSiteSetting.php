@@ -38,6 +38,8 @@ class ShopSiteSetting extends Model
      */
     protected $fillable = [
         'is_shop_active',
+        // Footer of the public pages: the copyright line shown (migration 2026_11_30_000000).
+        'show_footer_copyright',
         'maintenance_message',
         // Unpaid bank-transfer orders (UnpaidOrders, audit B-04): days after the order, 0 = off.
         'unpaid_reminder_days',
@@ -56,6 +58,7 @@ class ShopSiteSetting extends Model
      */
     protected $casts = [
         'is_shop_active' => 'boolean',
+        'show_footer_copyright' => 'boolean',
         'unpaid_reminder_days' => 'integer',
         'unpaid_cancel_days' => 'integer',
         'unpaid_orders_from' => 'datetime',

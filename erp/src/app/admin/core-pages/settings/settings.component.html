@@ -5,7 +5,7 @@
     @author: JS
     @created: 2026
     @description: Template of the company profile (route core/settings) in three tabs: Company
-        details, Brand and texts (logo, tagline, copyright, footer text), Social media and
+        details, Brand (logo, tagline per language), Social media and
         measuring (social links, Google Analytics). Every tab is one card whose sticky header holds
         its Save button; a tab with unsaved edits has an amber dot. The administration has no
         editable page titles (its tab title is a text of the admin UI).
@@ -226,7 +226,9 @@
                 </div>
               </section>
 
-              <!-- Texts on the public pages; tagline and copyright per language. -->
+              <!-- The tagline per language: switched on and missing in the open language it is marked
+                   (visitors would see 'Cannot load text'); the language tabs count it. The copyright
+                   line is a text of each application (note under the field). -->
               <section class="ws-group" aria-labelledby="settings-texts-heading">
                 <h3 class="ws-group-title" id="settings-texts-heading">{{ strings.texts_group_title }}</h3>
 
@@ -239,30 +241,18 @@
                 }
 
                 <div class="ws-form-grid">
-                  <div class="ws-field" [class.ws-field--off]="!isFieldOn('brand_tagline')">
+                  <div class="ws-field ws-field-full" [class.ws-field--off]="!isFieldOn('brand_tagline')" [class.ws-field--missing]="isTextMissing('brand_tagline')">
                     <ng-container *ngTemplateOutlet="toggleLabel; context: { field: 'brand_tagline', label: strings.field_brand_tagline, lang: currentLang }"></ng-container>
-                    <input class="ws-input" type="text"
+                    <input class="ws-input" type="text" maxlength="255"
                            [(ngModel)]="settings.brand_tagline_i18n[currentLang]"
                            name="brand_tagline" aria-labelledby="settings-label-brand_tagline"
+                           [attr.aria-describedby]="isTextMissing('brand_tagline') ? 'settings-missing-brand_tagline' : null"
                            [disabled]="!isFieldOn('brand_tagline')"
                            [placeholder]="strings.field_brand_tagline_placeholder.replace('{lang}', getLangName(currentLang))">
-                  </div>
-
-                  <div class="ws-field" [class.ws-field--off]="!isFieldOn('copyright_text')">
-                    <ng-container *ngTemplateOutlet="toggleLabel; context: { field: 'copyright_text', label: strings.field_copyright_text, lang: currentLang }"></ng-container>
-                    <input class="ws-input" type="text"
-                           [(ngModel)]="settings.copyright_text_i18n[currentLang]"
-                           name="copyright_text" aria-labelledby="settings-label-copyright_text"
-                           [disabled]="!isFieldOn('copyright_text')"
-                           [placeholder]="strings.field_copyright_text_placeholder.replace('{lang}', getLangName(currentLang))">
-                  </div>
-
-                  <div class="ws-field ws-field-full" [class.ws-field--off]="!isFieldOn('footer_text')">
-                    <ng-container *ngTemplateOutlet="toggleLabel; context: { field: 'footer_text', label: strings.field_footer_text }"></ng-container>
-                    <textarea class="ws-textarea" [(ngModel)]="settings.footer_text"
-                              name="footer_text" rows="3" aria-labelledby="settings-label-footer_text"
-                              [disabled]="!isFieldOn('footer_text')"
-                              [placeholder]="strings.field_footer_text_placeholder"></textarea>
+                    @if (isTextMissing('brand_tagline')) {
+                      <span class="ws-field-missing" id="settings-missing-brand_tagline">{{ missingFieldNote }}</span>
+                    }
+                    <p class="ws-field-note">{{ strings.brand_tagline_note }}</p>
                   </div>
                 </div>
               </section>

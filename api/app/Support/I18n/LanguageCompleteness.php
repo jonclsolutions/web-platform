@@ -9,12 +9,13 @@
  * @description What a language of a translation module still lacks: its texts (against Czech),
  *   the titles of the pages of the area and the content of the applications using the
  *   languages of the module (FAQ, positions…, the texts of the confirmation e-mails -
- *   AppManifest::contentMissing()). A language other
+ *   AppManifest::contentMissing()) and the texts of the company profile shown on the public pages
+ *   of every module (the tagline - CompanyTextsMissing). A language other
  *   than Czech may be switched on only when it lacks nothing (TranslationController::saveLanguages):
  *   a visitor never gets a half translated language - a text missing later (after an update of
  *   the application) shows 'Cannot load text' and the admin is told (orange dot).
  * @usage `LanguageCompleteness::missing('web', 'de')` → ['texts' => 12, 'page_titles' => 3, 'faq' => 1]
- * @dependencies MissingTranslations, MissingPageTitles, AppRegistry
+ * @dependencies MissingTranslations, MissingPageTitles, CompanyTextsMissing, AppRegistry
  */
 
 namespace App\Support\I18n;
@@ -27,7 +28,7 @@ final class LanguageCompleteness
      * @description What a language lacks, per part.
      * @param string $module Translation module (= area of its pages).
      * @param string $code Language code.
-     * @return array<string, int> Part (`texts`, `page_titles`, parts of the content) => count;
+     * @return array<string, int> Part (`texts`, `page_titles`, `company_texts`, parts of the content) => count;
      *   only the parts that lack something - [] when the language is complete.
      */
     public static function missing(string $module, string $code): array
@@ -35,6 +36,8 @@ final class LanguageCompleteness
         $parts = [
             'texts'       => MissingTranslations::forLanguage($module, $code),
             'page_titles' => MissingPageTitles::forLanguage($module, $code),
+            // the company profile texts are on the public pages of every module
+            'company_texts' => CompanyTextsMissing::forLanguage($code),
         ];
         foreach (AppRegistry::apps() as $app) {
             if ($app->languageModule() !== $module) {

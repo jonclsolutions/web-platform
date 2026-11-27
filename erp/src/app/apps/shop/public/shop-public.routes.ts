@@ -63,6 +63,8 @@ export const SHOP_PUBLIC_ROUTES: Routes = [
       // Shared legal pages of the core (public/legal), in the e-shop layout and translations.
       legalPageRoute('shop', 'tos'),
       legalPageRoute('shop', 'gdpr'),
+      // the e-shop measures with consent - the cookies policy (linked from its cookie bar)
+      legalPageRoute('shop', 'cookies'),
       // Unknown /shop/... URL - LAST child of the e-shop (404 in the e-shop layout and language).
       publicNotFoundRoute('shop', { canActivate: [shopMaintenanceGuard] })
     ]

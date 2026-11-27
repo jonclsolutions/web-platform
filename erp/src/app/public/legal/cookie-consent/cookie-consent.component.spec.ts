@@ -132,4 +132,34 @@ describe('CookieConsentComponent', () => {
     expect(localStorage.getItem('jsw_cookie_consent')).toBeNull();
     expect(banner.visible).toBeTrue();
   });
+
+  /**
+   * @description The description ends with a link to the cookies policy of the application
+   *   (policyRoute of its layout); no link without it; in the visual text editor the link does
+   *   not navigate.
+   * @input policyRoute '/shop/cookies-policy'; then null; onPolicyLink in / outside the editor
+   * @output a.cc-link with href ending /shop/cookies-policy and the text policy_link; no link;
+   *   preventDefault only in the editor
+   */
+  it('links the cookies policy of the application', () => {
+    const ctx = createPublicPageContext({ translations: { cookie_consent: { ...t, policy_link: 'Policy' } } });
+    TestBed.configureTestingModule({ imports: [CookieConsentComponent], providers: ctx.providers });
+    fixture = TestBed.createComponent(CookieConsentComponent);
+    fixture.componentRef.setInput('policyRoute', '/shop/cookies-policy');
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('a.cc-link') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toMatch(/\/shop\/cookies-policy$/);
+    expect(link.textContent?.trim()).toBe('Policy');
+    const outside = { preventDefault: jasmine.createSpy('preventDefault') } as any;
+    fixture.componentInstance.onPolicyLink(outside);
+    expect(outside.preventDefault).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('policyRoute', null);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a.cc-link')).toBeNull();
+    (fixture.componentInstance as any).textEditor = { active: true };
+    const inEditor = { preventDefault: jasmine.createSpy('preventDefault') } as any;
+    fixture.componentInstance.onPolicyLink(inEditor);
+    expect(inEditor.preventDefault).toHaveBeenCalled();
+  });
 });

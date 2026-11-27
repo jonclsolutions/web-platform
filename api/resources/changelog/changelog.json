@@ -1,10 +1,40 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "shop",
+            "part": "public",
+            "text": "Lišta cookies webu i e-shopu odkazuje na zásady cookies. E-shop má vlastní stránku Zásady cookies (/shop/cookies-policy) s odkazem v patičce a s vlastním titulkem stránky."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",
-            "text": "Firemní profil je rozdělený do tří záložek: Firemní údaje, Značka a texty (logo, slogan, copyright, patička) a Sociální sítě a měření (pořadí šipkami, kontrola adresy, Google Analytics). Každá záložka má jedno Uložit a funguje i na mobilu."
+            "text": "Copyright skrytý v Textech webu nebo e-shopu se už nepočítá jako chybějící text – nebrání zapnutí jazyka a nezobrazuje oranžovou tečku."
+        },
+        {
+            "type": "added",
+            "area": "shop",
+            "part": "public",
+            "text": "E-shop má lištu cookies a měří Google Analytics se stejným ID jako web (jedno ID pro celou doménu ve Firemním profilu). Měření se spustí jen po souhlasu s analytickými cookies; souhlas daný na webu platí i v e-shopu."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Copyright v patičce už není ve Firemním profilu: je to text webu a e-shopu (Texty webu, Texty e-shopu, ve všech jazycích) a volbou Zobrazovat copyright v patičce ho lze v každé aplikaci skrýt. Text patičky e-shopu z Firemního profilu odpadl – e-shop má vlastní."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Slogan ve Firemním profilu je zvlášť pro každý jazyk. Chybějící slogan se už nenahrazuje češtinou (návštěvník uvidí „Cannot load text“), počítá se do kontroly před zapnutím jazyka webu i e-shopu a ukazuje se číslem u jazyka a tečkou v menu."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Firemní profil je rozdělený do tří záložek: Firemní údaje, Značka (logo a slogan) a Sociální sítě a měření (pořadí šipkami, kontrola adresy, Google Analytics). Každá záložka má jedno Uložit a funguje i na mobilu."
         },
         {
             "type": "fixed",

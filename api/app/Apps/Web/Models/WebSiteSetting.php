@@ -37,6 +37,8 @@ class WebSiteSetting extends Model
      */
     protected $fillable = [
         'is_web_active',
+        // Footer of the public pages: the copyright line shown (migration 2026_11_30_000000).
+        'show_footer_copyright',
         'web_maintenance_message',
         'raw_request_email_title_i18n',
         'raw_request_email_intro_i18n',
@@ -50,6 +52,7 @@ class WebSiteSetting extends Model
      */
     protected $casts = [
         'is_web_active'                  => 'boolean',
+        'show_footer_copyright' => 'boolean',
         'raw_request_email_title_i18n'   => 'array',
         'raw_request_email_intro_i18n'   => 'array',
         'raw_request_email_outro_i18n'   => 'array',

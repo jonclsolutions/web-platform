@@ -75,13 +75,12 @@
       </div>
     </div>
 
-    <!-- Bottom bar: language switcher (not in the header any more) + footer text -->
+    <!-- Bottom bar: language switcher (not in the header any more) + the copyright line of the
+         e-shop texts (left out when switched off on the texts page) -->
     <div class="footer-bottom">
       <app-footer-language-switcher [label]="t?.language_label" />
-      @if (siteSettings?.footer_text) {
-        <p>{{ siteSettings.footer_text }}</p>
-      } @else if (!siteSettings) {
-        <p>{{ t?.copyright_text?.replace('{year}', currentYear.toString()) }}</p>
+      @if (copyrightText) {
+        <p class="footer-text">{{ copyrightText }}</p>
       }
     </div>
   </footer>

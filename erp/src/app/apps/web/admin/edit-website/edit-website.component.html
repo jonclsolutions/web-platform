@@ -6,12 +6,17 @@
     @created: 2026
     @description: Texts of the website: the shared translation editor page with the panels of
         the FAQ, the open positions, the references and the knowledge base (extra tabs, created
-        on their first open; `focusLang` - the language asked for in the window Jazyky).
+        on their first open; `focusLang` - the language asked for in the window Jazyky) and the
+        copyright switch of the footer above the texts.
 -->
 
 <!-- `compactActions`: JSON download / upload in the "⋯ Akce" menu, the save bar alone (pilot). -->
 <!-- `editorRoute`: the "Otevřít editor" button (visual text editor of the website pages). -->
 <app-translation-editor-view [e]="this" [compactActions]="true" editorRoute="/admin/web/edit-website/editor">
+  <!-- Copyright line of the website footer shown / hidden (text footer.copyright_text). -->
+  <app-footer-copyright-option textsOptions endpoint="web/settings/footer" [canUpdate]="canUpdate"
+                               (shownChange)="setTextHidden('footer.copyright_text', !$event)" />
+
   @if (isTabOpened('faq')) {
     <div class="ew-titles-wrap" [style.display]="activeTab === 'faq' ? null : 'none'">
       <app-faq-editor [hostLanguages]="languages" [focusLang]="focusLang" (dirtyChange)="setTabDirty('faq', $event)"></app-faq-editor>

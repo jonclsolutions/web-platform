@@ -11,15 +11,19 @@
  * - BasePublicComponent: Provides `t` (translations), `cdr`, `destroy$`.
  * - CookieConsentService: Storing / reading the consent state (localStorage) and the signal for
  *   reopening the bar.
+ * @note The description ends with a link to the cookies policy of the application
+ *   (`policyRoute` from its layout - `/cookies-policy`, `/shop/cookies-policy`); in the visual text
+ *   editor the link does not navigate.
  * @note Not shown in the visual text editor of the admin (PublicTextEditorService) - no consent
  *   asked or stored for the administrator looking at the page; only its page "Lišta cookies a
  *   nabídka jazyka" (`textEditor.banners`) shows it for editing its texts - "Nastavení" / "Zpět"
  *   switch the panel, the other buttons store nothing there.
  */
 
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { BasePublicComponent } from '../../base-public.component';
 import { CookieConsentCategories, CookieConsentService } from '../../../shared/services/cookie-consent.service';
@@ -27,7 +31,7 @@ import { PublicTextEditorService } from '../../text-editor/public-text-editor.se
 @Component({
   selector: 'app-cookie-consent',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './cookie-consent.component.html',
   styleUrl: './cookie-consent.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +39,9 @@ import { PublicTextEditorService } from '../../text-editor/public-text-editor.se
 export class CookieConsentComponent extends BasePublicComponent {
 
   protected readonly translationKey = 'cookie_consent';
+
+  /** Address of the cookies policy page of the application (null = no link). */
+  @Input() policyRoute: string | null = null;
 
   private consentService = inject(CookieConsentService);
   /** Visual text editor of the admin: no bar (the administrator is not a visitor). */
@@ -70,6 +77,15 @@ export class CookieConsentComponent extends BasePublicComponent {
         this.showSettings = true;
         this.cdr.markForCheck();
       });
+  }
+
+  /**
+   * @description Link to the cookies policy: no navigation in the visual text editor (the
+   *   administrator edits the texts there).
+   * @param event Click of the link.
+   */
+  onPolicyLink(event: Event): void {
+    if (this.textEditor.active) event.preventDefault();
   }
 
   /**

@@ -7,7 +7,8 @@
  * @description Injects Google Analytics 4 (gtag.js) dynamically and drives Google Consent Mode v2.
  * @note No GA script hard-coded in index.html - respects the user's consent (see
  * CookieConsentService) and whether a Measurement ID is set at all (see
- * SiteSetting.google_analytics_id, managed in the admin on the web settings page).
+ * SiteSetting.google_analytics_id - one ID for the whole domain, company profile in the admin,
+ * tab "Sociální sítě a měření"). Started by the public layouts of the website and the e-shop.
  *
  * @dependencies
  * - PublicDataService: Source of `google_analytics_id` (from the cache filled at bootstrap).
@@ -44,7 +45,8 @@ export class AnalyticsService {
   /**
    * @description Starts tracking the default consent state and reacts to the Measurement ID
    *              arriving / consent changes. Call once on application start (see
-   *              WebLayoutComponent) - calling it again is safe, the second call is ignored.
+   *              WebLayoutComponent, ShopLayoutComponent) - calling it again is safe, the
+   *              second call is ignored.
    */
   init(): void {
     if (this.initialized || this.textEditor.active) return;

@@ -7,14 +7,20 @@
  * @description Public site footer – brand block, grouped quick links
  *   (offer / company / support), contact, bottom bar with the language switcher, copyright,
  *   legal links and login.
- * @dependencies BasePublicComponent, FooterLanguageSwitcherComponent, apps.registry
+ * @note The tagline is the company profile text of the current language only (companyText): a
+ *   missing one is 'Cannot load text', a switched-off one is left out - never another language.
+ * @note The copyright line is a text of the website (`footer.copyright_text`, Texty webu), shown
+ *   unless switched off on that page (`show_footer_copyright` of web/public/status).
+ * @dependencies BasePublicComponent, FooterLanguageSwitcherComponent, apps.registry, companyText
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntil } from 'rxjs';
 import { RouterModule } from '@angular/router';
 import { BasePublicComponent } from '../../../../../public/base-public.component';
 import { hasApp } from '../../../../apps.registry';
 import { FooterLanguageSwitcherComponent } from '../../../../../shared/components/footer-language-switcher/footer-language-switcher.component';
+import { companyText } from '../../../../../shared/utils/company-text';
 
 /** Single footer link after translation. */
 interface FooterNavLink {
@@ -87,10 +93,26 @@ export class PublicFooterComponent extends BasePublicComponent {
     },
   ];
 
+  /** The copyright line is shown (web/public/status; shown until the answer comes). */
+  showCopyright = true;
+
   constructor() {
     super();
     // Localization module for the public web
     this.localizationService.setModule('web');
+  }
+
+  /** @description Reads whether the copyright line is switched on (Texty webu). */
+  protected override onInit(): void {
+    this.publicDataService.get<{ show_footer_copyright?: boolean }>('web/public/status')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: status => {
+          this.showCopyright = status?.show_footer_copyright !== false;
+          this.cdr.markForCheck();
+        },
+        error: () => {},
+      });
   }
 
   /**
@@ -103,27 +125,25 @@ export class PublicFooterComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Copyright line of the current language ('{year}' replaced); '' when the company
-   *   details have none (switched off in the admin) - the template then leaves the line out.
+   * @description Copyright line of the website texts in the current language ('{year}'
+   *   replaced; a missing text is 'Cannot load text' - the texts of the API); '' when switched
+   *   off on the texts page (the line is left out).
    * @returns The copyright text or ''.
    */
   get copyrightText(): string {
-    const lang = this.localizationService.getCurrentLanguage();
-    const i18n = this.settings?.copyright_text_i18n;
-    const text = (i18n && i18n[lang]) ? i18n[lang] : (this.settings?.copyright_text || '');
+    // `t` = the section `footer` of the texts (no key shown before the texts arrive)
+    const text = this.showCopyright ? this.t?.copyright_text : '';
 
-    return text.replace('{year}', this.currentYear.toString());
+    return typeof text === 'string' ? text.replace('{year}', this.currentYear.toString()) : '';
   }
 
   /**
-   * @description Brand tagline of the current language; '' when switched off in the admin.
-   * @returns The tagline or ''.
+   * @description Brand tagline of the current language; 'Cannot load text' when the language has
+   *   none; '' when switched off in the admin.
+   * @returns The tagline, the missing-text mark or ''.
    */
   get brandTagline(): string {
-    const lang = this.localizationService.getCurrentLanguage();
-    const i18n = this.settings?.brand_tagline_i18n;
-
-    return (i18n && i18n[lang]) ? i18n[lang] : (this.settings?.brand_tagline || '');
+    return companyText(this.settings?.brand_tagline_i18n, this.localizationService.getCurrentLanguage());
   }
 
   /** @description Translates one link definition. */

@@ -97,6 +97,7 @@
         "ico_label": "Company ID",
         "dic_label": "VAT ID",
         "contact_header": "Contact",
+        "copyright_text": "© {year} All rights reserved.",
         "language_label": "Language"
     },
     "legal": {
@@ -634,6 +635,7 @@
         "aria_label": "Cookie consent settings",
         "title": "We use cookies",
         "description": "We use cookies to ensure the website works properly and, with your consent, for analytics and marketing purposes. You can find details in our cookie policy.",
+        "policy_link": "Cookies policy",
         "btn_settings": "Settings",
         "btn_necessary_only": "Necessary only",
         "btn_accept_all": "Accept all",

@@ -61,6 +61,14 @@ return [
         'sort_order' => 70,
     ],
     [
+        // the e-shop measures with consent (Google Analytics, 2026-11) - its own cookies policy page
+        'area' => 'shop',
+        'page_key' => 'cookies-policy',
+        'route_path' => '/shop/cookies-policy',
+        'title_i18n' => ['cz' => 'Zásady cookies | Company name', 'en' => 'Cookies policy | Company name'],
+        'sort_order' => 75,
+    ],
+    [
         'area' => 'shop',
         'page_key' => 'not-found',
         'route_path' => '/shop/<unknown address>',

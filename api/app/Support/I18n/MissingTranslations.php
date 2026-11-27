@@ -20,12 +20,15 @@
  *   missing / empty text is MISSING_TEXT ('Cannot load text'). Never the text of another
  *   language: a text that is not there shows that something is wrong, the visitor is not misled.
  *   forLanguage(): the same count for any language (also a switched off one - may it be switched on?).
- * @dependencies TranslationController::activeLanguageCodes()
+ * @note Keys an application switched off on its public pages (AppManifest::hiddenTextKeys() - e.g.
+ *   the copyright line of the footer) are not counted (countedKeys()).
+ * @dependencies TranslationController::activeLanguageCodes(), AppRegistry
  */
 
 namespace App\Support\I18n;
 
 use App\Http\Controllers\Api\TranslationController;
+use App\Support\Apps\AppRegistry;
 use Illuminate\Support\Facades\File;
 
 final class MissingTranslations
@@ -60,7 +63,7 @@ final class MissingTranslations
         if ($primary === null) {
             return [];
         }
-        $keys = array_keys(self::flatten($primary));
+        $keys = self::countedKeys($module, $primary);
         $missing = [];
 
         foreach ($codes ?? TranslationController::activeLanguageCodes($module) as $code) {
@@ -87,7 +90,36 @@ final class MissingTranslations
         }
         $texts = strtolower($code) === self::PRIMARY ? $primary : (self::read($module, $code) ?? []);
 
-        return self::countMissing(array_keys(self::flatten($primary)), $texts);
+        return self::countMissing(self::countedKeys($module, $primary), $texts);
+    }
+
+    /**
+     * @description Keys of the texts switched off on the public pages of the applications using a
+     *   module (AppManifest::hiddenTextKeys()).
+     * @param string $module Translation module.
+     * @return array<int, string> Dot paths.
+     */
+    public static function hiddenKeys(string $module): array
+    {
+        $keys = [];
+        foreach (AppRegistry::apps() as $app) {
+            if ($app->languageModule() === $module) {
+                array_push($keys, ...$app->hiddenTextKeys());
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    /**
+     * @description Keys of Czech that must have a text in every language (without the switched-off ones).
+     * @param string $module Translation module.
+     * @param array<mixed> $primary Czech texts.
+     * @return array<int, string>
+     */
+    private static function countedKeys(string $module, array $primary): array
+    {
+        return array_values(array_diff(array_keys(self::flatten($primary)), self::hiddenKeys($module)));
     }
 
     /**

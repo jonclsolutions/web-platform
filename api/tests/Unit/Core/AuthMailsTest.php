@@ -36,7 +36,7 @@ class AuthMailsTest extends TestCase
         // Plain insert: the production table has no created_at column (the row is seeded once
         // and only updated afterwards), so Eloquent create() cannot be used here.
         DB::table('legal_site_settings')->insert([
-            'company_name' => 'Acme s.r.o.', 'ico' => '123', 'brand_tagline' => 't', 'copyright_text' => 'c',
+            'company_name' => 'Acme s.r.o.', 'ico' => '123', 'brand_tagline' => 't',
             'contact_email' => 'info@acme.cz', 'contact_phone' => '+420 123', 'address' => 'Praha',
         ]);
     }
